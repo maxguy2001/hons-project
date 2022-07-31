@@ -1,0 +1,2 @@
+add_subdirectory(logical_solver)
+add_subdirectory(dual_simplex)
