@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 3.22.0)
 # -------------------------------------------------- #
 # LIB HELPER                                         #
 # -------------------------------------------------- #
-set(ALL_LIBS "logical_solver;dual_simplex")
+set(ALL_LIBS "logical_solver;dual_simplex;primal_simplex;utils")
 function(make_lib target, include_path)
     file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
     file(GLOB code "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
@@ -31,7 +31,7 @@ add_executable(${target} ${CMAKE_SOURCE_DIR}/solver/main.cpp)
 
 
 #add_subdirectory(navigation)
-target_link_libraries(${target} logical_solver dual_simplex)
+target_link_libraries(${target} logical_solver dual_simplex primal_simplex utils)
 
 
 

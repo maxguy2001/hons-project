@@ -1,2 +1,4 @@
 add_subdirectory(logical_solver)
 add_subdirectory(dual_simplex)
+add_subdirectory(primal_simplex)
+add_subdirectory(utils)
