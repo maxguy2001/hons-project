@@ -2,13 +2,12 @@
 
 #include <iostream>
 #include <fstream>
-#include <sstream>
-
 
 namespace utils{
 
 Reader::Reader(){}
 
+//this function is probably now useless but still good practise!
 void Reader::readFirstProblem(const std::string problem_filepath){
 
   //initialise filestream and open file
@@ -25,7 +24,6 @@ void Reader::readFirstProblem(const std::string problem_filepath){
   //for problem matrix) and convert to integer
   std::getline(newfile, temp_string);
   std::getline(newfile, num_rows_string);
-
   const int num_rows = atoi(num_rows_string.c_str());
 
   //read in rows, add vectors to problem matrix
@@ -58,7 +56,6 @@ void Reader::readProblem(const std::string problem_filepath, const int problem_n
   if(!newfile.is_open()){
     std::cout << "ERROR: Unable to open file" << std::endl;
   }
-
   //find location in file we want to look at (nth problem)
   int current_problem_location = 0;
   std::string tempstring;
@@ -69,7 +66,6 @@ void Reader::readProblem(const std::string problem_filepath, const int problem_n
       current_problem_location += 1;
     }
   }
-
   //get number of rows to read for matrix
   std::string numrows_string;
   std::getline(newfile, numrows_string);
@@ -104,6 +100,7 @@ std::vector<int> Reader::convertStringToVector(const std::string vector_string){
   std::string tempstring;
   std::vector<std::string> stringvec;
 
+  //convert single string to vector of strings with space character as delimiter
   for(size_t i = 0; i < vector_string.length(); ++i){
     tempstring.push_back(vector_string.at(i));
     if(vector_string.at(i) == ' '){
@@ -128,10 +125,8 @@ std::vector<int> Reader::convertStringToVector(const std::string vector_string){
       rowvector.push_back(temp_int);
     }
   }
-
   return rowvector;
 }
-
 
 }//namespace utils
 
