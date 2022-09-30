@@ -23,10 +23,10 @@ namespace utils{
    * @param problems_filepath path to problem text file
    * @param problem_number number of problem to read in
    */
-  void readProblem(const std::string problems_filepath, const int problem_number);
+  void readProblem(const std::string problems_filepath, const int32_t problem_number);
 
-  std::vector<std::vector<int>> problem_matrix_;
-  std::vector<int> cost_vector_;
+  std::vector<std::vector<int16_t>> problem_matrix_;
+  std::vector<int16_t> cost_vector_;
 
   private:
 
@@ -37,7 +37,7 @@ namespace utils{
    * @param vector_string input string to be formatted
    * @return std::vector<int> formatted vector of ints produced from string input
    */
-  std::vector<int> convertStringToVector(const std::string vector_string);
+  std::vector<int16_t> convertStringToVector(const std::string vector_string);
   };
     
 }//namespace utils

@@ -5,8 +5,8 @@
 int main(){
   utils::Reader reader_;
   reader_.readProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt", 2);
-  std::vector<std::vector<int>> mat = reader_.problem_matrix_;
-  std::vector<int> vec = reader_.cost_vector_;
+  std::vector<std::vector<int16_t>> mat = reader_.problem_matrix_;
+  std::vector<int16_t> vec = reader_.cost_vector_;
 
 /*
   for(int i = 0; i < vec.size(); ++i){
