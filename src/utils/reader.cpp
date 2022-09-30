@@ -8,11 +8,11 @@ namespace utils{
 Reader::Reader(){}
 
 //this function is probably now useless but still good practise!
-void Reader::readFirstProblem(const std::string problem_filepath){
+void Reader::readFirstProblem(const std::string problems_filepath){
 
   //initialise filestream and open file
   std::fstream newfile;
-  newfile.open(problem_filepath, std::ios::in);
+  newfile.open(problems_filepath, std::ios::in);
   //check file is open
   if(!newfile.is_open()){
     std::cout << "ERROR: Unable to open file" << std::endl;
@@ -44,14 +44,14 @@ void Reader::readFirstProblem(const std::string problem_filepath){
   newfile.close();
 }
 
-void Reader::readProblem(const std::string problem_filepath, const int problem_number){
+void Reader::readProblem(const std::string problems_filepath, const int problem_number){
   //clear anything still sored in class members from previous read
   problem_matrix_.clear();
   cost_vector_.clear();
 
   //initialise filestream and open file
   std::fstream newfile;
-  newfile.open(problem_filepath, std::ios::in);
+  newfile.open(problems_filepath, std::ios::in);
   //check file is open
   if(!newfile.is_open()){
     std::cout << "ERROR: Unable to open file" << std::endl;

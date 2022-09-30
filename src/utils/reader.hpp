@@ -12,18 +12,18 @@ namespace utils{
    * @brief reads the first problem in the problem file and writes formatted contents
    * to class members problem_matrix_ and cost_vector_.
    * 
-   * @param problem_filepath path to problem text file
+   * @param problems_filepath path to problem text file
    */
-  void readFirstProblem(const std::string problem_filepath);
+  void readFirstProblem(const std::string problems_filepath);
   
   /**
    * @brief reads the nth problem in the problem file and writes formatted contents
    * to class members problem_matrix_ and cost_vector_.
    * 
-   * @param problem_filepath path to problem text file
+   * @param problems_filepath path to problem text file
    * @param problem_number number of problem to read in
    */
-  void readProblem(const std::string problem_filepath, const int problem_number);
+  void readProblem(const std::string problems_filepath, const int problem_number);
 
   std::vector<std::vector<int>> problem_matrix_;
   std::vector<int> cost_vector_;
