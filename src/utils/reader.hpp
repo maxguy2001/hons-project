@@ -26,7 +26,6 @@ namespace utils{
   void readProblem(const std::string problems_filepath, const int32_t problem_number);
 
   std::vector<std::vector<int16_t>> problem_matrix_;
-  std::vector<int16_t> cost_vector_;
 
   private:
 

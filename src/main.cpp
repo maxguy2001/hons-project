@@ -4,15 +4,9 @@
 
 int main(){
   utils::Reader reader_;
-  reader_.readProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt", 2);
+  //reader_.readFirstProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt");
+  reader_.readProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt", 3);
   std::vector<std::vector<int16_t>> mat = reader_.problem_matrix_;
-  std::vector<int16_t> vec = reader_.cost_vector_;
-
-/*
-  for(int i = 0; i < vec.size(); ++i){
-    std::cout << vec.at(i) << std::endl;
-  }
-*/
 
 
   for(int i =0; i < mat.size(); ++i){
