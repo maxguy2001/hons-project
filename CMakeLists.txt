@@ -23,11 +23,12 @@ endfunction()
 # -------------------------------------------------- #
 
 set(project solver)
+set(CMAKE_CXX_STANDARD 14)
 project(${project} CXX)
 
 set(target "solve")
 add_subdirectory(${CMAKE_SOURCE_DIR}/src)
-add_executable(${target} ${CMAKE_SOURCE_DIR}/solver/main.cpp)
+add_executable(${target} ${CMAKE_SOURCE_DIR}/src/main.cpp)
 
 
 #add_subdirectory(navigation)
