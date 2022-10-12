@@ -1,4 +1,4 @@
-set(target source)
+set(target run_main)
 file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
 file(GLOB code "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 add_executable(${target} ${headers} ${code})

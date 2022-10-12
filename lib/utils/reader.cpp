@@ -21,8 +21,8 @@ void Reader::readFirstProblem(const std::string problems_filepath){
   std::string temp_string;
   std::string num_variables_string;
   std::string num_inequality_rows_string;
-  //skip first line, read second line (number of rows to read 
-  //for problem matrix) and convert to integer
+
+  // get number of variables and number of inequalities we are reading in
   std::getline(newfile, num_variables_string);
   const int16_t num_variables = static_cast<int16_t>(atoi(num_variables_string.c_str())) + 1;
 
@@ -104,8 +104,8 @@ void Reader::readProblem(const std::string problems_filepath, const int32_t prob
   std::string temp_string;
   std::string num_variables_string;
   std::string num_inequality_rows_string;
-  //skip first line, read second line (number of rows to read 
-  //for problem matrix) and convert to integer
+
+  // get number of variables and number of inequalities we are reading in
   std::getline(newfile, num_variables_string);
   const int16_t num_variables = static_cast<int16_t>(atoi(num_variables_string.c_str())) + 1;
 
