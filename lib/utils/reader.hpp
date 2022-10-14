@@ -25,7 +25,16 @@ namespace utils{
    */
   void readProblem(const std::string problems_filepath, const int32_t problem_number);
 
+  const int16_t kMaxInt = 32765;
+
+  const int16_t kMinInt = -32765;
+
   std::vector<std::vector<int16_t>> problem_matrix_;
+
+  std::vector<int16_t> upper_bounds_;
+
+  std::vector<int16_t> lower_bounds_;
+
 
   private:
 
