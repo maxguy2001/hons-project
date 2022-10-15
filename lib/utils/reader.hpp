@@ -1,6 +1,6 @@
 #include <string>
 #include <vector>
-#include <stdint.h>
+#include <cstdint>
 
 namespace utils{
 
@@ -18,8 +18,8 @@ namespace utils{
   
   /**
    * @brief reads the nth problem in the problem file and writes formatted contents
-   * to class members problem_matrix_ and cost_vector_.
-   * 
+   * to class members problem_matrix_.
+   *  
    * @param problems_filepath path to problem text file
    * @param problem_number number of problem to read in
    */
