@@ -32,7 +32,5 @@ namespace utils{
   std::vector<int16_t> convertStringToVector(const std::string vector_string);
 
   };
-  
-  PrimalReader::PrimalReader(){}
-  
+    
 }

@@ -5,6 +5,9 @@
 
 namespace utils{
 
+  PrimalReader::PrimalReader(){}
+
+
   void PrimalReader::readProblem(const std::string path_to_primal_problem, const int32_t problem_num){
     //clear contents of table vector before redefining
     table_.clear();
