@@ -1,10 +1,11 @@
+#include "../lib/core/types.hpp"
 #include "../lib/utils/reader.hpp"
 #include "../lib/utils/primal_reader.hpp"
 #include <vector>
 #include <iostream>
 
 int main(){
-  utils::PrimalReader reader_;
+  utils::Reader reader_;
   //reader_.readFirstProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt");
 
   reader_.readProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt", 3);
