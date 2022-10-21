@@ -3,7 +3,6 @@
 #include <cstdint>
 #include "../core/types.hpp"
 
-
 namespace utils{
 
   class Reader
@@ -20,14 +19,23 @@ namespace utils{
   
   /**
    * @brief reads the nth problem in the problem file and writes formatted contents
-   * to class members problem_matrix_ and cost_vector_.
-   * 
+   * to class members problem_matrix_.
+   *  
    * @param problems_filepath path to problem text file
    * @param problem_number number of problem to read in
    */
   void readProblem(const std::string problems_filepath, const core::int_t problem_number);
 
   std::vector<std::vector<core::int_t>> problem_matrix_;
+
+  const core::int_t kMaxInt = 32765;
+
+  const core::int_t kMinInt = -32765;
+
+  std::vector<core::int_t> upper_bounds_;
+
+  std::vector<core::int_t> lower_bounds_;
+
 
   private:
 

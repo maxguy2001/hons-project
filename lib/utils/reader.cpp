@@ -40,14 +40,6 @@ void Reader::readFirstProblem(const std::string problems_filepath){
     if(matrix_row.size() != num_variables){
       std::cout << "ERROR: length of matrix row is: " << matrix_row.size() << " but length of " << num_inequality_rows << " was expected" << std::endl;
     }
-    //add slack
-    for(size_t j = 0; j < num_inequality_rows; ++j){
-      if(j == i){
-        matrix_row.push_back(1);
-      }else{
-        matrix_row.push_back(0);
-      }
-    }
     problem_matrix_.push_back(matrix_row);
     matrix_row.clear();
   }
@@ -67,15 +59,22 @@ void Reader::readFirstProblem(const std::string problems_filepath){
     if(matrix_row.size() != num_variables){
       std::cout << "ERROR: Expexted row of length " << num_variables << " but row has length " << matrix_row.size() << std::endl;
     }
-
-    //add slack
-    for(size_t j = 0; j < num_inequality_rows; ++j){
-      matrix_row.push_back(0);
-    }
     problem_matrix_.push_back(matrix_row);
     matrix_row.clear();
   }
   newfile.close();
+
+  //make bound vectors
+  for(size_t i = 0; i < num_inequality_rows; ++i){
+    upper_bounds_.push_back(kMaxInt);
+    lower_bounds_.push_back(0);
+  }
+
+  for(size_t i = num_inequality_rows; i < num_equality_rows+num_inequality_rows; ++i){
+    upper_bounds_.push_back(0);
+    lower_bounds_.push_back(0);
+  }
+
 }
 
 void Reader::readProblem(const std::string problems_filepath, const core::int_t problem_number){
@@ -123,14 +122,6 @@ void Reader::readProblem(const std::string problems_filepath, const core::int_t 
     if(matrix_row.size() != num_variables){
       std::cout << "ERROR: length of matrix row is: " << matrix_row.size() << " but length of " << num_inequality_rows << " was expected" << std::endl;
     }
-    //add slack
-    for(size_t j = 0; j < num_inequality_rows; ++j){
-      if(j == i){
-        matrix_row.push_back(1);
-      }else{
-        matrix_row.push_back(0);
-      }
-    }
     problem_matrix_.push_back(matrix_row);
     matrix_row.clear();
   }
@@ -151,12 +142,19 @@ void Reader::readProblem(const std::string problems_filepath, const core::int_t 
       std::cout << "ERROR: Expexted row of length " << num_variables << " but row has length " << matrix_row.size() << std::endl;
     }
 
-    //add slack
-    for(size_t j = 0; j < num_inequality_rows; ++j){
-      matrix_row.push_back(0);
-    }
     problem_matrix_.push_back(matrix_row);
     matrix_row.clear();
+  }
+
+  //make bound vectors
+  for(size_t i = 0; i < num_inequality_rows; ++i){
+    lower_bounds_.push_back(0);
+    upper_bounds_.push_back(kMaxInt);
+  }
+
+  for(size_t i = num_inequality_rows; i < num_inequality_rows+num_equality_rows; ++i){
+    lower_bounds_.push_back(0);
+    upper_bounds_.push_back(0);
   }
   
     newfile.close();
