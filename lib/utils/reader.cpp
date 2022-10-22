@@ -24,13 +24,13 @@ void Reader::readFirstProblem(const std::string problems_filepath){
 
   // get number of variables and number of inequalities we are reading in
   std::getline(newfile, num_variables_string);
-  const core::int_t num_variables = static_cast<core::int_t>(atoi(num_variables_string.c_str())) + 1;
+  const int num_variables = static_cast<int>(atoi(num_variables_string.c_str())) + 1;
 
   std::getline(newfile, num_inequality_rows_string);
-  const core::int_t num_inequality_rows = static_cast<core::int_t>(atoi(num_inequality_rows_string.c_str()));
+  const int num_inequality_rows = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
 
   //initialise vector for using as temporary holding for matrix row
-  std::vector<core::int_t> matrix_row;
+  std::vector<int> matrix_row;
 
   //read inequality in rows, add vectors to problem matrix
   for(size_t i = 0; i < num_inequality_rows; ++i){
@@ -48,7 +48,7 @@ void Reader::readFirstProblem(const std::string problems_filepath){
   std::string num_equality_rows_string;
   std::getline(newfile, num_equality_rows_string);
 
-  core::int_t num_equality_rows = static_cast<core::int_t>(atoi(num_equality_rows_string.c_str()));
+  int num_equality_rows = static_cast<int>(atoi(num_equality_rows_string.c_str()));
 
   for(size_t i = 0; i < num_equality_rows; ++i){
     //get and typecast row vector
@@ -77,7 +77,7 @@ void Reader::readFirstProblem(const std::string problems_filepath){
 
 }
 
-void Reader::readProblem(const std::string problems_filepath, const core::int_t problem_number){
+void Reader::readProblem(const std::string problems_filepath, const int problem_number){
   //clear anything still sored in class members from previous read
   problem_matrix_.clear();
 
@@ -89,7 +89,7 @@ void Reader::readProblem(const std::string problems_filepath, const core::int_t 
     std::cout << "ERROR: Unable to open file" << std::endl;
   }
   //find location in file we want to look at (nth problem)
-  core::int_t current_problem_location = 0;
+  int current_problem_location = 0;
   std::string tempstring;
   std::string tilde = "~";
   while(current_problem_location != problem_number-1){
@@ -106,13 +106,13 @@ void Reader::readProblem(const std::string problems_filepath, const core::int_t 
 
   // get number of variables and number of inequalities we are reading in
   std::getline(newfile, num_variables_string);
-  const core::int_t num_variables = static_cast<core::int_t>(atoi(num_variables_string.c_str())) + 1;
+  const int num_variables = static_cast<int>(atoi(num_variables_string.c_str())) + 1;
 
   std::getline(newfile, num_inequality_rows_string);
-  const core::int_t num_inequality_rows = static_cast<core::int_t>(atoi(num_inequality_rows_string.c_str()));
+  const int num_inequality_rows = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
 
   //initialise vector for using as temporary holding for matrix row
-  std::vector<core::int_t> matrix_row;
+  std::vector<int> matrix_row;
 
   //read inequality in rows, add vectors to problem matrix
   for(size_t i = 0; i < num_inequality_rows; ++i){
@@ -130,7 +130,7 @@ void Reader::readProblem(const std::string problems_filepath, const core::int_t 
   std::string num_equality_rows_string;
   std::getline(newfile, num_equality_rows_string);
 
-  core::int_t num_equality_rows = static_cast<core::int_t>(atoi(num_equality_rows_string.c_str()));
+  int num_equality_rows = static_cast<int>(atoi(num_equality_rows_string.c_str()));
 
   for(size_t i = 0; i < num_equality_rows; ++i){
     //get and typecast row vector
@@ -161,7 +161,7 @@ void Reader::readProblem(const std::string problems_filepath, const core::int_t 
 }
 
 
-std::vector<core::int_t> Reader::convertStringToVector(const std::string vector_string){
+std::vector<int> Reader::convertStringToVector(const std::string vector_string){
 
   std::string tempstring;
   std::vector<std::string> stringvec;
@@ -179,15 +179,15 @@ std::vector<core::int_t> Reader::convertStringToVector(const std::string vector_
   }
 
   //initialise variables
-  std::vector<core::int_t> rowvector;
-  core::int_t temp_int;
+  std::vector<int> rowvector;
+  int temp_int;
   std::string space = " ";
 
   //if string in vector is not empty or a space, convert to int and add to return vector
   for(size_t i = 0; i < stringvec.size(); ++i){
     tempstring = stringvec.at(i);
     if(tempstring.compare(space) != 0 && !tempstring.empty()){
-      temp_int = static_cast<core::int_t>(atoi(tempstring.c_str()));
+      temp_int = static_cast<int>(atoi(tempstring.c_str()));
       rowvector.push_back(temp_int);
     }
   }

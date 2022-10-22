@@ -4,6 +4,7 @@
 #include <iostream>
 // #include <stdint.h>
 #include <string>
+#include "../lib/core/types.hpp"
 
 const int all_test_cases_count = 150218;
 const bool test_all = false;
@@ -23,9 +24,9 @@ const double inf = kHighsInf;
 /// @param problem_number is the problem to presolve.
 void presolveProblem(
   Highs& highs,
-  const std::vector<std::vector<int16_t>> problem_matrix,
-  const std::vector<int16_t> lower_bounds,
-  const std::vector<int16_t> upper_bounds
+  const std::vector<std::vector<int>> problem_matrix,
+  const std::vector<int> lower_bounds,
+  const std::vector<int> upper_bounds
 );
 
 
@@ -43,9 +44,9 @@ void presolveProblemsN(const int n);
 /// @return HighsStatus to indicate whether the definition was successful.
 HighsStatus defineLp(
   Highs& highs, 
-  const std::vector<std::vector<int16_t>> problem_matrix,
-  const std::vector<int16_t> lower_bounds,
-  std::vector<int16_t> upper_bounds
+  const std::vector<std::vector<int>> problem_matrix,
+  const std::vector<int> lower_bounds,
+  std::vector<int> upper_bounds
 );
 
 
@@ -93,9 +94,9 @@ void reportAndLogPresolveLog(Highs& highs) {
 
 
 std::vector<double> getHighsRowBounds(
-  const int16_t constant_term,
-  const int16_t lower_bound,
-  const int16_t upper_bound
+  const int constant_term,
+  const int lower_bound,
+  const int upper_bound
 ) {
   std::vector<double> highs_bounds; 
 
@@ -116,9 +117,9 @@ std::vector<double> getHighsRowBounds(
 
 HighsStatus defineLp(
   Highs& highs, 
-  const std::vector<std::vector<int16_t>> problem_matrix,
-  const std::vector<int16_t> lower_bounds,
-  const std::vector<int16_t> upper_bounds
+  const std::vector<std::vector<int>> problem_matrix,
+  const std::vector<int> lower_bounds,
+  const std::vector<int> upper_bounds
 ) {
   HighsStatus return_status = HighsStatus::kOk;
 
@@ -135,10 +136,10 @@ HighsStatus defineLp(
 
   for (int row_num = 0;  row_num < num_rows; ++row_num) {
     // Getting row, constant term and bounds for the row.
-    std::vector<int16_t> row = problem_matrix[row_num];
-    int16_t constant_term = row[0];
-    int16_t lower_bound = lower_bounds[row_num];
-    int16_t upper_bound = upper_bounds[row_num];
+    std::vector<int> row = problem_matrix[row_num];
+    int constant_term = row[0];
+    int lower_bound = lower_bounds[row_num];
+    int upper_bound = upper_bounds[row_num];
     std::vector<double> highs_bounds = getHighsRowBounds(constant_term, lower_bound, upper_bound);
 
     //non-zero indices and values.
@@ -166,9 +167,9 @@ HighsStatus defineLp(
 
 void presolveProblem(
   Highs& highs,
-  const std::vector<std::vector<int16_t>> problem_matrix,
-  const std::vector<int16_t> lower_bounds,
-  const std::vector<int16_t> upper_bounds
+  const std::vector<std::vector<int>> problem_matrix,
+  const std::vector<int> lower_bounds,
+  const std::vector<int> upper_bounds
   ) {
 
   // Useful references to HiGHS variables.
@@ -209,12 +210,12 @@ void presolveProblemsN(int n) {
   utils::Reader reader;
   std::string test_problems = "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
 
-  for (int32_t i = 0; i < n; ++i) {
+  for (int i = 0; i < n; ++i) {
     // Reading problem.
     reader.readProblem(test_problems, i);
-    std::vector<std::vector<int16_t>> mat = reader.problem_matrix_;
-    std::vector<int16_t> max = reader.upper_bounds_;
-    std::vector<int16_t> min = reader.lower_bounds_;
+    std::vector<std::vector<int>> mat = reader.problem_matrix_;
+    std::vector<int> max = reader.upper_bounds_;
+    std::vector<int> min = reader.lower_bounds_;
 
     presolveProblem(highs, mat, min, max);
     highs.clearModel();
@@ -236,17 +237,3 @@ int main() {
 
   return 0;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
