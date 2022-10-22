@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include "../core/types.hpp"
 
 namespace utils{
 
@@ -23,17 +24,17 @@ namespace utils{
    * @param problems_filepath path to problem text file
    * @param problem_number number of problem to read in
    */
-  void readProblem(const std::string problems_filepath, const int32_t problem_number);
+  void readProblem(const std::string problems_filepath, const core::int_t problem_number);
 
-  const int16_t kMaxInt = 32765;
+  std::vector<std::vector<core::int_t>> problem_matrix_;
 
-  const int16_t kMinInt = -32765;
+  const core::int_t kMaxInt = 32765;
 
-  std::vector<std::vector<int16_t>> problem_matrix_;
+  const core::int_t kMinInt = -32765;
 
-  std::vector<int16_t> upper_bounds_;
+  std::vector<core::int_t> upper_bounds_;
 
-  std::vector<int16_t> lower_bounds_;
+  std::vector<core::int_t> lower_bounds_;
 
 
   private:
@@ -45,7 +46,7 @@ namespace utils{
    * @param vector_string input string to be formatted
    * @return std::vector<int> formatted vector of ints produced from string input
    */
-  std::vector<int16_t> convertStringToVector(const std::string vector_string);
+  std::vector<core::int_t> convertStringToVector(const std::string vector_string);
   };
     
 }//namespace utils

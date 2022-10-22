@@ -1,16 +1,18 @@
+#include "../lib/core/types.hpp"
 #include "../lib/utils/reader.hpp"
 #include "../lib/utils/primal_reader.hpp"
 #include <vector>
 #include <iostream>
 
 int main(){
-  utils::PrimalReader reader_;
+  utils::Reader reader_;
   //reader_.readFirstProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt");
 
   reader_.readProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt", 3);
-  std::vector<std::vector<int16_t>> mat = reader_.problem_matrix_;
-  std::vector<int16_t> max = reader_.upper_bounds_;
-  std::vector<int16_t> min = reader_.lower_bounds_;
+
+  std::vector<std::vector<core::int_t>> mat = reader_.problem_matrix_;
+  std::vector<core::int_t> max = reader_.upper_bounds_;
+  std::vector<core::int_t> min = reader_.lower_bounds_;
 
 
   for(int i =0; i < mat.size(); ++i){

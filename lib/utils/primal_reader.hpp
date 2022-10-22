@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include "../core/types.hpp"
 
 namespace utils{
 
@@ -16,9 +17,9 @@ namespace utils{
      * @param path_to_primal_problem full path to text file containing primal problem
      * @param problem_number number of problem in the file
      */
-    void readProblem(const std::string path_to_primal_problem, const int32_t problem_number);
+    void readProblem(const std::string path_to_primal_problem, const core::int_t problem_number);
 
-    std::vector<std::vector<int16_t>> table_;
+    std::vector<std::vector<core::int_t>> table_;
 
   private:
 
@@ -29,7 +30,7 @@ namespace utils{
    * @param vector_string input string to be formatted
    * @return std::vector<int> formatted vector of ints produced from string input
    */
-  std::vector<int16_t> convertStringToVector(const std::string vector_string);
+  std::vector<core::int_t> convertStringToVector(const std::string vector_string);
 
   };
     
