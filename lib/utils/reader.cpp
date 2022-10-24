@@ -30,18 +30,29 @@ void Reader::readFirstProblem(const std::string problems_filepath){
   const int num_inequality_rows = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
 
   //initialise vector for using as temporary holding for matrix row
-  std::vector<int> matrix_row;
+  std::vector<int> problem_row;
+  int constant_term;
+  std::vector<int> problem_matrix_row;
 
   //read inequality in rows, add vectors to problem matrix
   for(size_t i = 0; i < num_inequality_rows; ++i){
     std::getline(newfile, temp_string);
-    matrix_row = convertStringToVector(temp_string);
+    problem_row = getProblemRowAsIntVector(temp_string);
+
     //check vector size
-    if(matrix_row.size() != num_variables){
-      std::cout << "ERROR: length of matrix row is: " << matrix_row.size() << " but length of " << num_inequality_rows << " was expected" << std::endl;
+    if(problem_row.size() != num_variables){
+      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_inequality_rows << " was expected" << std::endl;
     }
-    problem_matrix_.push_back(matrix_row);
-    matrix_row.clear();
+
+    constant_term = problem_row.at(0)*(-1);
+    problem_matrix_row = std::vector<int>(problem_row.begin() + 1, problem_row.end());
+
+    problem_matrix_.push_back(problem_matrix_row);
+    upper_bounds_.push_back(kMaxInt);
+    lower_bounds_.push_back(constant_term);
+
+    problem_row.clear();
+    problem_matrix_row.clear();
   }
 
   //read in equality rows and add to problem matrix
@@ -51,30 +62,25 @@ void Reader::readFirstProblem(const std::string problems_filepath){
   int num_equality_rows = static_cast<int>(atoi(num_equality_rows_string.c_str()));
 
   for(size_t i = 0; i < num_equality_rows; ++i){
-    //get and typecast row vector
     std::getline(newfile, temp_string);
-    matrix_row = convertStringToVector(temp_string);
+    problem_row = getProblemRowAsIntVector(temp_string);
 
     //check vector size
-    if(matrix_row.size() != num_variables){
-      std::cout << "ERROR: Expexted row of length " << num_variables << " but row has length " << matrix_row.size() << std::endl;
+    if(problem_row.size() != num_variables){
+      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_inequality_rows << " was expected" << std::endl;
     }
-    problem_matrix_.push_back(matrix_row);
-    matrix_row.clear();
+
+    constant_term = problem_row.at(0)*(-1);
+    problem_matrix_row = std::vector<int>(problem_row.begin() + 1, problem_row.end());
+
+    problem_matrix_.push_back(problem_matrix_row);
+    upper_bounds_.push_back(constant_term);
+    lower_bounds_.push_back(constant_term);
+
+    problem_row.clear();
+    problem_matrix_row.clear();
   }
   newfile.close();
-
-  //make bound vectors
-  for(size_t i = 0; i < num_inequality_rows; ++i){
-    upper_bounds_.push_back(kMaxInt);
-    lower_bounds_.push_back(0);
-  }
-
-  for(size_t i = num_inequality_rows; i < num_equality_rows+num_inequality_rows; ++i){
-    upper_bounds_.push_back(0);
-    lower_bounds_.push_back(0);
-  }
-
 }
 
 void Reader::readProblem(const std::string problems_filepath, const int problem_number){
@@ -111,19 +117,29 @@ void Reader::readProblem(const std::string problems_filepath, const int problem_
   std::getline(newfile, num_inequality_rows_string);
   const int num_inequality_rows = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
 
-  //initialise vector for using as temporary holding for matrix row
-  std::vector<int> matrix_row;
+  std::vector<int> problem_row;
+  int constant_term;
+  std::vector<int> problem_matrix_row;
 
   //read inequality in rows, add vectors to problem matrix
   for(size_t i = 0; i < num_inequality_rows; ++i){
     std::getline(newfile, temp_string);
-    matrix_row = convertStringToVector(temp_string);
+    problem_row = getProblemRowAsIntVector(temp_string);
+
     //check vector size
-    if(matrix_row.size() != num_variables){
-      std::cout << "ERROR: length of matrix row is: " << matrix_row.size() << " but length of " << num_inequality_rows << " was expected" << std::endl;
+    if(problem_row.size() != num_variables){
+      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_inequality_rows << " was expected" << std::endl;
     }
-    problem_matrix_.push_back(matrix_row);
-    matrix_row.clear();
+
+    constant_term = problem_row.at(0)*(-1);
+    problem_matrix_row = std::vector<int>(problem_row.begin() + 1, problem_row.end());
+
+    problem_matrix_.push_back(problem_matrix_row);
+    upper_bounds_.push_back(kMaxInt);
+    lower_bounds_.push_back(constant_term);
+
+    problem_row.clear();
+    problem_matrix_row.clear();
   }
 
   //read in equality rows and add to problem matrix
@@ -133,31 +149,26 @@ void Reader::readProblem(const std::string problems_filepath, const int problem_
   int num_equality_rows = static_cast<int>(atoi(num_equality_rows_string.c_str()));
 
   for(size_t i = 0; i < num_equality_rows; ++i){
-    //get and typecast row vector
     std::getline(newfile, temp_string);
-    matrix_row = convertStringToVector(temp_string);
+    problem_row = getProblemRowAsIntVector(temp_string);
 
     //check vector size
-    if(matrix_row.size() != num_variables){
-      std::cout << "ERROR: Expexted row of length " << num_variables << " but row has length " << matrix_row.size() << std::endl;
+    if(problem_row.size() != num_variables){
+      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_inequality_rows << " was expected" << std::endl;
     }
 
-    problem_matrix_.push_back(matrix_row);
-    matrix_row.clear();
+    constant_term = problem_row.at(0)*(-1);
+    problem_matrix_row = std::vector<int>(problem_row.begin() + 1, problem_row.end());
+
+    problem_matrix_.push_back(problem_matrix_row);
+    upper_bounds_.push_back(constant_term);
+    lower_bounds_.push_back(constant_term);
+
+    problem_row.clear();
+    problem_matrix_row.clear();
   }
 
-  //make bound vectors
-  for(size_t i = 0; i < num_inequality_rows; ++i){
-    lower_bounds_.push_back(0);
-    upper_bounds_.push_back(kMaxInt);
-  }
-
-  for(size_t i = num_inequality_rows; i < num_inequality_rows+num_equality_rows; ++i){
-    lower_bounds_.push_back(0);
-    upper_bounds_.push_back(0);
-  }
-  
-    newfile.close();
+  newfile.close();
 }
 
 
@@ -194,7 +205,7 @@ std::vector<int> Reader::convertStringToVector(const std::string vector_string){
   return rowvector;
 }
 
-std::vector<int> getProblemRowAsIntVector(const std::string problem_row_string){
+std::vector<int> Reader::getProblemRowAsIntVector(const std::string problem_row_string){
   std::string tempstring;
   std::vector<int> row_vector;
 
