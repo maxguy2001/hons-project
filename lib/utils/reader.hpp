@@ -46,6 +46,10 @@ namespace utils{
    * @return std::vector<int> formatted vector of ints produced from string input
    */
   std::vector<int> convertStringToVector(const std::string vector_string);
+
+  std::vector<int> getProblemRowAsIntVector(const std::string problem_row_string);
   };
+
+
     
 }//namespace utils

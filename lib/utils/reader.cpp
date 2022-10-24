@@ -194,5 +194,25 @@ std::vector<int> Reader::convertStringToVector(const std::string vector_string){
   return rowvector;
 }
 
+std::vector<int> getProblemRowAsIntVector(const std::string problem_row_string){
+  std::string tempstring;
+  std::vector<int> row_vector;
+
+  //convert single string to vector of strings with space
+  //character as delimiter
+  for(size_t i = 0; i < problem_row_string.length(); ++i){
+    char position_char = problem_row_string.at(i);
+    
+    if(position_char != ' '){
+      tempstring.push_back(position_char);
+    } else {
+      row_vector.push_back(static_cast<int>(atoi(tempstring.c_str())));
+      tempstring.clear();
+    }
+  }
+
+  return row_vector;
+}
+
 }//namespace utils
 

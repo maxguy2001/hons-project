@@ -1,9 +1,8 @@
 #include "../lib/utils/reader.hpp"
 #include "Highs.h"
-// #include <vector>
-// #include <iostream>
-// // #include <stdint.h>
-// #include <string>
+#include <vector>
+#include <iostream>
+#include <string>
 
 int main() {
   utils::Reader reader_;
