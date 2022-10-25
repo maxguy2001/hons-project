@@ -8,13 +8,6 @@ namespace utils{
   {
   public:
   Reader();
-  /**
-   * @brief reads the first problem in the problem file and writes formatted contents
-   * to class members problem_matrix_ and cost_vector_.
-   * 
-   * @param problems_filepath path to problem text file
-   */
-  void readFirstProblem(const std::string problems_filepath);
   
   /**
    * @brief reads the nth problem in the problem file and writes formatted contents
@@ -48,6 +41,9 @@ namespace utils{
   std::vector<int> convertStringToVector(const std::string vector_string);
 
   std::vector<int> getProblemRowAsIntVector(const std::string problem_row_string);
+
+  std::vector<int> spliceVector(std::vector<int> to_splice, const int range_start, const int range_end);
+
   };
 
 

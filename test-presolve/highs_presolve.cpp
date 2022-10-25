@@ -224,7 +224,6 @@ void presolveProblemsN(int n) {
 
 
 int main() {
-  utils::Reader reader_;
   if (test_all) {
     presolveProblemsN(all_test_cases_count);
   } else {
