@@ -5,26 +5,24 @@
 #include <iostream>
 
 int main(){
-  utils::Reader reader_;
+  utils::PrimalReader reader_;
   //reader_.readFirstProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt");
 
-  reader_.readProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt", 3);
+  reader_.readProblem("/home/maxguy/projects/hons/hons-project/problems/primal_problems.txt", 2);
 
-  std::vector<std::vector<core::int_t>> mat = reader_.problem_matrix_;
-  std::vector<core::int_t> max = reader_.upper_bounds_;
-  std::vector<core::int_t> min = reader_.lower_bounds_;
+  std::vector<std::vector<int>> table = reader_.table_;
+  std::vector<int> basis = reader_.basis_;
 
 
-  for(int i =0; i < mat.size(); ++i){
-    for(int j = 0; j < mat[1].size(); ++j){
-      std::cout << mat[i][j] << std::endl;
+  for(int i =0; i < table.size(); ++i){
+    for(int j = 0; j < table[1].size(); ++j){
+      std::cout << table[i][j] << std::endl;
     }
   }
 
-  for(int i = 0; i < max.size(); ++i){
-    std::cout << max.at(i) << ", " << min.at(i) << std::endl;
+  for(int i = 0; i < basis.size(); ++i){
+    std::cout << basis.at(i) << std::endl;
   }
-
 
   return 0;
 }

@@ -24,17 +24,13 @@ namespace utils{
    * @param problems_filepath path to problem text file
    * @param problem_number number of problem to read in
    */
-  void readProblem(const std::string problems_filepath, const core::int_t problem_number);
+  void readProblem(const std::string problems_filepath, const int problem_number);
 
-  std::vector<std::vector<core::int_t>> problem_matrix_;
+  std::vector<std::vector<int>> problem_matrix_;
 
-  const core::int_t kMaxInt = 32765;
+  std::vector<int> upper_bounds_;
 
-  const core::int_t kMinInt = -32765;
-
-  std::vector<core::int_t> upper_bounds_;
-
-  std::vector<core::int_t> lower_bounds_;
+  std::vector<int> lower_bounds_;
 
 
   private:
@@ -46,7 +42,7 @@ namespace utils{
    * @param vector_string input string to be formatted
    * @return std::vector<int> formatted vector of ints produced from string input
    */
-  std::vector<core::int_t> convertStringToVector(const std::string vector_string);
+  std::vector<int> convertStringToVector(const std::string vector_string);
   };
     
 }//namespace utils
