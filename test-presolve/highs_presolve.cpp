@@ -6,14 +6,17 @@
 
 
 // Constants:
+//
+// JAJH Mod
 std::string test_problems = "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
 const int all_test_cases_count = 150218;
 const double inf = kHighsInf;
 
 // Parameters:
 const bool test_all = false;
-const int to_test_count = 10;
-bool print_problems = true;
+// JAJH Mods
+const int to_test_count = all_test_cases_count;//3000;
+bool print_problems = false;//true;
 
 // Report variables:
 int reduced_to_empty_count = 0;
@@ -82,7 +85,9 @@ void printLP(
 ) {
     for (int i = 0; i < problem_matrix.size(); ++i) {
       printf("Row %d \n", i+1);
-      for (int j = 0; j < problem_matrix[1].size(); ++j) {
+      // JAJH: [1] should be [0]. Caused segfault on a problem with only one row
+      //      for (int j = 0; j < problem_matrix[1].size(); ++j) {
+      for (int j = 0; j < problem_matrix[0].size(); ++j) {
         std::cout << problem_matrix[i][j] << std::endl;
       }
       std::cout<<" "<<std::endl;
@@ -152,8 +157,18 @@ HighsStatus defineLp(
   HighsStatus return_status = HighsStatus::kOk;
 
   // Problem dimensions.
-  const int num_var = problem_matrix[0].size();
+  //
+  // JAJH: This is where the segfault ocurred
+  //
+  // const int num_var = problem_matrix[0].size();
+  //
+  // For a problem with no rows, problem_matrix has no entries, so the
+  // vector problem_matrix[0] is not defined
+  //
+  // Since problems with no rows shouldn't reach here, add an assert
   const int num_rows = problem_matrix.size();
+  assert(num_rows > 0);
+  const int num_var = problem_matrix[0].size();
 
   // Setting up problem bounds
   std::vector<double> lower;
@@ -170,7 +185,7 @@ HighsStatus defineLp(
     int upper_bound;
 
     if (upper_bounds[row_num] == 32765) {
-      upper_bound = inf;
+      upper_bound = kHighsIInf;// JAJH This was inf, but that's a double
     }
 
     //non-zero indices and values.
@@ -236,16 +251,37 @@ void presolveProblems(int problems_count) {
   assert(return_status == HighsStatus::kOk);
   highs.setOptionValue("presolve_log_report", true);
 
-  //Instanciate reader.
+  // Instantiate reader.
   utils::Reader reader;
 
+  // JAJH: Inserting "&" makes problem_matrix, upper_bounds and
+  // lower_bounds references to the corresponding vector in reader,
+  // otherwise the data are copied every time
+  std::vector<std::vector<int>>& problem_matrix = reader.problem_matrix_;
+  std::vector<int>& upper_bounds = reader.upper_bounds_;
+  std::vector<int>& lower_bounds = reader.lower_bounds_;
+
+  int num_empty_problems = 0;
   for (int n = 0; n < problems_count; n++) {
+    if (n % 1000 == 0) printf("Reading problem %6d\n", n);
     // Reading problem.
     reader.readProblem(test_problems, n+1);
-    std::vector<std::vector<int>> problem_matrix = reader.problem_matrix_;
-    std::vector<int> upper_bounds = reader.upper_bounds_;
-    std::vector<int> lower_bounds = reader.lower_bounds_;
-
+    // JAJH: Ignore test problems with no rows
+    int num_row = problem_matrix.size();
+    if (num_row <= 0) {
+      assert(num_row == 0);
+      num_empty_problems++;
+      continue;
+    }
+    // JAJH: I don't know whether any problems have no variables, so
+    // flag them up with the assert and ignore them
+    int num_var = problem_matrix[0].size();
+    assert(num_var > 0);
+    if (num_var <= 0) {
+      assert(num_var == 0);
+      printf("Ignore test problems with %d variables\n", num_var);
+      continue;
+    }
 
     if (print_problems) {
       std::cout<<" "<<std::endl;
@@ -259,6 +295,7 @@ void presolveProblems(int problems_count) {
     presolveSingleProblem(highs, problem_matrix, lower_bounds, upper_bounds);
     highs.clearModel();
   }
+  printf("Ignored %d empty test problems\n", num_empty_problems);
 };
 
 
