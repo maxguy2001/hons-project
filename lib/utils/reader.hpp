@@ -18,6 +18,14 @@ namespace utils{
    */
   void readProblem(const std::string problems_filepath, const int problem_number);
 
+    /**
+   * @brief reads the next problem in the problem file and writes formatted contents
+   * to class members problem_matrix_ given an open filestream of test problems.
+   *  
+   * @param problems_filestream the open filestream
+   */
+  void readNextProblem(std::fstream &problems_filestream);
+
   std::vector<std::vector<int>> problem_matrix_;
 
   const int kMaxInt = 32765;
@@ -27,6 +35,7 @@ namespace utils{
   std::vector<int> upper_bounds_;
 
   std::vector<int> lower_bounds_;
+  
 
 
   private:

@@ -5,7 +5,97 @@
 
 namespace utils{
 
-Reader::Reader(){}
+Reader::Reader(){};
+
+void Reader::readNextProblem(std::fstream &problems_filestream){
+  //clear anything still sored in class members from previous read
+  problem_matrix_.clear();
+  lower_bounds_.clear();
+  upper_bounds_.clear();
+
+  //check file is open
+  if(!problems_filestream.is_open()){
+    std::cout << "ERROR: Unable to open file" << std::endl;
+  }
+  
+  //initialise strings for storing elements read from file
+  std::string temp_string;
+  std::string num_variables_string;
+  std::string num_inequality_rows_string;
+  std::string num_equality_rows_string;
+
+  // get number of variables we are reading in, taking into 
+  // account whether the line is a separation line or not 
+  // (it is only not a separation line in the first problem.)
+  std::getline(problems_filestream, temp_string);
+  if (temp_string.find('~') != std::string::npos) {
+    std::getline(problems_filestream, num_variables_string);
+  } else {
+    num_variables_string = temp_string;
+  }
+  const int num_variables = static_cast<int>(atoi(num_variables_string.c_str()));
+
+  // Get number of inequalities.
+  std::getline(problems_filestream, num_inequality_rows_string);
+  const int num_inequality_rows = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
+
+  // Define vectors to read in constraints.
+  std::vector<int> problem_row; // A line in the input file
+  int constant_term;
+  std::vector<int> problem_matrix_row; // Formatted constraint without the 
+  // constant term.
+
+  //read inequality in rows, add vectors to problem matrix
+  for(size_t i = 0; i < num_inequality_rows; ++i){
+    std::getline(problems_filestream, temp_string);
+    problem_row = getProblemRowAsIntVector(temp_string);
+
+    constant_term = problem_row.at(0)*(-1);
+    problem_matrix_row = spliceVector(problem_row, 1, num_variables);
+
+    //check vector size
+    if(problem_matrix_row.size() != num_variables){
+      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_variables << " was expected" << std::endl;
+    }
+
+    problem_matrix_.push_back(problem_matrix_row);
+    upper_bounds_.push_back(kMaxInt);
+    lower_bounds_.push_back(constant_term);
+
+    problem_row.clear();
+    problem_matrix_row.clear();
+  }
+
+  //read in equality rows and add to problem matrix
+  std::getline(problems_filestream, num_equality_rows_string);
+  int num_equality_rows = static_cast<int>(atoi(num_equality_rows_string.c_str()));
+
+  for(size_t i = 0; i < num_equality_rows; ++i){
+    std::getline(problems_filestream, temp_string);
+    problem_row = getProblemRowAsIntVector(temp_string);
+
+    constant_term = problem_row.at(0)*(-1);
+    problem_matrix_row = spliceVector(problem_row, 1, num_variables);
+
+    //check vector size
+    if(problem_matrix_row.size() != num_variables){
+      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_variables << " was expected" << std::endl;
+    }
+
+    problem_matrix_.push_back(problem_matrix_row);
+    upper_bounds_.push_back(constant_term);
+    lower_bounds_.push_back(constant_term);
+
+    problem_row.clear();
+    problem_matrix_row.clear();
+  }
+
+  // Read the tilde line so that next problem starts
+  // at the number of variables line. If the last problem
+  // ends with a tilde line would work and we would not need the 
+  // tilde check at the start:
+  // std::getline(problems_filestream, temp_string);
+}
 
 void Reader::readProblem(const std::string problems_filepath, const int problem_number){
   //clear anything still sored in class members from previous read
@@ -151,7 +241,6 @@ std::vector<int> Reader::getProblemRowAsIntVector(const std::string problem_row_
       row_vector.push_back(static_cast<int>(atoi(tempstring.c_str())));
     }
   }
-  
   
   return row_vector;
 }
