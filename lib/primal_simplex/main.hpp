@@ -1,4 +1,5 @@
 #include <vector>
+#include <cstdint>
 
 namespace primal_simplex{
 
@@ -7,9 +8,9 @@ namespace primal_simplex{
   public:
     PrimalSimplex();
 
-    void setProblem(const std::vector<std::vector<int>>);
+    void setProblem(const std::vector<std::vector<float>> table);
 
-    void setBasis(const std::vector<int>);
+    void setBasis(const std::vector<int> basis);
 
     void solveProblem();
 
@@ -17,22 +18,22 @@ namespace primal_simplex{
 
   private:
 
+    std::vector<std::vector<float>> table_;
+
+    std::vector<int> basis_;
+
+    std::vector<float> extractColumnFromTable(const int column_index);
+
     int getPivotColumnIndex();
 
-    int getPivotRowIndex();
+    int getPivotRowIndex(const int pivot_column_index);
 
-    void switchBasis();
+    void switchBasis(const int pivot_row_index, const int pivot_column_index);
 
-    int gcd(const int a, const int b);
-
-    int lcm(const int a, const int b);
-
-    void constructNewTable();
+    void constructNewTable(const int pivot_row_index, const int pivot_column_index);
 
     bool checkOptimality();
 
   };
-  
-  PrimalSimplex::PrimalSimplex(){}
-  
+    
 }

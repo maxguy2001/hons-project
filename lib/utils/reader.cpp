@@ -66,7 +66,7 @@ void Reader::readFirstProblem(const std::string problems_filepath){
 
   //make bound vectors
   for(size_t i = 0; i < num_inequality_rows; ++i){
-    upper_bounds_.push_back(core::kInfinity);
+    upper_bounds_.push_back(core::kIntInfinity);
     lower_bounds_.push_back(0);
   }
 
@@ -149,7 +149,7 @@ void Reader::readProblem(const std::string problems_filepath, const int problem_
   //make bound vectors
   for(size_t i = 0; i < num_inequality_rows; ++i){
     lower_bounds_.push_back(0);
-    upper_bounds_.push_back(core::kInfinity);
+    upper_bounds_.push_back(core::kIntInfinity);
   }
 
   for(size_t i = num_inequality_rows; i < num_inequality_rows+num_equality_rows; ++i){
