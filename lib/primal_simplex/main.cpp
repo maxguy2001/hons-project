@@ -43,9 +43,9 @@ namespace primal_simplex{
   int PrimalSimplex::getPivotColumnIndex(){
 
     //get objective function from table and make copy
-    std::vector<float> objective_function = table_.at(0);
+    const std::vector<float> objective_function = table_.at(0);
     std::vector<float> objective_values;
-    std::copy(objective_function.begin(), objective_function.end(), std::back_inserter(objective_function));
+    std::copy(objective_function.begin(), objective_function.end(), std::back_inserter(objective_values));
 
     //make vector containing corresponding index for objective_values
     std::vector<int> index;
