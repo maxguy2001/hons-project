@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <chrono>
+#include <cmath>
 
 
 // Constants:
@@ -39,7 +41,7 @@ void printLP(
 /// @param presolve_rule 
 /// @return Boolean indicating whether presolve_rule has been
 /// found in used rules.
-bool findPresolveRuleInUsed(const std::string presolve_rule);
+bool checkVectorContainsString(const std::vector<std::string> search_vector, const std::string to_find);
 
 
 /// @brief Defines a problem in a HiGHS instance.
@@ -56,7 +58,7 @@ HighsStatus defineLp(
 );
 
 
-void reportAndLogPresolveLog(Highs& highs);
+std::vector<std::string> reportAndLogPresolveLog(Highs& highs);
 
 
 /// @brief Reads and presolves one problem from the test cases
@@ -106,9 +108,9 @@ void printLP(
 }
 
 
-bool findPresolveRuleInUsed(const std::string presolve_rule) {
-  for (auto&used_rule : used_presolve_rules) {
-    if (used_rule == presolve_rule) {
+bool checkVectorContainsString(const std::vector<std::string> search_vector, const std::string to_find) {
+  for (auto&vector_element : search_vector) {
+    if (vector_element == to_find) {
       return true;
     }
   }
@@ -116,7 +118,7 @@ bool findPresolveRuleInUsed(const std::string presolve_rule) {
 }
 
 
-void reportAndLogPresolveLog(Highs& highs) {
+std::vector<std::string> reportAndLogPresolveLog(Highs& highs) {
   const HighsPresolveLog& presolve_log = highs.getPresolveLog();
   // The presolve_rule_off option will alow certain presolve rules to
   // be switched off
@@ -125,6 +127,10 @@ void reportAndLogPresolveLog(Highs& highs) {
     printf("\nRule  Bit| Call Row Col| Name\n");
   }
   int bit = 1;
+
+  // Problem presolve rules used
+  std::vector<std::string> problem_presolve_rules;
+
   for (int rule_ix = 0; rule_ix < kPresolveRuleCount; rule_ix++) {
     const HighsPresolveRuleLog& log = presolve_log.rule[rule_ix];
     const std::string presolve_rule = highs.presolveRuleTypeToString(rule_ix);
@@ -138,12 +144,18 @@ void reportAndLogPresolveLog(Highs& highs) {
         presolve_rule.c_str());
       }
 
-      if (!findPresolveRuleInUsed(presolve_rule)) {
+      if (!checkVectorContainsString(used_presolve_rules, presolve_rule)) {
         used_presolve_rules.push_back(presolve_rule);
+      }
+
+      if (!checkVectorContainsString(problem_presolve_rules, presolve_rule)) {
+        problem_presolve_rules.push_back(presolve_rule);
       }
     }
     bit *= 2; 
   }
+
+  return problem_presolve_rules;
 };
 
 
@@ -223,10 +235,20 @@ void presolveSingleProblem(
 
   return_status = highs.presolve();
   assert(return_status == HighsStatus::kOk);
-  // Flag up case where presolve does not reduce to empty
+
+  // If problem is reduced to empty
   if (!(presolved_lp.num_row_+presolved_lp.num_col_)) {
     reduced_to_empty_count += 1;
-    reportAndLogPresolveLog(highs);
+    std::vector<std::string> problem_presolve_rules = reportAndLogPresolveLog(highs);
+
+    if (problem_presolve_rules.size() == 2) {
+      std::cout << problem_presolve_rules[0] << std::endl;
+      std::cout << problem_presolve_rules[1] << std::endl;
+
+      if (checkVectorContainsString(problem_presolve_rules, "Singleton row") && checkVectorContainsString(problem_presolve_rules, "Dominated col")) {
+        printLP(problem_matrix, lower_bounds, upper_bounds);
+      }
+    }
   }
 };
 
@@ -242,6 +264,22 @@ void presolveProblems(int problems_count) {
   assert(return_status == HighsStatus::kOk);
   highs.setOptionValue("presolve_log_report", true);
 
+  int no_rules_off = 0;
+  int free_col_substitution_rule_off = 256;
+  int doubleton_equation_rule_off = 512;  // Doubleton equation rule off
+  int aggregator_rule_off = 4096; // Aggregator rule off
+  int parallel_rows_rule_off = 8192; // Parallel rows and columns rule off
+
+  int presolve_rules_off = 0;
+  std::vector<int> rules_off = {free_col_substitution_rule_off};
+
+  // Setting off rules in rules off array.
+  for (int rule_off : rules_off) {
+    presolve_rules_off += rule_off;
+  }
+  return_status = highs.setOptionValue("presolve_rule_off", presolve_rules_off);
+  assert(return_status == HighsStatus::kOk);
+
   // Instantiate reader.
   utils::Reader reader;
 
@@ -249,7 +287,7 @@ void presolveProblems(int problems_count) {
   std::fstream problems_filestream;
   problems_filestream.open(test_problems, std::ios::in);
 
-  // JAJH: Inserting "&" makes problem_matrix, upper_bounds and
+  // problem_matrix, upper_bounds and
   // lower_bounds references to the corresponding vector in reader,
   // otherwise the data are copied every time
   std::vector<std::vector<int>>& problem_matrix = reader.problem_matrix_;
@@ -257,6 +295,7 @@ void presolveProblems(int problems_count) {
   std::vector<int>& lower_bounds = reader.lower_bounds_;
 
   int num_empty_problems = 0;
+
   for (int n = 0; n < problems_count; n++) {
     if (n % 1000 == 0) printf("Reading problem %6d\n", n);
 
@@ -309,7 +348,10 @@ int main() {
     problems_to_test = to_test_count;
   }
 
+  auto start = std::chrono::high_resolution_clock::now();
   presolveProblems(problems_to_test);
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
 
   std::cout<<" "<<std::endl;
   std::cout<<" "<<std::endl;
@@ -322,6 +364,8 @@ int main() {
   std::cout<<" "<<std::endl;  
   printf("Problems tested: %d \n", problems_to_test);
   printf("Problems reduced to empty: %d \n", reduced_to_empty_count);
+
+  printf("Time taken (seconds): %d \n", seconds);
 
   return 0;
 }

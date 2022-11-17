@@ -60,7 +60,7 @@ int main(){
 
   std::cout << "" << std::endl;
   std::cout << "Printing problem 20 with readProblem" << std::endl;
-  reader.readProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt", 3);
+  reader.readProblem("/Users/pepe/hons-project/problems/feasibility_testcases.txt", 3);
   printLP(problem_matrix, lower_bounds, upper_bounds);
 
   return 0;
