@@ -5,7 +5,7 @@
 
 namespace utils{
 
-Reader::Reader(){};
+Reader::Reader(){}
 
 void Reader::readNextProblem(std::fstream &problems_filestream){
   //clear anything still sored in class members from previous read
