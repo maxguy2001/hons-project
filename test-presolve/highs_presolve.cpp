@@ -143,13 +143,14 @@ std::vector<std::string> reportAndLogPresolveLog(Highs& highs) {
         log.col_removed,
         presolve_rule.c_str());
       }
+      if (log.row_removed > 0 || log.col_removed > 0) {
+        if (!checkVectorContainsString(used_presolve_rules, presolve_rule)) {
+          used_presolve_rules.push_back(presolve_rule);
+        }
 
-      if (!checkVectorContainsString(used_presolve_rules, presolve_rule)) {
-        used_presolve_rules.push_back(presolve_rule);
-      }
-
-      if (!checkVectorContainsString(problem_presolve_rules, presolve_rule)) {
-        problem_presolve_rules.push_back(presolve_rule);
+        if (!checkVectorContainsString(problem_presolve_rules, presolve_rule)) {
+          problem_presolve_rules.push_back(presolve_rule);
+        }
       }
     }
     bit *= 2; 
@@ -242,10 +243,7 @@ void presolveSingleProblem(
     std::vector<std::string> problem_presolve_rules = reportAndLogPresolveLog(highs);
 
     if (problem_presolve_rules.size() == 2) {
-      std::cout << problem_presolve_rules[0] << std::endl;
-      std::cout << problem_presolve_rules[1] << std::endl;
-
-      if (checkVectorContainsString(problem_presolve_rules, "Singleton row") && checkVectorContainsString(problem_presolve_rules, "Dominated col")) {
+      if (checkVectorContainsString(problem_presolve_rules, "Singleton row") && checkVectorContainsString(problem_presolve_rules, "Free col substitution")) {
         printLP(problem_matrix, lower_bounds, upper_bounds);
       }
     }
@@ -271,7 +269,7 @@ void presolveProblems(int problems_count) {
   int parallel_rows_rule_off = 8192; // Parallel rows and columns rule off
 
   int presolve_rules_off = 0;
-  std::vector<int> rules_off = {free_col_substitution_rule_off};
+  std::vector<int> rules_off = {aggregator_rule_off, doubleton_equation_rule_off};
 
   // Setting off rules in rules off array.
   for (int rule_off : rules_off) {
