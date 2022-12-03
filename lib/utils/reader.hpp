@@ -35,6 +35,9 @@ namespace utils{
   std::vector<int> upper_bounds_;
 
   std::vector<int> lower_bounds_;
+
+  int num_inequalities_;
+  int num_equalities_;
   
 
 

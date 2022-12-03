@@ -37,7 +37,7 @@ void Reader::readNextProblem(std::fstream &problems_filestream){
 
   // Get number of inequalities.
   std::getline(problems_filestream, num_inequality_rows_string);
-  const int num_inequality_rows = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
+  num_inequalities_ = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
 
   // Define vectors to read in constraints.
   std::vector<int> problem_row; // A line in the input file
@@ -46,7 +46,7 @@ void Reader::readNextProblem(std::fstream &problems_filestream){
   // constant term.
 
   //read inequality in rows, add vectors to problem matrix
-  for(size_t i = 0; i < num_inequality_rows; ++i){
+  for(size_t i = 0; i < num_inequalities_; ++i){
     std::getline(problems_filestream, temp_string);
     problem_row = getProblemRowAsIntVector(temp_string);
 
@@ -68,9 +68,9 @@ void Reader::readNextProblem(std::fstream &problems_filestream){
 
   //read in equality rows and add to problem matrix
   std::getline(problems_filestream, num_equality_rows_string);
-  int num_equality_rows = static_cast<int>(atoi(num_equality_rows_string.c_str()));
+  num_equalities_ = static_cast<int>(atoi(num_equality_rows_string.c_str()));
 
-  for(size_t i = 0; i < num_equality_rows; ++i){
+  for(size_t i = 0; i < num_equalities_; ++i){
     std::getline(problems_filestream, temp_string);
     problem_row = getProblemRowAsIntVector(temp_string);
 

@@ -8,27 +8,26 @@
 #include <string>
 
 int main(){
-  std::string test_problems = "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
+  std::string test_problem = "/Users/pepe/hons-project/problems/presolve_test_problem.txt";
+  std::string all_test_problems = "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
   utils::Reader reader;
 
   // Start filestream to pass to reader.
   std::fstream problems_filestream;
-  problems_filestream.open(test_problems, std::ios::in);
+  problems_filestream.open(test_problem, std::ios::in);
 
-  std::vector<std::vector<int>> problem_matrix;
-  std::vector<int> upper_bounds;
-  std::vector<int> lower_bounds;
+  // std::vector<std::vector<int>> problem_matrix;
+  // std::vector<int> upper_bounds;
+  // std::vector<int> lower_bounds;
+  reader.readNextProblem(problems_filestream);
 
-  for (int i = 0; i < 1; i++){
-    std::cout << i << std::endl;
-    reader.readNextProblem(problems_filestream);
-    problem_matrix = reader.problem_matrix_;
-    upper_bounds = reader.upper_bounds_;
-    lower_bounds = reader.lower_bounds_;
-    
-  }
+  logical_solver::Presolve presolve(
+    reader.problem_matrix_, 
+    reader.lower_bounds_, reader.upper_bounds_,
+    reader.num_inequalities_, reader.num_equalities_
+  );
+  problems_filestream.close();
 
-  logical_solver::Presolve presolve(problem_matrix, lower_bounds, upper_bounds);
   presolve.printLP();
 
   return 0;
