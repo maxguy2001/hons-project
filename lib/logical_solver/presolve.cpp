@@ -29,92 +29,164 @@ namespace logical_solver{
     implied_lower_bounds_.resize(constraints_count_);
     implied_upper_bounds_.resize(constraints_count_);
     feasible_solution.resize(variables_count_);
+    rows_non_zero_variables_.resize(variables_count_);
 
     std::fill(active_rows_.begin(), active_rows_.end(), true);
     std::fill(active_columns_.begin(), active_columns_.end(), true);
+    std::fill(feasible_solution.begin(), feasible_solution.end(), -999);
   };
 
-  int Presolve::search_row_singleton_equality(std::vector<int> row) {
-    int row_singleton = -1;
+  std::vector<int> Presolve::getRowNonZeros(int row_index) {
+    std::vector<int> non_zero_cols;
 
-    for (int i = 0; i < variables_count_; ++i) {
-      int row_element = row.at(i);
+    for (int j = 0; j < variables_count_; ++j) {
+      if (active_columns_.at(j)) {
+        int row_element = problem_matrix_.at(row_index).at(j);
 
-      if (row_element != 0) {
-        // if no non-0 had been found set row singleton
-        // to variable found.
-        if (row_singleton == -1) {
-          row_singleton = i;
-        } 
-        // Else, more than one variable is non-zero 
-        // so row is not a row singleton.
-        else {
-          return -1;
+        if (row_element != 0) {
+          non_zero_cols.push_back(j);
         }
       }
     }
-    return row_singleton;
+
+    return non_zero_cols;
   };
 
-  void Presolve::update_state_row_singleton_equality(
-    int row_index, int variable_index
+  std::vector<int> Presolve::getColNonZeros(int col_index) {
+    std::vector<int> non_zero_rows;
+
+    for (int i = 0; i < constraints_count_; ++i) {
+      if (active_rows_.at(i)) {
+        int row_element = problem_matrix_.at(i).at(col_index);
+
+        if (row_element != 0) {
+          non_zero_rows.push_back(i);
+        }
+      }
+    }
+
+    return non_zero_rows;
+  }
+
+  void Presolve::updateStateRowSingletonEquality(
+    int row_index, int col_index
   ) {
     int variable_value = lower_bounds_.at(row_index);
 
     // Set variable equal to its value in the rest of the 
     // rows.
     for (int i = 0; i < constraints_count_; i++) {
-      problem_matrix_.at(i).at(variable_index) = variable_value;
+      int coefficient = problem_matrix_.at(i).at(col_index);
+      problem_matrix_.at(i).at(col_index) = coefficient * variable_value;
     }
 
-    // turn off corresponding problem row.
     active_rows_.at(row_index) = false;
 
-    // Get pointer to corresponding postsolve function.
-    void (Presolve::*postsolve_function_pointer) (int, int);
-    postsolve_function_pointer = &Presolve::apply_row_singleton_equality_postsolve;
-
     // Update presolve stack.
-    struct presolve_log log = {
-      row_index, variable_index, 
-      postsolve_function_pointer
-    };
-    
+    struct presolve_log log = {row_index, col_index, 1};
+    presolve_stack_.push(log);
   };
 
-  void Presolve::apply_row_singleton_equality_postsolve(
-    int row_index, int variable_index
+  void Presolve::applyRowSingletonEqualityPostsolve(
+    int row_index, int col_index
   ){
     // This was already found in the update state function for this
     // particular rule, but doing it again to maintain consistency
     // of postsolve functions' functionality.
     int variable_feasible_solution = lower_bounds_.at(row_index);
 
-    feasible_solution.at(variable_index) = variable_feasible_solution;
-    active_rows_.at(row_index) = true;
+    feasible_solution.at(col_index) = variable_feasible_solution;
   };
 
-  void Presolve::apply_presolve() {
-    // Apply row equality rules.
-    int equalities_start = constraints_count_ - equalities_count_; 
+  void Presolve::updateStateEmptyCol(int col_index) {
+    active_columns_.at(col_index) = false;
 
-    for (int i = equalities_start; i < constraints_count_; ++i) {
-      std::vector<int> row = problem_matrix_.at(i);
-      int row_singleton = search_row_singleton_equality(row);
+    struct presolve_log log = {-1, col_index, 2};
+    presolve_stack_.push(log);
+  };
 
-      // If row is a row singleton, update state accordingly.
-      if (row_singleton != -1) {
-        update_state_row_singleton_equality(i, row_singleton);
+  void Presolve::applyEmptyColPostsolve(int col_index) {
+    feasible_solution.at(col_index) = 0;
+  };
+
+  void Presolve::applyPresolveRowRules() {
+    for (int i = 0; i < constraints_count_; ++i) {
+      // If row is active, apply row rules.
+      if (active_rows_.at(i)) {
+        std::vector<int> row_non_zeros = getRowNonZeros(i);
+        int non_zeros_count = row_non_zeros.size();
+
+        // Update non-zero active variables for row.
+        rows_non_zero_variables_.at(i) = row_non_zeros;
+
+        // If row is a row singleton, update state accordingly.
+        if (non_zeros_count == 1) {
+          if (i >= inequalities_count_) {
+            // If it is an equality, call row singleton update state method
+            // for equalities.
+            updateStateRowSingletonEquality(i, row_non_zeros.at(0));
+          }
+        }
       }
     }
   };
 
-  void Presolve::apply_postsolve() {
-    while (!presolve_stack_.empty()) {
-        presolve_log rule_log = presolve_stack_.top();
-        Presolve::rule_log.postsolve_function(rule_log.constraint_index, rule_log.variable_index);
+  void Presolve::applyPresolveColRules() {
+    for (int j = 0; j < variables_count_; j++) {
+      // If column is active, apply col rules.
+      if (active_columns_.at(j)) {
+        std::vector<int> col_non_zeros = getColNonZeros(j);
+        int non_zeros_count = col_non_zeros.size();
+
+        // If column is an empty column, update state accordingly.
+        if (non_zeros_count == 0) {
+          updateStateEmptyCol(j);
+        }
+        
+        // Check if column is a free column substitution - if only one
+        // row is non-zero in the column, and that whole row only
+        // has two non-zero variables (including this one.)
+        if (non_zeros_count == 1) {
+          if (rows_non_zero_variables_.at(col_non_zeros.at(0)).size() == 2) {
+            // TODO - add get free col subs get dependency variable funct.
+            // add free col subs equality update state, and ineq.
+            // 
+          }
+           
+        }
+      }
     }
   }
+
+  void Presolve::applyPresolve() {
+    applyPresolveRowRules();
+    applyPresolveColRules();
+  };
+
+  void Presolve::applyPostsolve() {
+    while (!presolve_stack_.empty()) {
+        presolve_log rule_log = presolve_stack_.top();
+        int rule_id = rule_log.rule_id;
+        int row_index = rule_log.constraint_index;
+        int col_index = rule_log.variable_index;
+
+        if (rule_id == 1) {
+          applyRowSingletonEqualityPostsolve(row_index, col_index);
+        }
+        else if (rule_id == 2) {
+          applyEmptyColPostsolve(col_index);
+        }
+        
+        // Remove rule from stack.
+        presolve_stack_.pop();
+    }
+  };
+
+  void Presolve::printFeasibleSolution() {
+    for (int i = 0; i < variables_count_; i++) {
+      printf("Variable %d = %d\n", i, feasible_solution.at(i));
+    }
+  };
 
   void Presolve::printLP() {
     for (int i = 0; i < constraints_count_; ++i) {

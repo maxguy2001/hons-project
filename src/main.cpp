@@ -28,7 +28,11 @@ int main(){
   );
   problems_filestream.close();
 
-  presolve.printLP();
+  //presolve.printLP();
+  presolve.applyPresolve();
+  presolve.applyPostsolve();
+  presolve.printFeasibleSolution();
+  //presolve.printLP();
 
   return 0;
 }

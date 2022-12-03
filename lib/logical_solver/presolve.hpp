@@ -42,14 +42,19 @@ namespace logical_solver{
    * 
    * @return void.
    */
-  void apply_presolve();
+  void applyPresolve();
 
   /**
    * @brief Applies postsolve to the problem.
    * 
    * @return void.
    */
-  void apply_postsolve();
+  void applyPostsolve();
+
+  /**
+   * @brief Prints the feasible solutions vector.
+   */
+  void printFeasibleSolution();
 
   /**
    * @brief Prints the instance LP.
@@ -62,44 +67,53 @@ namespace logical_solver{
   // during presolve
   std::vector<bool> active_rows_;
   std::vector<bool> active_columns_;
+  // Array to keep track of the non-zero variables in each
+  // row.
+  std::vector<std::vector<int>> rows_non_zero_variables_;
 
   // STRUCTS:
   // struct containing the search function and update 
   // state function for a given rule (pointers).
-  typedef void (Presolve::*member_function)(int, int);
 
-  struct rule_functions {
-    int (Presolve::*search_function) (std::vector<int>);
-    void (Presolve::*update_state_function) (int, int);
-  };
+  // (type definition for trying to add postsolve function
+  // to the stack)
+  // typedef void (Presolve::*member_function)(int, int);
 
   // struct to keep track of presolve rules applied 
   // during presolve.
   struct presolve_log {   
     int constraint_index;      // constraint number      
     int variable_index;         // variable (column) index
-    member_function postsolve_function; // presolve rule function to apply in postsolve
+    int rule_id; // presolve rule function to apply in postsolve
+    std::vector<int> dependancies;
   }; 
 
   // PRIVATE CLASS VARIABLES:
   // stack (vector) of presolve structs.
   std::stack<presolve_log> presolve_stack_;
 
-  // vector of presolve_rule_functions structs for all 
-  // the row equality rules.
-  std::vector<rule_functions> equality_row_rules; 
-
   // PRIVATE METHODS
   /**
-   * @brief Looks for a row singleton variable in an equality row.
+   * @brief Gets the indices of the non-zero columns
+   * of a row (non-zero variables).
    * 
-   * @param equality row.
-   * @return Row singleton variable if it was found, -1 if not.
+   * @param row_index: index of the row.
+   * @return vector of indicies of non-zero variables
    */
-  int search_row_singleton_equality(std::vector<int> row);
+  std::vector<int> getRowNonZeros(int row_index);
 
   /**
-   * @brief Updates the state of the problem given that a row 
+   * @brief Gets the indices of the non-zero rows
+   * of a column (non-zero coefficients of the column
+   * variable).
+   * 
+   * @param column_index: index of the column.
+   * @return vector of indicies of non-zero variables
+   */
+  std::vector<int> getColNonZeros(int col_index);
+
+  /**
+   * @brief Updates the state of the problem in presolve given that a row 
    * singleton has been found in an equality. Finds the value of
    * the variable and substitutes into the problem matrix, turns off
    * the row and logs the rule into the presolve stack.
@@ -108,27 +122,58 @@ namespace logical_solver{
    * @param variable index. 
    * @return void.
    */
-  void update_state_row_singleton_equality(int row_index, int variable_index);
+  void updateStateRowSingletonEquality(int row_index, int col_index);
 
   /**
    * @brief Finds the feasible value of a variable in postsolve
-   * when the rule in presolve was row singleton equality. Updates
-   * the feasible solution vector, and the state of the problem 
-   * accordingly. 
+   * when the rule in presolve was row singleton equality. It then updates
+   * the feasible solution vector and the state of the problem 
+   * accordingly.
    * 
    * @param equality row index.
    * @param variable index. 
    * @return void.
    */
-  void apply_row_singleton_equality_postsolve(int row_index, int variable_index);
-  };
+  void applyRowSingletonEqualityPostsolve(int row_index, int col_index);
 
   /**
-   * @brief Looks for a row singleton variable in an inequality row.
+   * @brief Updates the state of the problem in presolve when an
+   * empty column has been found. Turns off
+   * the column and logs the rule into the presolve stack.
    * 
-   * @param ineequality row.
-   * @return Row singleton variable if it was found, -1 if not.
+   * @param col_index: column index.
+   * @return void.
    */
-  int search_row_singleton_inequality(std::vector<int> row);
+  void updateStateEmptyCol(int col_index);
+
+  /**
+   * @brief Finds the feasible value of a variable in postsolve
+   * when the rule in presolve was empty column - as per the 
+   * presolve stack. Feasible value is taken to be 0 arbitrarily. It then updates
+   * the feasible solution vector and the state of the problem 
+   * accordingly.
+   * 
+   * @param col_index: column index.
+   * @return void.
+   */
+  void applyEmptyColPostsolve(int col_index);
+
+  /**
+   * @brief Applies the presolve row rules to the problem during
+   * a presolve iteration.
+   * 
+   * @return void.
+   */
+  void applyPresolveRowRules();
+
+  /**
+   * @brief Applies the presolve column rules to the problem during
+   * a presolve iteration.
+   * 
+   * @return void.
+   */
+  void applyPresolveColRules();
+  };
   
-}
+};
+  
