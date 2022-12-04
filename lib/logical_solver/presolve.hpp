@@ -67,9 +67,11 @@ namespace logical_solver{
   // during presolve
   std::vector<bool> active_rows_;
   std::vector<bool> active_columns_;
-  // Array to keep track of the non-zero variables in each
-  // row.
+  int active_rows_count_;
+  // Array to keep track of the non-zero active variables in each
+  // row and col during presolve.
   std::vector<std::vector<int>> rows_non_zero_variables_;
+  std::vector<std::vector<int>> cols_non_zero_coefficients_;
 
   // STRUCTS:
   // struct containing the search function and update 
@@ -95,22 +97,33 @@ namespace logical_solver{
   // PRIVATE METHODS
   /**
    * @brief Gets the indices of the non-zero columns
-   * of a row (non-zero variables).
+   * of each row (non-zero variables) and stores in the 
+   * instance variable rows_non_zero_variables.
    * 
-   * @param row_index: index of the row.
-   * @return vector of indicies of non-zero variables
+   * @return void
    */
-  std::vector<int> getRowNonZeros(int row_index);
+  void getRowsNonZeros();
 
   /**
-   * @brief Gets the indices of the non-zero rows
-   * of a column (non-zero coefficients of the column
-   * variable).
+   * @brief Gets the indices of the non-zero rows (coefficients)
+   * of each column and stores in the 
+   * instance variable cols_non_zero_coefficients.
    * 
-   * @param column_index: index of the column.
-   * @return vector of indicies of non-zero variables
+   * @return void
    */
-  std::vector<int> getColNonZeros(int col_index);
+  void getColsNonZeros();
+
+  /**
+   * @brief Updates the state of the problem in presolve given that a 
+   * redundant variable has been found. Turns off
+   * the row and column and logs the rule into the presolve stack as a 
+   * row singleton.
+   * 
+   * @param equality row index.
+   * @param column index. 
+   * @return void.
+   */
+  void updateStateRedundantVariable(int row_index, int col_index);
 
   /**
    * @brief Updates the state of the problem in presolve given that a row 
@@ -119,7 +132,7 @@ namespace logical_solver{
    * the row and logs the rule into the presolve stack.
    * 
    * @param equality row index.
-   * @param variable index. 
+   * @param column index. 
    * @return void.
    */
   void updateStateRowSingletonEquality(int row_index, int col_index);
@@ -131,10 +144,10 @@ namespace logical_solver{
    * accordingly.
    * 
    * @param equality row index.
-   * @param variable index. 
+   * @param column index. 
    * @return void.
    */
-  void applyRowSingletonEqualityPostsolve(int row_index, int col_index);
+  void applyRowSingletonPostsolve(int row_index, int col_index);
 
   /**
    * @brief Updates the state of the problem in presolve when an
@@ -157,6 +170,63 @@ namespace logical_solver{
    * @return void.
    */
   void applyEmptyColPostsolve(int col_index);
+
+  /**
+   * @brief Function called in presolve when we know a column 
+   * only has one non-zero cofficient, in order to check whether it is
+   * a fixed column. A fixed column happens when there is only
+   * one non-zero coefficient in a column, and it happens
+   * in a row where there is only one other variable. Thus,
+   * the variable in the column can be expressed in terms of 
+   * the other variable in the row. The function checks if the
+   * corresponding row only has two non-zero variables by checking the
+   * rows_non_zero_variables vector. 
+   * 
+   * @param row_index: of the corresponding row to check. 
+   * @return bool: indicating whether or not column is a fixed col.
+   */
+  bool isFixedCol(int row_index);
+
+  /**
+   * @brief Finds the dependancy variable of a fixed column,
+   * that is the corresponding row that is non-zero when
+   * 
+   * @param row index.
+   * @param column index. 
+   * @return int - the index of the dependancy variable.
+   */
+  int getFixedColDependancy(int row_index, int col_index);
+
+  /**
+   * @brief Updates state of the problem in presolve when a fixed
+   * column has been found in an equality. Turns off the corresponding
+   * row and col and stores the rule in the stack, also storing 
+   * the dependancy. Note that we differentiate between fixed col equality
+   * and inequality because the postsolve procedure is different.
+   * 
+   * @param row index.
+   * @param column index. 
+   * @return void.
+   */
+  void updateStateFixedCol(int row_index, int col_index);
+
+  /**
+   * @brief Finds the feasible value of a variable in postsolve
+   * when the rule in presolve was fixed col - as per the 
+   * presolve stack. Feasible value is given by the constant in the lower
+   * bounds vector minus the dependancy variable's feasible value 
+   * times its coefficient (this will give a feasible value both in 
+   * equalities and inequalities).It then updates the feasible solution 
+   * vector and the state of the problem 
+   * accordingly.
+   * 
+   * @param int row_index: row index.
+   * @param int col_index: col index.
+   * @param int dependancy: dependancy variable to work out 
+   * feasible solution.
+   * @return void.
+   */ 
+  void applyFixedColPostsolve(int row_index, int col_index, int dependancy_index);
 
   /**
    * @brief Applies the presolve row rules to the problem during

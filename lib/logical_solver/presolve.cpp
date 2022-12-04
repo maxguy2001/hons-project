@@ -29,65 +29,90 @@ namespace logical_solver{
     implied_lower_bounds_.resize(constraints_count_);
     implied_upper_bounds_.resize(constraints_count_);
     feasible_solution.resize(variables_count_);
-    rows_non_zero_variables_.resize(variables_count_);
+
+    active_rows_count_ = constraints_count_;
+
+    // Set up vectors to keep track of non zeros in rows 
+    // and columns.
+    rows_non_zero_variables_.resize(constraints_count_);
+    cols_non_zero_coefficients_.resize(variables_count_);
 
     std::fill(active_rows_.begin(), active_rows_.end(), true);
     std::fill(active_columns_.begin(), active_columns_.end(), true);
     std::fill(feasible_solution.begin(), feasible_solution.end(), -999);
   };
 
-  std::vector<int> Presolve::getRowNonZeros(int row_index) {
-    std::vector<int> non_zero_cols;
+  void Presolve::getRowsNonZeros() {
+    for (int i = 0; i < constraints_count_; i++) {
+      std::vector<int> row_non_zero_cols;
 
-    for (int j = 0; j < variables_count_; ++j) {
-      if (active_columns_.at(j)) {
-        int row_element = problem_matrix_.at(row_index).at(j);
+      for (int j = 0; j < variables_count_; ++j) {
+        if (active_columns_.at(j)) {
+          int row_element = problem_matrix_.at(i).at(j);
 
-        if (row_element != 0) {
-          non_zero_cols.push_back(j);
+          if (row_element != 0) {
+            row_non_zero_cols.push_back(j);
+          }
         }
       }
-    }
 
-    return non_zero_cols;
+      rows_non_zero_variables_.at(i) = row_non_zero_cols;
+    }
   };
 
-  std::vector<int> Presolve::getColNonZeros(int col_index) {
-    std::vector<int> non_zero_rows;
+  void Presolve::getColsNonZeros() {
+    for (int j = 0; j < variables_count_; j++) {
+      std::vector<int> non_zero_coefficients;
 
-    for (int i = 0; i < constraints_count_; ++i) {
-      if (active_rows_.at(i)) {
-        int row_element = problem_matrix_.at(i).at(col_index);
+      for (int i = 0; i < constraints_count_; ++i) {
+        if (active_rows_.at(i)) {
+          int col_element = problem_matrix_.at(i).at(j);
 
-        if (row_element != 0) {
-          non_zero_rows.push_back(i);
+          if (col_element != 0) {
+            non_zero_coefficients.push_back(i);
+          }
         }
       }
+
+      cols_non_zero_coefficients_.at(j) = non_zero_coefficients;
     }
+  };
 
-    return non_zero_rows;
-  }
-
-  void Presolve::updateStateRowSingletonEquality(
+  void Presolve::updateStateRedundantVariable(
     int row_index, int col_index
   ) {
-    int variable_value = lower_bounds_.at(row_index);
-
-    // Set variable equal to its value in the rest of the 
-    // rows.
-    for (int i = 0; i < constraints_count_; i++) {
-      int coefficient = problem_matrix_.at(i).at(col_index);
-      problem_matrix_.at(i).at(col_index) = coefficient * variable_value;
-    }
-
     active_rows_.at(row_index) = false;
+    active_columns_.at(col_index) = false;
+    active_rows_count_ -= 1;
 
     // Update presolve stack.
     struct presolve_log log = {row_index, col_index, 1};
     presolve_stack_.push(log);
   };
 
-  void Presolve::applyRowSingletonEqualityPostsolve(
+  void Presolve::updateStateRowSingletonEquality(
+    int row_index, int col_index
+  ) {
+    int variable_value = lower_bounds_.at(row_index);
+
+    // Update the lower bound of each constraint that 
+    // contains the variable using the variable value.
+    for (auto&i : cols_non_zero_coefficients_.at(col_index)) {
+      int coefficient = problem_matrix_.at(i).at(col_index);
+      int lower_bound = lower_bounds_.at(i);
+      lower_bounds_.at(i) = lower_bound - coefficient * variable_value;
+    }
+
+    active_rows_.at(row_index) = false;
+    active_columns_.at(col_index) = false;
+    active_rows_count_ -= 1;
+
+    // Update presolve stack.
+    struct presolve_log log = {row_index, col_index, 1};
+    presolve_stack_.push(log);
+  };
+
+  void Presolve::applyRowSingletonPostsolve(
     int row_index, int col_index
   ){
     // This was already found in the update state function for this
@@ -109,22 +134,89 @@ namespace logical_solver{
     feasible_solution.at(col_index) = 0;
   };
 
+  bool Presolve::isFixedCol(int row_index) {
+    if (rows_non_zero_variables_.at(row_index).size() == 2) {
+      return true;
+    }
+    return false;
+  };
+
+  int Presolve::getFixedColDependancy(int row_index, int col_index) {
+    for (int i = 0; i < 2; i++) {
+      int variable_index = rows_non_zero_variables_.at(row_index).at(i);
+
+      if (variable_index != col_index) {
+        return variable_index;
+      }
+    }
+
+    // return -1 if dependancy was not found.
+    return -1;
+  };
+
+  void Presolve::updateStateFixedCol(int row_index, int col_index) {
+    // Get dependancy variable and store in dependancies vector to be 
+    // stored in rule log struct.
+    int dependancy = getFixedColDependancy(row_index, col_index);
+    std::vector<int> dependancies_vector = {dependancy};
+
+    // Turn off row and col
+    active_rows_.at(row_index) = false;
+    active_columns_.at(col_index) = false;
+    active_rows_count_ -= 1;
+
+    // Update presolve stack.
+    struct presolve_log log = {row_index, col_index, 3, dependancies_vector};
+    presolve_stack_.push(log);
+  };
+
+  void Presolve::applyFixedColPostsolve(
+    int row_index, int col_index, int dependancy_index
+  ) {
+    // get variable feasible value.
+    int constant_term = lower_bounds_.at(row_index);
+    int dependancy_feasible_value = feasible_solution.at(dependancy_index);
+    int dependancy_coefficient = problem_matrix_.at(row_index).at(dependancy_index);
+
+    // will need to add a check for when the coefficient is not 1, which may
+    // lead to non integer non-feasible values for equalities. In inequalities we can
+    // just pick an integer larger then the non-int minimal sol, which will
+    // still be feasible if we don't have an implied upper bound affecting 
+    // the variable.
+    int variable_feasible_value = constant_term - dependancy_feasible_value*dependancy_coefficient;
+
+    feasible_solution.at(col_index) = variable_feasible_value;
+    problem_matrix_.at(row_index).at(col_index) = variable_feasible_value;
+
+    active_rows_.at(row_index) = true;
+    active_columns_.at(col_index) = true;
+  };
+
   void Presolve::applyPresolveRowRules() {
     for (int i = 0; i < constraints_count_; ++i) {
       // If row is active, apply row rules.
       if (active_rows_.at(i)) {
-        std::vector<int> row_non_zeros = getRowNonZeros(i);
+        std::vector<int> row_non_zeros = rows_non_zero_variables_.at(i);
         int non_zeros_count = row_non_zeros.size();
 
-        // Update non-zero active variables for row.
-        rows_non_zero_variables_.at(i) = row_non_zeros;
-
-        // If row is a row singleton, update state accordingly.
+        // If row is a row singleton, check if it is a redundant 
+        // variable, row singleton equality or row singleton inequality.
         if (non_zeros_count == 1) {
-          if (i >= inequalities_count_) {
+          int non_zero_variable = row_non_zeros.at(0);
+          int corresponding_col_non_zeros_count = cols_non_zero_coefficients_.at(
+            non_zero_variable
+          ).size();
+
+          // If it is a redundant variable, update state accordingly.
+          if (corresponding_col_non_zeros_count == 1) {
+            updateStateRedundantVariable(i, non_zero_variable);
+          }
+          // If it is not a redundant variable, check if is an equality
+          // or an inequality and update state accordingly.
+          else if (i >= inequalities_count_) {
             // If it is an equality, call row singleton update state method
             // for equalities.
-            updateStateRowSingletonEquality(i, row_non_zeros.at(0));
+            updateStateRowSingletonEquality(i, non_zero_variable);
           }
         }
       }
@@ -135,7 +227,7 @@ namespace logical_solver{
     for (int j = 0; j < variables_count_; j++) {
       // If column is active, apply col rules.
       if (active_columns_.at(j)) {
-        std::vector<int> col_non_zeros = getColNonZeros(j);
+        std::vector<int> col_non_zeros = cols_non_zero_coefficients_.at(j);
         int non_zeros_count = col_non_zeros.size();
 
         // If column is an empty column, update state accordingly.
@@ -143,24 +235,25 @@ namespace logical_solver{
           updateStateEmptyCol(j);
         }
         
-        // Check if column is a free column substitution - if only one
-        // row is non-zero in the column, and that whole row only
-        // has two non-zero variables (including this one.)
+        // If column is fixed col, update state accordingly.
         if (non_zeros_count == 1) {
-          if (rows_non_zero_variables_.at(col_non_zeros.at(0)).size() == 2) {
-            // TODO - add get free col subs get dependency variable funct.
-            // add free col subs equality update state, and ineq.
-            // 
-          }
-           
+          int non_zero_row = col_non_zeros.at(0);
+
+          if (isFixedCol(non_zero_row)) {
+            updateStateFixedCol(non_zero_row, j);
+          } 
         }
       }
     }
   }
 
   void Presolve::applyPresolve() {
-    applyPresolveRowRules();
-    applyPresolveColRules();
+    while (active_rows_count_ > 0) {
+      getRowsNonZeros();
+      getColsNonZeros();
+      applyPresolveRowRules();
+      applyPresolveColRules();
+    }
   };
 
   void Presolve::applyPostsolve() {
@@ -171,10 +264,13 @@ namespace logical_solver{
         int col_index = rule_log.variable_index;
 
         if (rule_id == 1) {
-          applyRowSingletonEqualityPostsolve(row_index, col_index);
+          applyRowSingletonPostsolve(row_index, col_index);
         }
         else if (rule_id == 2) {
           applyEmptyColPostsolve(col_index);
+        }
+        else if (rule_id == 3) {
+          applyFixedColPostsolve(row_index, col_index, rule_log.dependancies.at(0));
         }
         
         // Remove rule from stack.
@@ -191,7 +287,7 @@ namespace logical_solver{
   void Presolve::printLP() {
     for (int i = 0; i < constraints_count_; ++i) {
       if (active_rows_.at(i)) {
-        printf("Row %d \n", i+1);
+        printf("Row %d \n", i);
 
         for (int j = 0; j < variables_count_; ++j) {
           if (active_columns_.at(j)) {
