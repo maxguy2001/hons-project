@@ -1,7 +1,6 @@
 #include <string>
 #include <vector>
 #include <cstdint>
-#include "../core/types.hpp"
 
 namespace utils{
 
@@ -9,13 +8,6 @@ namespace utils{
   {
   public:
   Reader();
-  /**
-   * @brief reads the first problem in the problem file and writes formatted contents
-   * to class members problem_matrix_ and cost_vector_.
-   * 
-   * @param problems_filepath path to problem text file
-   */
-  void readFirstProblem(const std::string problems_filepath);
   
   /**
    * @brief reads the nth problem in the problem file and writes formatted contents
@@ -24,17 +16,26 @@ namespace utils{
    * @param problems_filepath path to problem text file
    * @param problem_number number of problem to read in
    */
-  void readProblem(const std::string problems_filepath, const core::int_t problem_number);
+  void readProblem(const std::string problems_filepath, const int problem_number);
 
-  std::vector<std::vector<core::int_t>> problem_matrix_;
+    /**
+   * @brief reads the next problem in the problem file and writes formatted contents
+   * to class members problem_matrix_ given an open filestream of test problems.
+   *  
+   * @param problems_filestream the open filestream
+   */
+  void readNextProblem(std::fstream &problems_filestream);
 
-  const core::int_t kMaxInt = 32765;
+  std::vector<std::vector<int>> problem_matrix_;
 
-  const core::int_t kMinInt = -32765;
+  const int kMaxInt = 32765;
 
-  std::vector<core::int_t> upper_bounds_;
+  const int kMinInt = -32765;
 
-  std::vector<core::int_t> lower_bounds_;
+  std::vector<int> upper_bounds_;
+
+  std::vector<int> lower_bounds_;
+  
 
 
   private:
@@ -46,7 +47,14 @@ namespace utils{
    * @param vector_string input string to be formatted
    * @return std::vector<int> formatted vector of ints produced from string input
    */
-  std::vector<core::int_t> convertStringToVector(const std::string vector_string);
+  std::vector<int> convertStringToVector(const std::string vector_string);
+
+  std::vector<int> getProblemRowAsIntVector(const std::string problem_row_string);
+
+  std::vector<int> spliceVector(std::vector<int> to_splice, const int range_start, const int range_end);
+
   };
+
+
     
 }//namespace utils
