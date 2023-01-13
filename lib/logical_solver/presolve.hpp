@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <stack>
+#include <limits>
 
 namespace logical_solver{
 
@@ -63,15 +64,18 @@ namespace logical_solver{
 
   private:
   // PRIVATE INSTANCE VARIABLES 
+  int kInfinity;
+
   // vectors to keep track of active rows and columns
   // during presolve
   std::vector<bool> active_rows_;
   std::vector<bool> active_columns_;
   int active_rows_count_;
+
   // Array to keep track of the non-zero active variables in each
   // row and col during presolve.
   std::vector<std::vector<int>> rows_non_zero_variables_;
-  std::vector<std::vector<int>> cols_non_zero_coefficients_;
+  std::vector<std::vector<int>> cols_non_zeros_indices_;
 
   // STRUCTS:
   // struct containing the search function and update 
@@ -85,7 +89,7 @@ namespace logical_solver{
   // during presolve.
   struct presolve_log {   
     int constraint_index;      // constraint number      
-    int variable_index;         // variable (column) index
+    int variable_index;        // variable (column) index
     int rule_id; // presolve rule function to apply in postsolve
     std::vector<int> dependancies;
   }; 
@@ -107,11 +111,22 @@ namespace logical_solver{
   /**
    * @brief Gets the indices of the non-zero rows (coefficients)
    * of each column and stores in the 
-   * instance variable cols_non_zero_coefficients.
+   * instance variable cols_non_zeros_indices.
    * 
    * @return void
    */
   void getColsNonZeros();
+
+  /**
+   * @brief Gets the indices of the non-zero rows (coefficients)
+   * of each column and stores in the 
+   * instance variable cols_non_zeros_indices;
+   * and same for the non-zero variables in each row, storing them
+   * in the variable rows_non_zero_variables.
+   * 
+   * @return void
+   */
+  void getRowsAndColsNonZeros();
 
   /**
    * @brief Updates the state of the problem in presolve given that a 

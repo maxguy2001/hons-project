@@ -10,6 +10,9 @@ namespace logical_solver{
     const int inequalities_count,
     const int equalities_count
   ) {
+    // Infitnity - eventually to be defined in types.
+    kInfinity = std::numeric_limits<int>::max(); 
+
     // Define problem
     problem_matrix_ = problem_matrix;
     lower_bounds_ = lower_bounds;
@@ -24,22 +27,17 @@ namespace logical_solver{
     // Set up active rows and columns arrays as well
     // as implied bounds using problem size and feasible
     // solution vector.
-    active_rows_.resize(constraints_count_);
-    active_columns_.resize(variables_count_);
-    implied_lower_bounds_.resize(constraints_count_);
-    implied_upper_bounds_.resize(constraints_count_);
-    feasible_solution.resize(variables_count_);
+    active_rows_.resize(constraints_count_, true);
+    active_columns_.resize(variables_count_, true);
+    implied_lower_bounds_.resize(constraints_count_, -kInfinity);
+    implied_upper_bounds_.resize(constraints_count_, kInfinity);
+    feasible_solution.resize(variables_count_, -999);
+
+    // Set up 2d vectors to keep track of non-zero variables.
+    rows_non_zero_variables_.resize(constraints_count_, {});
+    cols_non_zeros_indices_.resize(variables_count_, {});
 
     active_rows_count_ = constraints_count_;
-
-    // Set up vectors to keep track of non zeros in rows 
-    // and columns.
-    rows_non_zero_variables_.resize(constraints_count_);
-    cols_non_zero_coefficients_.resize(variables_count_);
-
-    std::fill(active_rows_.begin(), active_rows_.end(), true);
-    std::fill(active_columns_.begin(), active_columns_.end(), true);
-    std::fill(feasible_solution.begin(), feasible_solution.end(), -999);
   };
 
   void Presolve::getRowsNonZeros() {
@@ -74,9 +72,26 @@ namespace logical_solver{
         }
       }
 
-      cols_non_zero_coefficients_.at(j) = non_zero_coefficients;
+      cols_non_zeros_indices_.at(j) = non_zero_coefficients;
     }
   };
+
+  void Presolve::getRowsAndColsNonZeros() {
+    for (int i = 0; i < constraints_count_; i++) {
+      if (active_rows_.at(i)) {
+
+        for (int j = 0; j < variables_count_; ++j) {
+          if (active_columns_.at(j)) {
+
+            if (problem_matrix_.at(i).at(j) != 0) {
+              rows_non_zero_variables_.at(i).push_back(j);
+              cols_non_zeros_indices_.at(j).push_back(i);
+            }
+          }
+        }
+      }
+    }
+  }
 
   void Presolve::updateStateRedundantVariable(
     int row_index, int col_index
@@ -97,7 +112,7 @@ namespace logical_solver{
 
     // Update the lower bound of each constraint that 
     // contains the variable using the variable value.
-    for (auto&i : cols_non_zero_coefficients_.at(col_index)) {
+    for (auto&i : cols_non_zeros_indices_.at(col_index)) {
       int coefficient = problem_matrix_.at(i).at(col_index);
       int lower_bound = lower_bounds_.at(i);
       lower_bounds_.at(i) = lower_bound - coefficient * variable_value;
@@ -203,7 +218,7 @@ namespace logical_solver{
         // variable, row singleton equality or row singleton inequality.
         if (non_zeros_count == 1) {
           int non_zero_variable = row_non_zeros.at(0);
-          int corresponding_col_non_zeros_count = cols_non_zero_coefficients_.at(
+          int corresponding_col_non_zeros_count = cols_non_zeros_indices_.at(
             non_zero_variable
           ).size();
 
@@ -227,8 +242,7 @@ namespace logical_solver{
     for (int j = 0; j < variables_count_; j++) {
       // If column is active, apply col rules.
       if (active_columns_.at(j)) {
-        std::vector<int> col_non_zeros = cols_non_zero_coefficients_.at(j);
-        int non_zeros_count = col_non_zeros.size();
+        int non_zeros_count = cols_non_zeros_indices_.at(j).size();
 
         // If column is an empty column, update state accordingly.
         if (non_zeros_count == 0) {
@@ -237,7 +251,7 @@ namespace logical_solver{
         
         // If column is fixed col, update state accordingly.
         if (non_zeros_count == 1) {
-          int non_zero_row = col_non_zeros.at(0);
+          int non_zero_row = cols_non_zeros_indices_.at(j).at(0);
 
           if (isFixedCol(non_zero_row)) {
             updateStateFixedCol(non_zero_row, j);
@@ -249,8 +263,7 @@ namespace logical_solver{
 
   void Presolve::applyPresolve() {
     while (active_rows_count_ > 0) {
-      getRowsNonZeros();
-      getColsNonZeros();
+      getRowsAndColsNonZeros();
       applyPresolveRowRules();
       applyPresolveColRules();
     }
