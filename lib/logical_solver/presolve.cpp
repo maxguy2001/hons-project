@@ -33,10 +33,6 @@ namespace logical_solver{
     implied_upper_bounds_.resize(constraints_count_, kInfinity);
     feasible_solution.resize(variables_count_, -999);
 
-    // Set up 2d vectors to keep track of non-zero variables.
-    rows_non_zero_variables_.resize(constraints_count_, {});
-    cols_non_zeros_indices_.resize(variables_count_, {});
-
     active_rows_count_ = constraints_count_;
   };
 
@@ -77,6 +73,11 @@ namespace logical_solver{
   };
 
   void Presolve::getRowsAndColsNonZeros() {
+    rows_non_zero_variables_.clear();
+    cols_non_zeros_indices_.clear();
+    rows_non_zero_variables_.resize(constraints_count_, {});
+    cols_non_zeros_indices_.resize(variables_count_, {});
+
     for (int i = 0; i < constraints_count_; i++) {
       if (active_rows_.at(i)) {
 
@@ -91,7 +92,7 @@ namespace logical_solver{
         }
       }
     }
-  }
+  };
 
   void Presolve::updateStateRedundantVariable(
     int row_index, int col_index
