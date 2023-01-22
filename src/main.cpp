@@ -1,30 +1,35 @@
-#include "../lib/core/types.hpp"
-#include "../lib/utils/reader.hpp"
+#include "../lib/primal_simplex/main.hpp"
+#include "../lib/core/consts.hpp"
 #include "../lib/utils/primal_reader.hpp"
-#include <vector>
+#include "../lib/utils/reader.hpp"
 #include <iostream>
+#include <vector>
 
-int main(){
-  utils::Reader reader_;
-  //reader_.readFirstProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt");
+int main() {
+  utils::PrimalReader reader_;
+  // reader_.readFirstProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt");
 
-  reader_.readProblem("/home/maxguy/projects/hons/hons-project/problems/feasibility_testcases.txt", 3);
+  reader_.readProblem(
+      "/home/maxguy/projects/hons/hons-project/problems/primal_problems.txt",
+      1);
 
-  std::vector<std::vector<core::int_t>> mat = reader_.problem_matrix_;
-  std::vector<core::int_t> max = reader_.upper_bounds_;
-  std::vector<core::int_t> min = reader_.lower_bounds_;
+  std::vector<std::vector<int>> table = reader_.table_;
+  std::vector<int> basis = reader_.basis_;
 
-
-  for(int i =0; i < mat.size(); ++i){
-    for(int j = 0; j < mat[1].size(); ++j){
-      std::cout << mat[i][j] << std::endl;
+  std::vector<std::vector<float>> table_float;
+  std::vector<float> temp_vec;
+  for (int i = 0; i < table.size(); ++i) {
+    for (int j = 0; j < table[0].size(); ++j) {
+      temp_vec.push_back(static_cast<float>(table.at(i).at(j)));
     }
+    table_float.push_back(temp_vec);
+    temp_vec.clear();
   }
 
-  for(int i = 0; i < max.size(); ++i){
-    std::cout << max.at(i) << ", " << min.at(i) << std::endl;
-  }
-
+  primal_simplex::PrimalSimplex solver_;
+  solver_.setProblem(table_float);
+  solver_.setBasis(basis);
+  solver_.solveProblem();
 
   return 0;
 }
