@@ -1,4 +1,4 @@
-#include "../lib/primal_simplex/main.hpp"
+#include "../lib/solvers/primal_simplex/main.hpp"
 #include "../lib/core/consts.hpp"
 #include "../lib/utils/primal_reader.hpp"
 #include "../lib/utils/reader.hpp"

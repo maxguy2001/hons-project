@@ -1,5 +1,4 @@
 #include "main.hpp"
-#include "core/consts.hpp"
 #include <algorithm>
 #include <iostream>
 #include <iterator>
@@ -211,22 +210,6 @@ void PrimalSimplex::printSolution() {
               << std::endl;
   }
   std::cout << "All other variables were nonbasic and hence = 0" << std::endl;
-}
-
-void PrimalSimplex::printTable() {
-  for (size_t i = 0; i < table_.size(); ++i) {
-    for (size_t j = 0; j < table_.at(0).size(); ++j) {
-      std::cout << table_.at(i).at(j) << std::endl;
-    }
-    std::cout << "  " << std::endl;
-  }
-}
-
-void PrimalSimplex::printBasis() {
-  for (size_t i = 0; i < basis_.size(); ++i) {
-    std::cout << basis_.at(i) << std::endl;
-  }
-  std::cout << " " << std::endl;
 }
 
 void PrimalSimplex::solveProblem() {

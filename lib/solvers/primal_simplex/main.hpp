@@ -1,9 +1,10 @@
+#include "../../core/consts.hpp"
 #include <cstdint>
 #include <vector>
 
 namespace primal_simplex {
 
-class PrimalSimplex {
+class PrimalSimplex : public core::ISolver {
 public:
   PrimalSimplex();
 
@@ -13,12 +14,6 @@ public:
    * @param table simplex table
    */
   void setProblem(const std::vector<std::vector<float>> table);
-
-  // TODO: get rid!
-  void printTable();
-
-  // TODO: get rid!
-  void printBasis();
 
   /**
    * @brief Set the initial simplex basis
@@ -33,17 +28,12 @@ public:
    */
   void solveProblem();
 
+private:
   /**
    * @brief prints solution to simplex problem to terminal
    *
    */
   void printSolution();
-
-  // simplex table
-  std::vector<std::vector<float>> table_;
-
-  // simplex basis. Order of basis must be preserved!
-  std::vector<int> basis_;
 
   /**
    * @brief returns a column of the table as a vector. Useful for iterating over
@@ -98,6 +88,12 @@ public:
    * @return false
    */
   bool checkOptimality();
+
+  // simplex table
+  std::vector<std::vector<float>> table_;
+
+  // simplex basis. Order of basis must be preserved!
+  std::vector<int> basis_;
 };
 
 } // namespace primal_simplex
