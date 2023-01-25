@@ -32,7 +32,7 @@ int main(){
   presolve.applyPresolve();
   presolve.applyPostsolve();
   presolve.printFeasibleSolution();
-  //presolve.printLP();
+  // presolve.printLP();
 
   return 0;
 }
