@@ -29,9 +29,11 @@ namespace logical_solver{
     // solution vector.
     presolve_active_rows_.resize(constraints_count_, true);
     presolve_active_columns_.resize(variables_count_, true);
-    implied_lower_bounds_.resize(constraints_count_, -kInfinity);
-    implied_upper_bounds_.resize(constraints_count_, kInfinity);
+    implied_lower_bounds_.resize(variables_count_, -kInfinity);
+    implied_upper_bounds_.resize(variables_count_, kInfinity);
     feasible_solution.resize(variables_count_, -999);
+
+    reduced_to_empty = false;
 
     presolve_active_rows_count_ = constraints_count_;
     presolve_active_columns_count = variables_count_;
@@ -113,6 +115,7 @@ namespace logical_solver{
   ) {
     int feasible_value = lower_bounds_.at(row_index);
     checkVariableFeasibleValue(col_index, feasible_value, 0);
+    feasible_solution.at(col_index) = feasible_value;
     postsolve_active_rows_.at(row_index) = true;
     postsolve_active_cols_.at(col_index) = true;
   };
@@ -142,10 +145,10 @@ namespace logical_solver{
     );
 
     if (implied_bound < 0) {
-      implied_lower_bounds_.at(row_index) = -implied_upper_bounds_.at(row_index);
-      implied_upper_bounds_.at(row_index) = implied_bound;
+      implied_lower_bounds_.at(col_index) = -implied_upper_bounds_.at(col_index);
+      implied_upper_bounds_.at(col_index) = implied_bound;
     } else {
-      implied_lower_bounds_.at(row_index) = implied_bound;
+      implied_lower_bounds_.at(col_index) = implied_bound;
     }
   };
 
@@ -172,7 +175,7 @@ namespace logical_solver{
   };
 
   bool Presolve::isFixedCol(int col_index) {
-    if (lower_bounds_.at(col_index) == upper_bounds_.at(col_index)) {
+    if (implied_lower_bounds_.at(col_index) == implied_upper_bounds_.at(col_index)) {
       return true;
     }
     return false;
@@ -212,9 +215,9 @@ namespace logical_solver{
     feasible_solution.at(col_index) = feasible_value;
   };
 
-  bool Presolve::isFreeColSubstitution(int row_index) {
+  bool Presolve::isFreeColSubstitution(int row_index, int col_index) {
     if (rows_non_zero_variables_.at(row_index).size() == 2) {
-      if (implied_lower_bounds_.at(row_index) == kInfinity && implied_upper_bounds_.at(row_index) == kInfinity) {
+      if (implied_lower_bounds_.at(col_index) == -kInfinity && implied_upper_bounds_.at(col_index) == kInfinity) {
         return true;
       }
     }
@@ -298,6 +301,7 @@ namespace logical_solver{
           // If it is not a redundant variable, check if is an equality
           // or an inequality and update state accordingly.
           else if (i < inequalities_count_) {
+            
             updateStateRowSingletonInequality(i, non_zero_variable);
           }
           else {
@@ -313,7 +317,7 @@ namespace logical_solver{
       // If column is active, apply col rules.
       if (presolve_active_columns_.at(j)) {
         int non_zeros_count = cols_non_zeros_indices_.at(j).size();
-        
+
         // If column is a fixed column update state 
         // accordingly.
         if (isFixedCol(j)) {
@@ -327,7 +331,7 @@ namespace logical_solver{
         else if (non_zeros_count == 1) {
           int non_zero_row = cols_non_zeros_indices_.at(j).at(0);
 
-          if (isFreeColSubstitution(non_zero_row)) {
+          if (isFreeColSubstitution(non_zero_row, j)) {
             updateStateFreeColSubstitution(non_zero_row, j);
           } 
         }
@@ -391,25 +395,28 @@ namespace logical_solver{
       for (int i = 0; i < unsatisfied_constraints.size(); i++) {
         std::cout<<i<<std::endl;
       }
-      printf("After applying rule %d", rule_id);
+      printf("After applying rule %d \n", rule_id);
     }
   };
 
   void Presolve::applyPresolve() {
     int iteration_active_rows = presolve_active_rows_count_;
     int iteration_active_cols = presolve_active_columns_count;
-
     while (presolve_active_rows_count_ > 0) {
       getRowsAndColsNonZeros();
       applyPresolveRowRules();
       applyPresolveColRules();
-
+      
       if (presolve_active_rows_count_ == iteration_active_rows && presolve_active_columns_count == iteration_active_cols) {
         break;
       } else {
         iteration_active_rows = presolve_active_rows_count_;
         iteration_active_cols = presolve_active_columns_count;
       }
+    }
+
+    if (presolve_active_rows_count_ == 0 && presolve_active_columns_count == 0) {
+      reduced_to_empty = true;
     }
   };
 
@@ -442,7 +449,7 @@ namespace logical_solver{
       // Remove rule from stack.
       presolve_stack_.pop();
       std::vector<int> unsatisfied_constraints = getUnsatisfiedConstraintsPostsolve();
-      // checkUnsatisfiedConstraintsPostsolve(unsatisfied_constraints,rule_id);
+      checkUnsatisfiedConstraintsPostsolve(unsatisfied_constraints, rule_id);
     }
   };
 
@@ -459,7 +466,9 @@ namespace logical_solver{
 
         for (int j = 0; j < variables_count_; ++j) {
           if (presolve_active_columns_.at(j)) {
-            std::cout << problem_matrix_[i][j] << std::endl;
+            // std::cout<<<<std::endl;
+            // std::cout << problem_matrix_[i][j] << std::endl;
+            printf("col %d: %d \n", j, problem_matrix_[i][j]);
           }
         }
         std::cout<<" "<<std::endl;

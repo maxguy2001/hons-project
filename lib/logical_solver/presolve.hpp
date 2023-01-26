@@ -29,6 +29,9 @@ namespace logical_solver{
   // feasible solution vector
   std::vector<int> feasible_solution;
 
+  // Boolean to check if problem has been reduced to empty.
+  bool reduced_to_empty;
+
   // CONSTRUCTOR
   Presolve(
     const std::vector<std::vector<int>> problem_matrix, 
@@ -256,9 +259,10 @@ namespace logical_solver{
    * rows_non_zero_variables vector. 
    * 
    * @param row_index: of the corresponding row to check. 
+   * @param col_index: of the corresponding column. 
    * @return bool: indicating whether or not column is a free column substitution col.
    */
-  bool isFreeColSubstitution(int row_index);
+  bool isFreeColSubstitution(int row_index, int col_index);
 
   /**
    * @brief Finds the dependancy variable of a free column substitution column,
