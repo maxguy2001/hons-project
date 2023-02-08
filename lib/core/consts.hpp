@@ -13,8 +13,9 @@ const int kMaxIterations = 1000;
 
 class ISolver {
 public:
-  virtual void setProblem(const std::vector<std::vector<float>> table) = 0;
-  virtual void setBasis(const std::vector<int> basis) = 0;
+  // TODOLater: consider implementing these?
+  // virtual void setProblem(const std::vector<std::vector<float>> table) = 0;
+  // virtual void setBasis(const std::vector<int> basis) = 0;
   virtual void solveProblem() = 0;
 };
 
