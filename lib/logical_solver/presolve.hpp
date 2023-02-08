@@ -3,6 +3,7 @@
 #include <stack>
 #include <limits>
 #include <cmath>
+#include <iomanip>
 
 namespace logical_solver{
 
@@ -31,6 +32,7 @@ namespace logical_solver{
 
   // Boolean to check if problem has been reduced to empty.
   bool reduced_to_empty;
+  bool infeasible;
 
   // CONSTRUCTOR
   Presolve(
@@ -66,6 +68,17 @@ namespace logical_solver{
    */
   void printLP();
 
+  /**
+   * @brief Prints the constraints bounds.
+   */
+  void printBounds();
+
+  /**
+   * @brief Prints the implied bounds.
+   */
+  void printImpliedBounds();
+
+
   private:
   // PRIVATE INSTANCE VARIABLES 
   int kInfinity;
@@ -76,6 +89,10 @@ namespace logical_solver{
   std::vector<bool> presolve_active_columns_;
   int presolve_active_rows_count_;
   int presolve_active_columns_count;
+
+  // Vector to check we don't apply inequality row 
+  // singletons presolve twice to the same inequality.
+  std::vector<int> inequality_singletons_;
 
   std::vector<bool> postsolve_active_rows_;
   std::vector<bool> postsolve_active_cols_;
@@ -303,7 +320,9 @@ namespace logical_solver{
    * feasible solution.
    * @return void.
    */ 
-  void applyFreeColSubstitutionPostsolve(int row_index, int col_index, int dependancy_index);
+  void applyFreeColSubstitutionPostsolve(
+    int row_index, int col_index, int dependancy_index
+  );
 
   /**
    * @brief Applies the presolve row rules to the problem during
@@ -322,6 +341,40 @@ namespace logical_solver{
   void applyPresolveColRules();
 
   /**
+   * @brief Called in postsolve to get the feasible value of 
+   * a variable once a postsolve function has simplified the 
+   * corresponding constraint to an integer coefficient times 
+   * the variable in the LHS, and an integer in the RHS. It checks 
+   * if the RHS divided by the coefficient is an integer that 
+   * satisfies the implied bounds. If not, if it is an inequality, 
+   * tries rounding up to nearest integer and checks if the upper 
+   * bound is satisfied.
+   * 
+   * @param int variable_coefficient: integer coefficient of the variable.
+   * @param int constraint_RHS: integer RHS of constraint.
+   * @param int row_index.
+   * @return int Inf if not feasible, int feasible value if feasible.
+   */ 
+  int getVariableFeasibleValue(
+    int row_index, int col_index, 
+    int variable_coefficient, int constraint_RHS
+  );
+
+  /**
+   * @brief Called from the postsolve functions after getting
+   * the variable feasible value with getVariableFeasibleValue.
+   * If feasible value is infinity, it sets the instance variable
+   * infeasible to true. Else, it updates the feasible_solution vector
+   * with the feasible value. It returns false if variable was not 
+   * feasible and true if it was.
+   * 
+   * @param int col_index: the index of the variable.
+   * @param int feasible_value: feasible value found for the variable.
+   * @return void.
+   */
+  bool updateStateFeasibleValue(int col_index, int feasible_value);
+
+  /**
    * @brief Checks if the feasible value that has been found for
    * a varibale satisfies the variable's implied bounds.
    * 
@@ -329,10 +382,10 @@ namespace logical_solver{
    * @param feasible_value: value found for the variable.
    * @param rule_id: the rule which has been used to find the 
    * feasible value.
-   * @return void
+   * @return bool.
    */
-  void checkVariableFeasibleValue(
-    int col_index, int feasible_value, int rule_id
+  bool checkVariableImpliedBounds(
+    int col_index, int feasible_value
   );
 
   /**

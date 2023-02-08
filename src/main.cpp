@@ -8,7 +8,7 @@
 #include <string>
 
 void testOnTestProblem() {
-  std::string test_problem = "/Users/pepe/hons-project/problems/presolve_test_problem.txt";
+  std::string test_problem = "/Users/pepe/hons-project/problems/presolve_test_problem2.txt";
   utils::Reader reader;
   // Start filestream to pass to reader.
   std::fstream problems_filestream;
@@ -26,10 +26,18 @@ void testOnTestProblem() {
   );
   problems_filestream.close();
 
-  //presolve.printLP();
+  presolve.printLP();
+  presolve.printImpliedBounds();
   presolve.applyPresolve();
   presolve.applyPostsolve();
-  presolve.printFeasibleSolution();
+
+  if (!presolve.infeasible){
+    presolve.printFeasibleSolution();
+  }
+  else {
+    std::cout << "Infeasible" << std::endl;
+  }
+  presolve.printImpliedBounds();
 }
 
 void testOnSingleProblem(int problem_number) {
@@ -42,13 +50,14 @@ void testOnSingleProblem(int problem_number) {
     reader.lower_bounds_, reader.upper_bounds_,
     reader.num_inequalities_, reader.num_equalities_
   );
+
   presolve.printLP();
   presolve.applyPresolve();
   if (presolve.reduced_to_empty) {
     printf("Reduced to empty\n");
   }
-  // presolve.applyPostsolve();
-  // presolve.printFeasibleSolution();
+  presolve.applyPostsolve();
+  presolve.printFeasibleSolution();
 }
 
 void testOnMultipleProblems(int problems_count) {
@@ -60,6 +69,8 @@ void testOnMultipleProblems(int problems_count) {
   problems_filestream.open(all_test_problems, std::ios::in);
 
   int reduced_to_empty_count = 0;
+  int infeasible_count = 0;
+
   for (int n = 0; n < problems_count; n++) {
     printf("Solving problem %d\n", n);
 
@@ -73,23 +84,27 @@ void testOnMultipleProblems(int problems_count) {
         reader.num_inequalities_, reader.num_equalities_
       );
       presolve.applyPresolve();
-
+      presolve.applyPostsolve();
+      if (presolve.infeasible) {
+        infeasible_count += 1;
+      }
       if (presolve.reduced_to_empty) {
         std::cout << "REDUCED TO EMPTY\n" << std::endl;
         reduced_to_empty_count += 1;
-        presolve.applyPostsolve();
+        // presolve.applyPostsolve();
       }
     }
   }
-  printf("%d problems were reduced to empty\n", reduced_to_empty_count);
+  printf("%d problems were reduced to empty.\n", reduced_to_empty_count);
+  printf("%d gave us a double in free col\n", infeasible_count);
+
 }
 
 int main(){
   // testOnTestProblem();
-  // testOnSingleProblem(2203);
+  //testOnSingleProblem(146402);
   const int all_test_cases_count = 150218;
   testOnMultipleProblems(all_test_cases_count);
-
 
   return 0;
 }

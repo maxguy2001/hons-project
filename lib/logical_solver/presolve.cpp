@@ -29,11 +29,13 @@ namespace logical_solver{
     // solution vector.
     presolve_active_rows_.resize(constraints_count_, true);
     presolve_active_columns_.resize(variables_count_, true);
+    inequality_singletons_ = {};
     implied_lower_bounds_.resize(variables_count_, -kInfinity);
     implied_upper_bounds_.resize(variables_count_, kInfinity);
     feasible_solution.resize(variables_count_, -999);
 
     reduced_to_empty = false;
+    infeasible = false;
 
     presolve_active_rows_count_ = constraints_count_;
     presolve_active_columns_count = variables_count_;
@@ -97,6 +99,42 @@ namespace logical_solver{
     }
   };
 
+  int Presolve::getVariableFeasibleValue(
+    int row_index, int col_index, 
+    int variable_coefficient, int constraint_RHS
+  ) {
+    // Check if RHS/coeff is not an integer
+    if (constraint_RHS % variable_coefficient != 0) {
+      // If inequality, check if rounding up satisfies upper
+      // bound and implied bounds.
+      if (row_index < inequalities_count_) {
+        int feasible_value = ceil(constraint_RHS/variable_coefficient);
+        if (feasible_value <= upper_bounds_.at(row_index)) {
+          if (checkVariableImpliedBounds(col_index, feasible_value)) {
+            return feasible_value;
+          }
+        }
+      }
+      return kInfinity;
+    }
+    // If RHS/coeff is integer, calculate it and check if 
+    // implied bounds satisfied.
+    int feasible_value = constraint_RHS/variable_coefficient;
+    if (checkVariableImpliedBounds(col_index, feasible_value)) {
+      return feasible_value;
+    }
+    return kInfinity;
+  };
+
+  bool Presolve::updateStateFeasibleValue(int col_index, int feasible_value) {
+    if (feasible_value == kInfinity) {
+      infeasible = true;
+      return false;
+    }
+    feasible_solution.at(col_index) = feasible_value;
+    return true;
+  };
+
   void Presolve::updateStateRedundantVariable(
     int row_index, int col_index
   ) {
@@ -113,26 +151,36 @@ namespace logical_solver{
   void Presolve::applyRedundantVariablePostsolve(
     int row_index, int col_index
   ) {
-    int feasible_value = lower_bounds_.at(row_index);
-    checkVariableFeasibleValue(col_index, feasible_value, 0);
-    feasible_solution.at(col_index) = feasible_value;
-    postsolve_active_rows_.at(row_index) = true;
-    postsolve_active_cols_.at(col_index) = true;
+    int feasible_value = getVariableFeasibleValue(
+      row_index, col_index, problem_matrix_.at(row_index).at(col_index), 
+      lower_bounds_.at(row_index)
+    );
+    if (updateStateFeasibleValue(col_index, feasible_value)) {
+      feasible_solution.at(col_index) = feasible_value;
+      postsolve_active_rows_.at(row_index) = true;
+      postsolve_active_cols_.at(col_index) = true;
+    }
   };
 
   void Presolve::updateStateRowSingletonEquality(
     int row_index, int col_index
   ) {
-    int variable_value = lower_bounds_.at(row_index);
+    int variable_coefficient = problem_matrix_.at(row_index).at(col_index);
+    int RHS = lower_bounds_.at(row_index);
 
-    presolve_active_rows_.at(row_index) = false;
-    presolve_active_rows_count_ -= 1;
-    implied_lower_bounds_.at(col_index) = variable_value;
-    implied_upper_bounds_.at(col_index) = variable_value;
+    if (RHS %  variable_coefficient == 0) {
+      int variable_value = RHS/variable_coefficient;
+      presolve_active_rows_.at(row_index) = false;
+      presolve_active_rows_count_ -= 1;
+      implied_lower_bounds_.at(col_index) = variable_value;
+      implied_upper_bounds_.at(col_index) = variable_value;
 
-    // Update presolve stack.
-    struct presolve_log log = {row_index, col_index, 1};
-    presolve_stack_.push(log);
+      // Update presolve stack.
+      struct presolve_log log = {row_index, col_index, 1};
+      presolve_stack_.push(log);
+    } else {
+      infeasible = true;
+    }
   };
 
   void Presolve::updateStateRowSingletonInequality(
@@ -140,14 +188,25 @@ namespace logical_solver{
   ) {
     // Get the implied bound by divinding the lower bound on the
     // constraint by the coefficient.
-    int implied_bound = std::ceil(
-      float(lower_bounds_.at(row_index))/float(problem_matrix_.at(row_index).at(col_index))
-    );
+    int variable_coefficient = problem_matrix_.at(row_index).at(col_index);
 
-    if (implied_bound < 0) {
+    if (variable_coefficient < 0) {
+      // If coefficient negative, upper bound becomes 
+      // lower bound divided by coefficient, and we use floor
+      // to make sure that the bound is met in integer arithmetic.
+      int implied_bound = std::floor(
+        float(lower_bounds_.at(row_index))/float(variable_coefficient)
+      );
       implied_lower_bounds_.at(col_index) = -implied_upper_bounds_.at(col_index);
       implied_upper_bounds_.at(col_index) = implied_bound;
+
     } else {
+      // If coefficient not negative, lower bound becomes lower
+      // bound divided by the coefficient and we use ceil to make
+      // bound is met in integer arithmetic.
+      int implied_bound = std::ceil(
+        float(lower_bounds_.at(row_index))/float(variable_coefficient)
+      );
       implied_lower_bounds_.at(col_index) = implied_bound;
     }
   };
@@ -200,6 +259,10 @@ namespace logical_solver{
   };
 
   void Presolve::applyFixedColPostsolve(int col_index) {
+    // In postsolve we know that the feasible value 
+    // is feasible because when updating the implied 
+    // bounds in presolve we check that the implied 
+    // bounds we get are integers.
     int feasible_value = implied_lower_bounds_.at(col_index);
 
     // Re-update the lower bound of each constraint that 
@@ -211,7 +274,6 @@ namespace logical_solver{
     }
 
     postsolve_active_cols_.at(col_index) = true;
-    checkVariableFeasibleValue(col_index, feasible_value, 3);
     feasible_solution.at(col_index) = feasible_value;
   };
 
@@ -261,23 +323,24 @@ namespace logical_solver{
   void Presolve::applyFreeColSubstitutionPostsolve(
     int row_index, int col_index, int dependancy_index
   ) {
-    // get variable feasible value.
-    int constant_term = lower_bounds_.at(row_index);
-    int dependancy_feasible_value = feasible_solution.at(dependancy_index);
-    int dependancy_coefficient = problem_matrix_.at(row_index).at(dependancy_index);
+    // Check if a feasible value has been found for a 
+    // variable, and if so apply postsolve.
+    if (postsolve_active_cols_.at(dependancy_index)) {
+      int constant_term = lower_bounds_.at(row_index);
+      int dependancy_feasible_value = feasible_solution.at(dependancy_index);
+      int dependancy_coefficient = problem_matrix_.at(row_index).at(dependancy_index);
+      int RHS = constant_term - dependancy_feasible_value*dependancy_coefficient;
+      int variable_coefficient = problem_matrix_.at(row_index).at(col_index);
 
-    // will need to add a check for when the coefficient is not 1, which may
-    // lead to non integer non-feasible values for equalities. In inequalities we can
-    // just pick an integer larger then the non-int minimal sol, which will
-    // still be feasible if we don't have an implied upper bound affecting 
-    // the variable.
-    int feasible_value = constant_term - dependancy_feasible_value*dependancy_coefficient;
 
-    checkVariableFeasibleValue(col_index, feasible_value, 4);
-    feasible_solution.at(col_index) = feasible_value;
-
-    postsolve_active_rows_.at(row_index) = true;
-    postsolve_active_cols_.at(col_index) = true;
+      int feasible_value = getVariableFeasibleValue(
+        row_index, col_index, variable_coefficient, RHS
+      );
+      if (updateStateFeasibleValue(col_index, feasible_value)) {
+        postsolve_active_rows_.at(row_index) = true;
+        postsolve_active_cols_.at(col_index) = true;
+      }
+    }
   };
 
   void Presolve::applyPresolveRowRules() {
@@ -301,8 +364,10 @@ namespace logical_solver{
           // If it is not a redundant variable, check if is an equality
           // or an inequality and update state accordingly.
           else if (i < inequalities_count_) {
-            
-            updateStateRowSingletonInequality(i, non_zero_variable);
+            if (std::find(inequality_singletons_.begin(), inequality_singletons_.end(), i) == inequality_singletons_.end()) {
+              updateStateRowSingletonInequality(i, non_zero_variable);
+              inequality_singletons_.push_back(i);
+            }
           }
           else {
             updateStateRowSingletonEquality(i, non_zero_variable);
@@ -327,7 +392,7 @@ namespace logical_solver{
         else if (non_zeros_count == 0) {
           updateStateEmptyCol(j);
         }
-        // If column is fixed col, update state accordingly.
+        // If column is free col, update state accordingly.
         else if (non_zeros_count == 1) {
           int non_zero_row = cols_non_zeros_indices_.at(j).at(0);
 
@@ -339,19 +404,15 @@ namespace logical_solver{
     }
   };
 
-  void Presolve::checkVariableFeasibleValue(
-    int col_index, int feasible_value, int rule_id
+  bool Presolve::checkVariableImpliedBounds(
+    int col_index, int feasible_value
   ) {
-    try {
-      if (feasible_value < implied_lower_bounds_.at(col_index) || feasible_value > implied_upper_bounds_.at(col_index)) {
-        throw(0);
-      }
-    }
-    catch (int myNum) {
+    if (feasible_value < implied_lower_bounds_.at(col_index) || feasible_value > implied_upper_bounds_.at(col_index)) {
       printf("Variable %d does not meet the implied bounds.", col_index);
       printf("Implied bounds: Lower = %d, Upper = %d.", implied_lower_bounds_.at(col_index), implied_upper_bounds_.at(col_index));
-      printf("Rule used: %d", rule_id);
+      return false;
     }
+    return true;
   };
 
   std::vector<int> Presolve::getUnsatisfiedConstraintsPostsolve() {
@@ -369,8 +430,8 @@ namespace logical_solver{
           }
         }
 
-        // Check if constraint is satisfied, and if not return 
-        // constraint index.
+        // Check if constraint is satisfied, and if not 
+        // add index to unsatisfied constraints vector.
         if (constraint_value < lower_bounds_.at(i) || constraint_value > upper_bounds_.at(i)) {
           unsatisfied_constraints.push_back(i);
         }
@@ -385,27 +446,26 @@ namespace logical_solver{
     std::vector<int> unsatisfied_constraints,
     int rule_id
   ) {
-    try {
-      if (unsatisfied_constraints.size() > 0) {
-        throw (0);
-      }
-    }   
-    catch (int myNum) {
+    if (unsatisfied_constraints.size() > 0) {
       std::cout<<"The following constraints were unsatisfied:"<<std::endl;
       for (int i = 0; i < unsatisfied_constraints.size(); i++) {
-        std::cout<<i<<std::endl;
+        std::cout<<unsatisfied_constraints.at(i)<<std::endl;
       }
       printf("After applying rule %d \n", rule_id);
+      std::cout << " " << std::endl;
     }
   };
 
   void Presolve::applyPresolve() {
     int iteration_active_rows = presolve_active_rows_count_;
     int iteration_active_cols = presolve_active_columns_count;
+
     while (presolve_active_rows_count_ > 0) {
       getRowsAndColsNonZeros();
       applyPresolveRowRules();
       applyPresolveColRules();
+
+      if (infeasible) {break;}
       
       if (presolve_active_rows_count_ == iteration_active_rows && presolve_active_columns_count == iteration_active_cols) {
         break;
@@ -424,32 +484,36 @@ namespace logical_solver{
     postsolve_active_rows_.resize(constraints_count_, false);
     postsolve_active_cols_.resize(variables_count_, false);
     
-    while (!presolve_stack_.empty()) {
-      presolve_log rule_log = presolve_stack_.top();
-      int rule_id = rule_log.rule_id;
-      int row_index = rule_log.constraint_index;
-      int col_index = rule_log.variable_index;
+    if (!infeasible) {
+      while (!presolve_stack_.empty()) {
+        presolve_log rule_log = presolve_stack_.top();
+        int rule_id = rule_log.rule_id;
+        int row_index = rule_log.constraint_index;
+        int col_index = rule_log.variable_index;
 
-      if (rule_id == 0) {
-        applyRedundantVariablePostsolve(row_index, col_index);
+        if (rule_id == 0) {
+          applyRedundantVariablePostsolve(row_index, col_index);
+        }
+        else if (rule_id == 1) {
+          applyRowSingletonPostsolve(row_index);
+        }
+        else if (rule_id == 2) {
+          applyEmptyColPostsolve(col_index);
+        }
+        else if (rule_id == 3) {
+          applyFixedColPostsolve(col_index);
+        }
+        else if (rule_id == 4) {
+          applyFreeColSubstitutionPostsolve(row_index, col_index, rule_log.dependancies.at(0));
+        }
+
+        if (infeasible) {break;}
+
+        // Remove rule from stack.
+        presolve_stack_.pop();
+        std::vector<int> unsatisfied_constraints = getUnsatisfiedConstraintsPostsolve();
+        checkUnsatisfiedConstraintsPostsolve(unsatisfied_constraints, rule_id);
       }
-      else if (rule_id == 1) {
-        applyRowSingletonPostsolve(row_index);
-      }
-      else if (rule_id == 2) {
-        applyEmptyColPostsolve(col_index);
-      }
-      else if (rule_id == 3) {
-        applyFixedColPostsolve(col_index);
-      }
-      else if (rule_id == 4) {
-        applyFreeColSubstitutionPostsolve(row_index, col_index, rule_log.dependancies.at(0));
-      }
-      
-      // Remove rule from stack.
-      presolve_stack_.pop();
-      std::vector<int> unsatisfied_constraints = getUnsatisfiedConstraintsPostsolve();
-      checkUnsatisfiedConstraintsPostsolve(unsatisfied_constraints, rule_id);
     }
   };
 
@@ -457,26 +521,11 @@ namespace logical_solver{
     for (int i = 0; i < variables_count_; i++) {
       printf("Variable %d = %d\n", i, feasible_solution.at(i));
     }
+    std::cout<<" "<<std::endl;
   };
 
-  void Presolve::printLP() {
-    for (int i = 0; i < constraints_count_; ++i) {
-      if (presolve_active_rows_.at(i)) {
-        printf("Row %d \n", i);
-
-        for (int j = 0; j < variables_count_; ++j) {
-          if (presolve_active_columns_.at(j)) {
-            // std::cout<<<<std::endl;
-            // std::cout << problem_matrix_[i][j] << std::endl;
-            printf("col %d: %d \n", j, problem_matrix_[i][j]);
-          }
-        }
-        std::cout<<" "<<std::endl;
-      }
-    }
-
-    std::cout<<" "<<std::endl;
-    std::cout<<"Bounds"<<std::endl;;
+  void Presolve::printBounds() {
+    std::cout<<"Constraints Bounds"<<std::endl;;
 
     for (int i = 0; i < constraints_count_; ++i) {
       std::string upper_bound = std::to_string(upper_bounds_.at(i));
@@ -485,5 +534,56 @@ namespace logical_solver{
       }
       std::cout << lower_bounds_.at(i) << ", " << upper_bound << std::endl;
     }
+
+    std::cout<<" "<<std::endl;
+  };
+
+  void Presolve::printImpliedBounds() {
+    std::cout<<"Implied Bounds"<<std::endl;;
+
+    for (int i = 0; i < variables_count_; ++i) {
+      int lower_bound = implied_lower_bounds_.at(i);
+      int upper_bound = implied_upper_bounds_.at(i);
+
+      std::string lower_str;
+      std::string upper_str;
+
+      if (lower_bound == -kInfinity) {
+        lower_str = "-Inf";
+      } else {
+        lower_str = std::to_string(lower_bound);
+      }
+
+      if (upper_bound == kInfinity) {
+        upper_str = "Inf";
+      } else {
+        upper_str = std::to_string(upper_bound);
+      }
+      
+      std::cout << lower_str << ", " << upper_str << std::endl;
+    }
+
+    std::cout<<" "<<std::endl;
+  };
+
+  void Presolve::printLP() {
+    int max_width = 0;
+    for (const auto &row : problem_matrix_) {
+      for (int element : row) {
+        int width = std::to_string(element).length();
+        max_width = std::max(max_width, width);
+      }
+    }
+
+    for (const auto &row : problem_matrix_) {
+      for (int element : row) {
+        std::cout << std::left << std::setw(max_width) << element << " ";
+      }
+      std::cout << std::endl;
+    }
+    
+    std::cout<<" "<<std::endl;
+
+    printBounds();
   };
 }
