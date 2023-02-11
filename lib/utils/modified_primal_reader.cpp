@@ -32,12 +32,6 @@ std::optional<core::InputRows> ModifiedPrimalReader::getNextProblem() {
   for (size_t i = 0; i < num_inequality_rows; ++i) {
     std::getline(filestream_, temp_string);
     matrix_row = convertStringToVector(temp_string);
-    // check vector size
-    if (matrix_row.size() != num_variables) {
-      std::cout << "ERROR: length of matrix row is: " << matrix_row.size()
-                << " but length of " << num_inequality_rows << " was expected"
-                << std::endl;
-    }
     inequality_rows.push_back(matrix_row);
     matrix_row.clear();
   }
@@ -53,12 +47,6 @@ std::optional<core::InputRows> ModifiedPrimalReader::getNextProblem() {
     // get and typecast row vector
     std::getline(filestream_, temp_string);
     matrix_row = convertStringToVector(temp_string);
-
-    // check vector size
-    if (matrix_row.size() != num_variables) {
-      std::cout << "ERROR: Expexted row of length " << num_variables
-                << " but row has length " << matrix_row.size() << std::endl;
-    }
     equality_rows.push_back(matrix_row);
     matrix_row.clear();
   }

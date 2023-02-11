@@ -12,14 +12,9 @@ public:
   ModifiedPrimalReader(std::fstream &filestream);
 
   /**
-   * @brief reads the next problem in the problem file and writes formatted
-   * contents to class members problem_matrix_.
-   *
-   * @param problem_file filestream to problem file
+   * @brief returns next problem in file in InputRows format
+   * fails if location in problem file is lost
    */
-  void readNextProblem(std::fstream &problem_file);
-
-  // TODO: make these optional?
   std::optional<core::InputRows> getNextProblem();
 
 private:
