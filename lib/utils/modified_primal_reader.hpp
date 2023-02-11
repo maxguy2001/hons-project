@@ -1,21 +1,15 @@
 #include "../core/consts.hpp"
 #include <cstdint>
 #include <fstream>
+#include <optional>
 #include <string>
 #include <vector>
 
 namespace utils {
 
-class DualReader {
+class ModifiedPrimalReader {
 public:
-  DualReader();
-  /**
-   * @brief reads the first problem in the problem file and writes formatted
-   * contents to class members problem_matrix_ and cost_vector_.
-   *
-   * @param problems_filepath path to problem text file
-   */
-  void readFirstProblem(const std::string problems_filepath);
+  ModifiedPrimalReader(std::fstream &filestream);
 
   /**
    * @brief reads the next problem in the problem file and writes formatted
@@ -26,11 +20,7 @@ public:
   void readNextProblem(std::fstream &problem_file);
 
   // TODO: make these optional?
-  std::vector<std::vector<float>> getProblemMatrix();
-
-  std::vector<float> getUpperBounds();
-
-  std::vector<float> getLowerBounds();
+  std::optional<core::InputRows> getNextProblem();
 
 private:
   /**
@@ -43,11 +33,12 @@ private:
    */
   std::vector<float> convertStringToVector(const std::string vector_string);
 
-  std::vector<std::vector<float>> problem_matrix_;
+  std::fstream &filestream_;
 
-  std::vector<float> upper_bounds_;
+  // counter of filestream problem number, initialised as 0
+  uint64_t current_probelm_number_;
 
-  std::vector<float> lower_bounds_;
+  const std::string tilde_ = "~";
 };
 
 } // namespace utils
