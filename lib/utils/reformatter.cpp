@@ -95,9 +95,11 @@ std::vector<float> Reformatter::getDualObjectiveRow(
   std::vector<float> dual_objective_row;
   dual_objective_row.push_back(1);
 
+  const float negative_one = -1.0;
+
   // add primal bounds to dual objective row
   for (std::size_t i = 0; i < primal_bounds.size(); ++i) {
-    dual_objective_row.push_back(primal_bounds.at(i));
+    dual_objective_row.push_back(negative_one * primal_bounds.at(i));
   }
 
   // add the neccesary number of zeros on to the end
@@ -157,7 +159,7 @@ core::FormattedProblem Reformatter::getFullDualTable(
 
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
-    initial_basis.push_back(identity_1_position);
+    initial_basis.push_back(primal_table.size() + identity_1_position);
     ++identity_1_position;
     temp_row.clear();
   }
@@ -187,7 +189,7 @@ core::FormattedProblem Reformatter::getFullDualTable(
 
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
-    initial_basis.push_back(identity_1_position);
+    initial_basis.push_back(primal_table.size() + identity_1_position);
     ++identity_1_position;
     temp_row.clear();
   }

@@ -92,12 +92,7 @@ int RevisedPrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
 
   const auto max_value =
       std::max_element(pivot_column.begin(), pivot_column.end());
-  int pivot_row_index;
-  for (std::size_t i = pivot_column.size(); i > 0; --i) {
-    if (std::abs(pivot_column.at(i) - *max_value) < core::kEpsilon) {
-      pivot_row_index = i;
-    }
-  }
+  const int pivot_row_index = std::distance(pivot_column.begin(), max_value);
 
   if (pivot_row_index <= 0) {
     return -1;
@@ -193,19 +188,31 @@ bool RevisedPrimalSimplex::checkOptimality() {
   return true;
 }
 
+void RevisedPrimalSimplex::printObjectiveRow() {
+  std::vector<float> obj_row = table_.at(0);
+  for (std::size_t i = 0; i < obj_row.size(); ++i) {
+    std::cout << obj_row.at(i) << " ";
+  }
+  std::cout << std::endl;
+}
+
 std::optional<std::vector<float>> RevisedPrimalSimplex::solveProblem() {
 
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
+    // TODO: also issue with pivot comumn index (cause of error in pivot row
+    // index?)
     int pivot_column_index = getPivotColumnIndex();
     // TODO: Error in this funciton somewhere!
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
+      printObjectiveRow();
       return table_.at(0);
     }
     switchBasis(pivot_row_index, pivot_column_index);
     constructNewTable(pivot_row_index, pivot_column_index);
 
     if (checkOptimality()) {
+      printObjectiveRow();
       return table_.at(0);
     }
   }

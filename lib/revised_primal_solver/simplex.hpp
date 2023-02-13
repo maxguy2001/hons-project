@@ -88,6 +88,9 @@ private:
    * @return false
    */
   bool checkOptimality();
+
+  // TODO: remove this?
+  void printObjectiveRow();
 };
 
 } // namespace revised_primal_simplex
