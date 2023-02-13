@@ -199,10 +199,8 @@ void RevisedPrimalSimplex::printObjectiveRow() {
 std::optional<std::vector<float>> RevisedPrimalSimplex::solveProblem() {
 
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
-    // TODO: also issue with pivot comumn index (cause of error in pivot row
-    // index?)
+    // TODO: fix segmentation fault
     int pivot_column_index = getPivotColumnIndex();
-    // TODO: Error in this funciton somewhere!
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
       printObjectiveRow();

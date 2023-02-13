@@ -159,7 +159,8 @@ core::FormattedProblem Reformatter::getFullDualTable(
 
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
-    initial_basis.push_back(primal_table.size() + identity_1_position);
+    initial_basis.push_back(primal_table.at(0).size() + identity_1_position +
+                            1);
     ++identity_1_position;
     temp_row.clear();
   }
@@ -189,7 +190,9 @@ core::FormattedProblem Reformatter::getFullDualTable(
 
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
-    initial_basis.push_back(primal_table.size() + identity_1_position);
+    // TODO: change implementation
+    initial_basis.push_back(primal_table.at(0).size() + identity_1_position +
+                            1);
     ++identity_1_position;
     temp_row.clear();
   }

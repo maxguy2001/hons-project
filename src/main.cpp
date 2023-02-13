@@ -23,31 +23,14 @@ int main() {
   utils::Reformatter rf_;
   core::FormattedProblem rf_prob = rf_.reformatProblem(*problem);
 
+  std::vector<int> objr = rf_prob.basic_variables;
   revised_primal_simplex::RevisedPrimalSimplex solver_;
   solver_.setProblem(rf_prob.problem_matrix);
   solver_.setBasis(rf_prob.basic_variables);
-  // auto solution_row = solver_.solveProblem();
+  auto solution_row = solver_.solveProblem();
 
   // if (!solution_row) {
   //  std::cout << "broke";
   //}
-
-  // next question
-  problem = reader_.getNextProblem();
-  rf_prob = rf_.reformatProblem(*problem);
-  std::vector<int> objr = rf_prob.basic_variables;
-  // still issue with basis!
-  for (std::size_t i = 0; i < objr.size(); ++i) {
-    std::cout << objr.at(i) << " ";
-  }
-  std::cout << std::endl;
-  solver_.setProblem(rf_prob.problem_matrix);
-  solver_.setBasis(rf_prob.basic_variables);
-  // solution_row = solver_.solveProblem();
-
-  // if (!solution_row) {
-  //  std::cout << "broke";
-  //}
-
   return 0;
 }
