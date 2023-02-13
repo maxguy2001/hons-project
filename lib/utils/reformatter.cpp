@@ -4,14 +4,14 @@ namespace utils {
 
 Reformatter::Reformatter() {}
 
-std::vector<std::vector<float>>
+core::FormattedProblem
 Reformatter::reformatProblem(const core::InputRows input_rows) {
   const std::vector<float> primal_bounds = getPrimalBounds(input_rows);
   const std::vector<std::vector<float>> primal_table =
       getPrimalTable(input_rows);
   const std::vector<float> dual_objective_row =
       getDualObjectiveRow(primal_bounds, primal_table);
-  const std::vector<std::vector<float>> dual_table =
+  const core::FormattedProblem dual_table =
       getFullDualTable(primal_table, dual_objective_row);
   return dual_table;
 }
@@ -112,7 +112,7 @@ std::vector<float> Reformatter::getDualObjectiveRow(
   return dual_objective_row;
 }
 
-std::vector<std::vector<float>> Reformatter::getFullDualTable(
+core::FormattedProblem Reformatter::getFullDualTable(
     const std::vector<std::vector<float>> primal_table,
     const std::vector<float> objective_row) {
 
@@ -124,6 +124,9 @@ std::vector<std::vector<float>> Reformatter::getFullDualTable(
 
   // to keep track of slack being added to dual table
   std::size_t identity_1_position = 0;
+
+  // vector to keep track of initial basis
+  std::vector<int> initial_basis;
 
   // temporary container to hold rows as they are created and slack matrix
   // temporary colmns to be added
@@ -154,6 +157,7 @@ std::vector<std::vector<float>> Reformatter::getFullDualTable(
 
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
+    initial_basis.push_back(identity_1_position);
     ++identity_1_position;
     temp_row.clear();
   }
@@ -183,11 +187,16 @@ std::vector<std::vector<float>> Reformatter::getFullDualTable(
 
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
+    initial_basis.push_back(identity_1_position);
     ++identity_1_position;
     temp_row.clear();
   }
 
-  return dual_table;
+  core::FormattedProblem formatted_problem;
+  formatted_problem.problem_matrix = dual_table;
+  formatted_problem.basic_variables = initial_basis;
+
+  return formatted_problem;
 }
 
 } // namespace utils

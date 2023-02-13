@@ -1,5 +1,6 @@
 #include "../lib/primal_simplex/main.hpp"
 #include "../lib/core/consts.hpp"
+#include "../lib/revised_primal_solver/simplex.hpp"
 #include "../lib/utils/modified_primal_reader.hpp"
 #include "../lib/utils/primal_reader.hpp"
 #include "../lib/utils/reformatter.hpp"
@@ -20,14 +21,12 @@ int main() {
   auto problem = reader_.getNextProblem();
 
   utils::Reformatter rf_;
-  std::vector<std::vector<float>> rf_prob = rf_.reformatProblem(*problem);
+  core::FormattedProblem rf_prob = rf_.reformatProblem(*problem);
 
-  for (std::size_t i = 0; i < rf_prob.size(); ++i) {
-    for (std::size_t j = 0; j < rf_prob.at(0).size(); ++j) {
-      std::cout << rf_prob.at(i).at(j) << "  ";
-    }
-    std::cout << std::endl;
-  }
+  revised_primal_simplex::RevisedPrimalSimplex solver_;
+  solver_.setProblem(rf_prob.problem_matrix);
+  solver_.setBasis(rf_prob.basic_variables);
+  auto solution_row = solver_.solveProblem();
 
   return 0;
 }

@@ -1,7 +1,8 @@
 #include <cstdint>
+#include <optional>
 #include <vector>
 
-namespace primal_simplex {
+namespace revised_primal_simplex {
 
 class RevisedPrimalSimplex {
 public:
@@ -14,12 +15,6 @@ public:
    */
   void setProblem(const std::vector<std::vector<float>> table);
 
-  // TODO: get rid!
-  void printTable();
-
-  // TODO: get rid!
-  void printBasis();
-
   /**
    * @brief Set the initial simplex basis
    *
@@ -31,14 +26,9 @@ public:
    * @brief solve the given problem
    *
    */
-  void solveProblem();
+  std::optional<std::vector<float>> solveProblem();
 
-  /**
-   * @brief prints solution to simplex problem to terminal
-   *
-   */
-  void printSolution();
-
+private:
   // simplex table
   std::vector<std::vector<float>> table_;
 
@@ -100,4 +90,4 @@ public:
   bool checkOptimality();
 };
 
-} // namespace primal_simplex
+} // namespace revised_primal_simplex
