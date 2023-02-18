@@ -85,10 +85,15 @@ int RevisedPrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
   return pivot_row_index;
 }
 
-void RevisedPrimalSimplex::switchBasis(const int pivot_row_index,
+bool RevisedPrimalSimplex::switchBasis(const int pivot_row_index,
                                        const int pivot_column_index) {
+  // check fail state for now
+  if (basis_.size() < pivot_row_index) {
+    return false;
+  }
   // update basis
   basis_.at(pivot_row_index - 1) = pivot_column_index;
+  return true;
 }
 
 void RevisedPrimalSimplex::constructNewTable(const int pivot_row_index,
@@ -183,22 +188,26 @@ void RevisedPrimalSimplex::printObjectiveRow() {
 std::optional<std::vector<float>> RevisedPrimalSimplex::solveProblem() {
 
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
-    // TODO: fix segmentation fault
-    // int pivot_column_index = getPivotColumnIndex();
     int pivot_column_index = getPivotColumnIndexFixed();
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
+      ++num_basis_failures;
       return std::nullopt;
     }
-    switchBasis(pivot_row_index, pivot_column_index);
+    // TODO: fix this function (guarantee that pivot_row_index is not >
+    // len(basis)...)
+    bool is_basis_switch_successful =
+        switchBasis(pivot_row_index, pivot_column_index);
+    if (!is_basis_switch_successful) {
+      return std::nullopt;
+    }
     constructNewTable(pivot_row_index, pivot_column_index);
 
     if (checkOptimality()) {
-      // printObjectiveRow();
       return table_.at(0);
     }
   }
   return std::nullopt;
-}
+} // namespace revised_primal_simplex
 
 } // namespace revised_primal_simplex

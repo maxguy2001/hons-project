@@ -8,6 +8,8 @@ class RevisedPrimalSimplex {
 public:
   RevisedPrimalSimplex();
 
+  int num_basis_failures = 0;
+
   /**
    * @brief Set the table class member
    *
@@ -49,9 +51,6 @@ private:
    *
    * @return int
    */
-  int getPivotColumnIndex();
-
-  // TODO: fix this
   int getPivotColumnIndexFixed();
 
   /**
@@ -70,7 +69,7 @@ private:
    * @param pivot_row_index found in getPivotRowIndex()
    * @param pivot_column_index found in getPivotColumnIndex()
    */
-  void switchBasis(const int pivot_row_index, const int pivot_column_index);
+  bool switchBasis(const int pivot_row_index, const int pivot_column_index);
 
   /**
    * @brief constructs new table_ object, completing row operations to reduce

@@ -23,7 +23,7 @@ int main() {
   revised_primal_simplex::RevisedPrimalSimplex solver_;
   utils::Reformatter rf_;
 
-  int num_to_solve = 2210;
+  int num_to_solve = 20000;
   int num_failed = 0;
   int num_empty = 0;
 
@@ -38,6 +38,8 @@ int main() {
     if (problem->equality_rows.size() == 0 &&
         problem->inequality_rows.size() == 0) {
       ++num_empty;
+      // TODO: update conditions for number empty to include where row length is
+      // 0
     } else {
 
       core::FormattedProblem rf_prob = rf_.reformatProblem(*problem);
@@ -64,30 +66,16 @@ int main() {
   std::cout << "Number of falures: " << num_failed << std::endl;
   std::cout << "Number of empty problems: " << num_empty << std::endl;
   std::cout << "Time taken: " << time_taken_secs << " seconds" << std::endl;
-
-  auto problem = reader_.getNextProblem();
-  // std::cout << problem->equality_rows.size() << std::endl;
+  std::cout << "Num basis failures: " << solver_.num_basis_failures
+            << std::endl;
 
   /*
-  for (std::size_t i = 0; i < problem->inequality_rows.size(); ++i) {
-    for (std::size_t j = 0; j < problem->inequality_rows.at(0).size(); ++j) {
-      std::cout << problem->inequality_rows.at(i).at(j) << " ";
-    }
-    std::cout << std::endl;
-  }
-  std::cout << std::endl;
-  */
+  auto problem = reader_.getNextProblem();
   core::FormattedProblem rf_prob = rf_.reformatProblem(*problem);
   solver_.setProblem(rf_prob.problem_matrix);
   solver_.setBasis(rf_prob.basic_variables);
-  for (std::size_t i = 0; i < rf_prob.problem_matrix.size(); ++i) {
-    for (std::size_t j = 0; j < rf_prob.problem_matrix.at(0).size(); ++j) {
-      std::cout << rf_prob.problem_matrix.at(i).at(j) << " ";
-    }
-    std::cout << std::endl;
-  }
-  std::cout << std::endl;
-  // auto solution_row = solver_.solveProblem();
+  auto solution_row = solver_.solveProblem();
+  */
 
   return 0;
 }
