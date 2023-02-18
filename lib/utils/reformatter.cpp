@@ -127,9 +127,6 @@ core::FormattedProblem Reformatter::getFullDualTable(
   // to keep track of slack being added to dual table
   std::size_t identity_1_position = 0;
 
-  // vector to keep track of initial basis
-  std::vector<int> initial_basis;
-
   // temporary container to hold rows as they are created and slack matrix
   // temporary colmns to be added
   std::vector<float> temp_row;
@@ -159,8 +156,6 @@ core::FormattedProblem Reformatter::getFullDualTable(
 
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
-    initial_basis.push_back(primal_table.at(0).size() + identity_1_position +
-                            1);
     ++identity_1_position;
     temp_row.clear();
   }
@@ -191,10 +186,15 @@ core::FormattedProblem Reformatter::getFullDualTable(
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
     // TODO: change implementation
-    initial_basis.push_back(primal_table.at(0).size() + identity_1_position +
-                            1);
     ++identity_1_position;
     temp_row.clear();
+  }
+
+  // Get intial basis
+  std::vector<int> initial_basis;
+  for (std::size_t i = primal_table.size() + 1; i < objective_row.size() - 2;
+       ++i) {
+    initial_basis.push_back(i);
   }
 
   core::FormattedProblem formatted_problem;
