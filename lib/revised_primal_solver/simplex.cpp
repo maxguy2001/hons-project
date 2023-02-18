@@ -40,52 +40,30 @@ RevisedPrimalSimplex::extractColumnFromTable(const int column_index) {
   return column;
 }
 
-int RevisedPrimalSimplex::getPivotColumnIndex() {
+int RevisedPrimalSimplex::getPivotColumnIndexFixed() {
 
-  // get objective function from table and make copy
+  // get objective function
   const std::vector<float> objective_function = table_.at(0);
-  std::vector<float> objective_values;
-  std::copy(objective_function.begin(), objective_function.end(),
-            std::back_inserter(objective_values));
 
-  // make vector containing corresponding index for objective_values
-  std::vector<int> index;
-  for (size_t i = 0; i < objective_values.size(); ++i) {
-    index.push_back(i);
-  }
-
-  // make copy of basis
-  std::vector<int> basis_copy;
-  std::copy(basis_.begin(), basis_.end(), std::back_inserter(basis_copy));
-
-  // sort basis copy descending
-  std::sort(basis_copy.begin(), basis_copy.end(), std::greater<int>());
-
-  // remove basic variables from objective_values and index
-
-  int index_to_remove;
-
-  for (size_t i = 0; i < basis_copy.size(); ++i) {
-    index_to_remove = basis_copy.at(i);
-    // if(std::find(basis_copy.begin(), basis_copy.end(), index_to_remove) ==
-    // basis_copy.end()){}
-    // TODO: fix seg fault here (remove this check?!?)
-    // objective_values.erase(objective_values.begin() + index_to_remove);
-    // index.erase(index.begin() + index_to_remove);
-  }
-
-  // locate and return smallest nonbasic value in objective function
-  auto min_value =
-      std::min_element(objective_values.begin(), objective_values.end());
-  int min_index;
-
-  for (size_t i = 0; i < objective_values.size(); ++i) {
-    if (std::abs(objective_values.at(i) - *min_value) < core::kEpsilon) {
-      min_index = i;
+  // set initial point for pivot column index
+  int pivot_column_index;
+  float min_value;
+  for (std::size_t i = 1; i < objective_function.size(); ++i) {
+    if (std::find(basis_.begin(), basis_.end(), i) == basis_.end()) {
+      pivot_column_index = i;
+      min_value = objective_function.at(i);
     }
   }
 
-  return index.at(min_index);
+  // find pivot column index
+  for (std::size_t i = 1; i < objective_function.size(); ++i) {
+    if (std::find(basis_.begin(), basis_.end(), i) == basis_.end() &&
+        objective_function.at(i) < min_value) {
+      pivot_column_index = i;
+      min_value = objective_function.at(i);
+    }
+  }
+  return pivot_column_index;
 }
 
 int RevisedPrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
@@ -206,12 +184,11 @@ std::optional<std::vector<float>> RevisedPrimalSimplex::solveProblem() {
 
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
     // TODO: fix segmentation fault
-    int pivot_column_index = getPivotColumnIndex();
+    // int pivot_column_index = getPivotColumnIndex();
+    int pivot_column_index = getPivotColumnIndexFixed();
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
-      printObjectiveRow();
-      std::cout << "wrong rtn";
-      return table_.at(0);
+      return std::nullopt;
     }
     switchBasis(pivot_row_index, pivot_column_index);
     constructNewTable(pivot_row_index, pivot_column_index);

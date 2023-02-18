@@ -51,6 +51,9 @@ private:
    */
   int getPivotColumnIndex();
 
+  // TODO: fix this
+  int getPivotColumnIndexFixed();
+
   /**
    * @brief returns index of pivot row in table_ based on the minimum value
    * found during ratio testing
