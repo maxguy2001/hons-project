@@ -27,17 +27,18 @@ void testOnTestProblem() {
   problems_filestream.close();
 
   presolve.printLP();
-  presolve.printImpliedBounds();
   presolve.applyPresolve();
   presolve.applyPostsolve();
-
+  if (presolve.reduced_to_empty) {
+    printf("Reduced to empty\n");
+  }
   if (!presolve.infeasible){
     presolve.printFeasibleSolution();
   }
   else {
     std::cout << "Infeasible" << std::endl;
   }
-  presolve.printImpliedBounds();
+  // presolve.printImpliedBounds();
 }
 
 void testOnSingleProblem(int problem_number) {
@@ -83,12 +84,15 @@ void testOnMultipleProblems(int problems_count) {
         reader.lower_bounds_, reader.upper_bounds_,
         reader.num_inequalities_, reader.num_equalities_
       );
+      if (n == 712) {
+        presolve.printLP();
+      }
       presolve.applyPresolve();
       presolve.applyPostsolve();
       if (presolve.infeasible) {
         infeasible_count += 1;
       }
-      if (presolve.reduced_to_empty) {
+      else if (presolve.reduced_to_empty) {
         std::cout << "REDUCED TO EMPTY\n" << std::endl;
         reduced_to_empty_count += 1;
         // presolve.applyPostsolve();
@@ -101,8 +105,8 @@ void testOnMultipleProblems(int problems_count) {
 }
 
 int main(){
-  // testOnTestProblem();
-  //testOnSingleProblem(146402);
+  //testOnTestProblem();
+  //testOnSingleProblem(144187);
   const int all_test_cases_count = 150218;
   testOnMultipleProblems(all_test_cases_count);
 

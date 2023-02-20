@@ -30,6 +30,7 @@ namespace logical_solver{
     presolve_active_rows_.resize(constraints_count_, true);
     presolve_active_columns_.resize(variables_count_, true);
     inequality_singletons_ = {};
+
     implied_lower_bounds_.resize(variables_count_, -kInfinity);
     implied_upper_bounds_.resize(variables_count_, kInfinity);
     feasible_solution.resize(variables_count_, -999);
@@ -220,6 +221,136 @@ namespace logical_solver{
     postsolve_active_rows_.at(row_index) = true;
   };
 
+  bool Presolve::checkAreRowsParallel(int row1_index, int row2_index) {
+    if (rows_non_zero_variables_.at(row1_index).size() != rows_non_zero_variables_.at(row2_index).size()) {
+      return false;
+    }
+    int row1_first_non_zero_col = rows_non_zero_variables_.at(row1_index).at(0);
+    int row2_first_non_zero_col = rows_non_zero_variables_.at(row2_index).at(0);
+    if (row1_first_non_zero_col != row2_first_non_zero_col) {
+      return false;
+    }
+    double ratio = problem_matrix_.at(row1_index).at(row1_first_non_zero_col)/problem_matrix_.at(row2_index).at(row2_first_non_zero_col);
+
+    for (int j = 1; j < rows_non_zero_variables_.at(row1_index).size(); j++) {
+      int row1_non_zero_col = rows_non_zero_variables_.at(row1_index).at(j);
+      int row2_non_zero_col = rows_non_zero_variables_.at(row2_index).at(j);
+
+      if (row1_non_zero_col != row2_non_zero_col) {
+        return false;
+      }
+      double ratio_new = problem_matrix_.at(row1_index).at(row1_non_zero_col)/problem_matrix_.at(row2_index).at(row2_non_zero_col);
+      if (ratio != ratio_new) {return false;}
+      ratio = ratio_new;
+    }
+
+    return true;
+  };
+
+  int Presolve::getParallelRow(int row_index, int start) {
+    if (row_index == start) {return -1;}
+    
+    for (int k = start; k < row_index; k++) {
+      if (checkAreRowsParallel(row_index, k)) {return k;}
+    }
+
+    return -1;
+  };
+
+  std::vector<int> Presolve::sortParallelRowsBySize(int row, int parallel_row) {
+    // Get index of first non-zero variable in row.
+    int first_non_zero_col = rows_non_zero_variables_.at(row).at(0);
+
+    // Get absolute value of first coefficient of each row.
+    int row_abs_first_coeff = std::abs(problem_matrix_.at(row).at(first_non_zero_col));
+    int parallel_row_abs_first_coeff = std::abs(problem_matrix_.at(parallel_row).at(first_non_zero_col));
+    
+    if (row_abs_first_coeff > parallel_row_abs_first_coeff) {
+      return {parallel_row, row};
+    }
+    // If they are equal then return parallel row so that
+    // row is kept on, which means we might still detect if it
+    // is a row singleton or reduntant variable afterwards, which would
+    // mean we turn off both rows in the same iteration.
+    return {row, parallel_row};
+  };
+
+  bool Presolve::checkAreParallelRowsFeasible(
+    int small_row_index,
+    int large_to_small_ratio,
+    double large_bound_by_ratio
+  ){
+    // If we are dealing with an equality, check if the bounds
+    // are also multiples of eachother and if not the parallel
+    // row is not feasible.
+    if (small_row_index >= inequalities_count_) {
+      if (large_bound_by_ratio != lower_bounds_.at(small_row_index)) {
+        return false;
+      }
+    }
+    // If we have one row of each sign, we now have to check feasibility
+    // for inequalities.
+    if (large_to_small_ratio < 0) {
+      // large bound by ratio, rounded down to ensure feasibility for
+      // integers, now becomes an upper bound of the small inequality.
+      // Thus, if it is smaller than the small row's bound, the problem 
+      // is infeasible.
+      if (std::floor(large_bound_by_ratio) < lower_bounds_.at(small_row_index)) {
+        return false;
+      }
+    }
+
+    return true;
+
+  };
+
+  void Presolve::updateStateParallelRow(
+    int small_row_index, 
+    int large_row_index,
+    int large_to_small_ratio,
+    double large_bound_by_ratio
+  ) {
+    // turn off large row and log into stack
+    presolve_active_rows_.at(large_row_index) = false;
+    presolve_active_rows_count_ -= 1;
+
+    // Dependancy vector to keep track of the row we keep on and its
+    // original bound.
+    std::vector<int> dependencies = {small_row_index, lower_bounds_.at(small_row_index)};
+    struct presolve_log log = {large_row_index, -1, 5, dependencies};
+    presolve_stack_.push(log);
+
+    // if we have an inequality, update the bound on the small row 
+    // to ensure that both are satisfied.
+    if (small_row_index < inequalities_count_) {
+      // Round up the large bound by ratio to ensure conditions
+      // are met integer wise.
+      int rounded_large_bound_by_ratio = std::ceil(large_bound_by_ratio);
+      int small_row_lower_bound = lower_bounds_.at(small_row_index);
+
+      if (large_to_small_ratio > 0) {
+        // If the inequalities both have the same sign then we use 
+        // the bound that takes up all the slack.
+        if (small_row_lower_bound < rounded_large_bound_by_ratio) {
+          lower_bounds_.at(small_row_index) = rounded_large_bound_by_ratio;
+        }
+      } else {
+        // If they do not have the same sign, then that means that the 
+        // lower bound of the large one divided by the large 
+        // to small ratio, rounded down, will have become an upper bound
+        // of the small one - if this upper bound is smaller than the small one's
+        // lower bound, we will have already deemed the system unfeasible in 
+        // checkAreParallelRowsFeasible.
+        upper_bounds_.at(small_row_index) = std::floor(large_bound_by_ratio);
+      }
+    }
+  };
+
+  void Presolve::applyParallelRowPostsolve(
+    int row_index, int small_row_index, int small_row_initial_bound
+  ) {
+  };
+
   void Presolve::updateStateEmptyCol(int col_index) {
     presolve_active_columns_.at(col_index) = false;
     presolve_active_columns_count -= 1;
@@ -251,6 +382,7 @@ namespace logical_solver{
       lower_bounds_.at(i) = lower_bound - coefficient * variable_value;
     }
 
+    presolve_active_columns_.at(col_index) = false;
     presolve_active_columns_count -= 1;
     // Log -1 in row index as not applicable in this 
     // rule.
@@ -347,10 +479,57 @@ namespace logical_solver{
     for (int i = 0; i < constraints_count_; ++i) {
       // If row is active, apply row rules.
       if (presolve_active_rows_.at(i)) {
-        int non_zeros_count = rows_non_zero_variables_.at(i).size();
+        // Check if row is parallel to another row from row 0
+        // to row i-1, or from the start of the equalities to i-1.
+        int parallel_row_search_start = 0;
+        if (i >= inequalities_count_) {parallel_row_search_start = inequalities_count_;}
+        // std::cout << "TRYYYY" <<std::endl;
+        // std::cout << i << std::endl;
+        
+        int parallel_row = getParallelRow(i, parallel_row_search_start);
+        // If parallel row is found, check feasibility and 
+        // if feasible call updateSateParallelRows.
 
+        if (parallel_row != -1) {
+          std::vector<int> sorted_rows = sortParallelRowsBySize(i, parallel_row);
+          int small_row_index = sorted_rows.at(0);
+          int large_row_index = sorted_rows.at(1);
+          int large_to_small_ratio = problem_matrix_.at(large_row_index).at(rows_non_zero_variables_.at(large_row_index).at(0))/problem_matrix_.at(small_row_index).at(rows_non_zero_variables_.at(small_row_index).at(0));
+          double large_bound_by_ratio;
+          // std::cout << "TRYYYY 3" <<std::endl;
+          // if (i == 5) {
+          //   printf("parallel row: %d\n", parallel_row);
+          //   printf("ratio: %d\n", large_to_small_ratio);
+          //   printf("large lower bound: %d\n", lower_bounds_.at(large_row_index));
+          // }
+          if (lower_bounds_.at(large_row_index) == -2147483648) {
+            large_bound_by_ratio = -2147483648/large_to_small_ratio;
+          } else {
+            large_bound_by_ratio = lower_bounds_.at(large_row_index)/large_to_small_ratio;
+          }
+
+          // std::cout << "TRYYYY 4" <<std::endl;
+          // If parallel row not feasible, set problem to infeasible
+          // and break, else update state.
+          if (!checkAreParallelRowsFeasible(small_row_index, large_to_small_ratio, large_bound_by_ratio)) {
+            infeasible = true;
+            break;
+          } else {
+            updateStateParallelRow(
+              small_row_index, 
+              large_row_index, 
+              large_to_small_ratio,
+              large_bound_by_ratio
+            );
+          }
+          // if I was the large row in parallel rows it will have 
+          // been turned off so we don't check the rest of the rules.
+          if (large_row_index == i) {continue;}
+        }
+        int non_zeros_count = rows_non_zero_variables_.at(i).size();
         // If row is a row singleton, check if it is a redundant 
-        // variable, row singleton equality or row singleton inequality.
+        // variable, row singleton equality or row singleton inequality,
+        // and update state accordingly.
         if (non_zeros_count == 1) {
           int non_zero_variable = rows_non_zero_variables_.at(i).at(0);
           int corresponding_col_non_zeros_count = cols_non_zeros_indices_.at(
@@ -361,9 +540,10 @@ namespace logical_solver{
           if (corresponding_col_non_zeros_count == 1) {
             updateStateRedundantVariable(i, non_zero_variable);
           }
+          
           // If it is not a redundant variable, check if is an equality
           // or an inequality and update state accordingly.
-          else if (i < inequalities_count_) {
+          else if (i < inequalities_count_) { // Inequality
             if (std::find(inequality_singletons_.begin(), inequality_singletons_.end(), i) == inequality_singletons_.end()) {
               updateStateRowSingletonInequality(i, non_zero_variable);
               inequality_singletons_.push_back(i);
@@ -459,12 +639,10 @@ namespace logical_solver{
   void Presolve::applyPresolve() {
     int iteration_active_rows = presolve_active_rows_count_;
     int iteration_active_cols = presolve_active_columns_count;
-
     while (presolve_active_rows_count_ > 0) {
       getRowsAndColsNonZeros();
       applyPresolveRowRules();
       applyPresolveColRules();
-
       if (infeasible) {break;}
       
       if (presolve_active_rows_count_ == iteration_active_rows && presolve_active_columns_count == iteration_active_cols) {
@@ -483,7 +661,6 @@ namespace logical_solver{
   void Presolve::applyPostsolve() {
     postsolve_active_rows_.resize(constraints_count_, false);
     postsolve_active_cols_.resize(variables_count_, false);
-    
     if (!infeasible) {
       while (!presolve_stack_.empty()) {
         presolve_log rule_log = presolve_stack_.top();
@@ -508,7 +685,6 @@ namespace logical_solver{
         }
 
         if (infeasible) {break;}
-
         // Remove rule from stack.
         presolve_stack_.pop();
         std::vector<int> unsatisfied_constraints = getUnsatisfiedConstraintsPostsolve();
@@ -586,4 +762,16 @@ namespace logical_solver{
 
     printBounds();
   };
+
+  void Presolve::printPresolveCurrentState() {
+    for (int i=0; i < constraints_count_; i++) {
+      if (rows_non_zero_variables_.at(i).size() > 0) {
+        printf("ROW %d\n", i);
+        for (int j = 0; j < rows_non_zero_variables_.at(i).size(); j++) {
+          printf("Col %d: %d\n", j, problem_matrix_.at(i).at(j));
+        }
+        std::cout<<""<<std::endl;
+      }
+    }
+  }
 }

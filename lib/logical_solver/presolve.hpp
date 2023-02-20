@@ -78,7 +78,6 @@ namespace logical_solver{
    */
   void printImpliedBounds();
 
-
   private:
   // PRIVATE INSTANCE VARIABLES 
   int kInfinity;
@@ -210,6 +209,50 @@ namespace logical_solver{
    * @return void.
    */
   void applyRowSingletonPostsolve(int row_index);
+
+  /**
+   * @brief Checks whether two rows are paralell
+   * 
+   * @param int row_index_1: index of first row.
+   * @param int row_index_2: index of second row.
+   * @return bool.
+   */
+  bool checkAreRowsParallel(int row1_index, int row2_index);
+
+  /**
+   * @brief Given a row, checks if it is parallel to any
+   * of the previous rows that are still on, so if it is 
+   * row i it will check if it is parallel to any row from 
+   * 0 to i-1. Note that we will never find that it is parallel
+   * to two rows j, k in 0 to i-1, because that implies that j and k
+   * are also parallel between eachother, hence one of them will 
+   * already have been turned off. If we find that it there are no 
+   * rows parallel to i, return -1.
+   * 
+   * @param int row_index: index of row i.
+   * @return int, either row in 0 to i-1 parallel to i or -1 if
+   * none were found.
+   */
+  int getParallelRow(int row_index, int start);
+
+  std::vector<int> sortParallelRowsBySize(int row, int parallel_row);
+
+  bool checkAreParallelRowsFeasible(
+    int small_row_index, 
+    int large_to_small_ratio,
+    double large_bound_by_ratio
+  );
+
+  void updateStateParallelRow(
+    int small_row_index, 
+    int large_row_index,
+    int large_to_small_ratio, 
+    double large_bound_by_ratio
+  );
+
+  void applyParallelRowPostsolve(
+    int row_index, int small_row_index, int small_row_initial_bound
+  );
 
   /**
    * @brief Updates the state of the problem in presolve when an
@@ -411,6 +454,9 @@ namespace logical_solver{
     std::vector<int> unsatisfied_constraints,
     int rule_id
   );
+
+  void printPresolveCurrentState();
+
   
   };
 };
