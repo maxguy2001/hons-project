@@ -84,9 +84,9 @@ void testOnMultipleProblems(int problems_count) {
         reader.lower_bounds_, reader.upper_bounds_,
         reader.num_inequalities_, reader.num_equalities_
       );
-      if (n == 712) {
-        presolve.printLP();
-      }
+      // if (n == 712) {
+      //   presolve.printLP();
+      // }
       presolve.applyPresolve();
       presolve.applyPostsolve();
       if (presolve.infeasible) {
