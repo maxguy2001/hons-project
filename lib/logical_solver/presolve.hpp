@@ -33,6 +33,7 @@ namespace logical_solver{
   // Boolean to check if problem has been reduced to empty.
   bool reduced_to_empty;
   bool infeasible;
+  bool unsatisfied_constraints;
 
   // CONSTRUCTOR
   Presolve(
@@ -250,9 +251,7 @@ namespace logical_solver{
     double large_bound_by_ratio
   );
 
-  void applyParallelRowPostsolve(
-    int row_index, int small_row_index, int small_row_initial_bound
-  );
+  void applyParallelRowPostsolve(int row_index);
 
   /**
    * @brief Updates the state of the problem in presolve when an
@@ -430,6 +429,10 @@ namespace logical_solver{
   bool checkVariableImpliedBounds(
     int col_index, int feasible_value
   );
+
+  bool isRowActivePostsolve(int row_index);
+
+  bool checkConstraint(int row_index, int rule_id);
 
   /**
    * @brief Checks if each constraint is being satisfied correctly

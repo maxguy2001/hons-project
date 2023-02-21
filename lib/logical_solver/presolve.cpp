@@ -37,6 +37,7 @@ namespace logical_solver{
 
     reduced_to_empty = false;
     infeasible = false;
+    unsatisfied_constraints = false;
 
     presolve_active_rows_count_ = constraints_count_;
     presolve_active_columns_count = variables_count_;
@@ -156,10 +157,17 @@ namespace logical_solver{
       row_index, col_index, problem_matrix_.at(row_index).at(col_index), 
       lower_bounds_.at(row_index)
     );
+    // Check if feasible value is indeed feasible, and if 
+    // so add to feasible solution, turn on column in postsolve
+    // and check if row should be turned on.
     if (updateStateFeasibleValue(col_index, feasible_value)) {
-      feasible_solution.at(col_index) = feasible_value;
-      postsolve_active_rows_.at(row_index) = true;
       postsolve_active_cols_.at(col_index) = true;
+
+      if (isRowActivePostsolve(row_index)) {
+        if (checkConstraint(row_index, 0)) {
+          postsolve_active_rows_.at(row_index) = true;
+        }
+      }
     }
   };
 
@@ -218,7 +226,11 @@ namespace logical_solver{
     // found by applyFixedColPostsolve, so we just have to turn 
     // the row on on postsolve so that it can be included in the 
     // constraints checks.
-    postsolve_active_rows_.at(row_index) = true;
+    if (isRowActivePostsolve(row_index)) {
+      if (checkConstraint(row_index, 1)) {
+        postsolve_active_rows_.at(row_index) = true;
+      }
+    }
   };
 
   bool Presolve::checkAreRowsParallel(int row1_index, int row2_index) {
@@ -346,9 +358,12 @@ namespace logical_solver{
     }
   };
 
-  void Presolve::applyParallelRowPostsolve(
-    int row_index, int small_row_index, int small_row_initial_bound
-  ) {
+  void Presolve::applyParallelRowPostsolve(int row_index) {
+    if (isRowActivePostsolve(row_index)) {
+      if (checkConstraint(row_index, 5)) {
+        postsolve_active_rows_.at(row_index) = true;
+      }
+    }
   };
 
   void Presolve::updateStateEmptyCol(int col_index) {
@@ -469,8 +484,12 @@ namespace logical_solver{
         row_index, col_index, variable_coefficient, RHS
       );
       if (updateStateFeasibleValue(col_index, feasible_value)) {
-        postsolve_active_rows_.at(row_index) = true;
         postsolve_active_cols_.at(col_index) = true;
+        if (isRowActivePostsolve(row_index)) {
+          if (checkConstraint(row_index, 4)) {
+            postsolve_active_rows_.at(row_index) = true;
+          }
+        }
       }
     }
   };
@@ -595,6 +614,41 @@ namespace logical_solver{
     return true;
   };
 
+  bool Presolve::isRowActivePostsolve(int row_index) {
+    for (int j = 0; j < variables_count_; j++) {
+      if (problem_matrix_.at(row_index).at(j) != 0) {
+        if (!postsolve_active_cols_.at(j)) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
+  bool Presolve::checkConstraint(int row_index, int rule_id) {
+    int constraint_value = 0;
+
+    // Loop through row active columns working out the 
+    // constraint value.
+    for (int j = 0; j < variables_count_; j++) {
+      if (postsolve_active_cols_.at(j)) {
+        constraint_value += problem_matrix_.at(row_index).at(j)*feasible_solution.at(j);
+      }
+    }
+
+    // Check if constraint is satisfied, and if not 
+    // add index to unsatisfied constraints vector.
+    if (constraint_value < lower_bounds_.at(row_index) || constraint_value > upper_bounds_.at(row_index)) {
+      // printf(
+      //   "Constraint %d was unsatisfied after applying rule %d.\n",
+      //   row_index, rule_id
+      // );
+      unsatisfied_constraints = true;
+      return false;
+    }
+    return true;
+  }
+
   std::vector<int> Presolve::getUnsatisfiedConstraintsPostsolve() {
     std::vector<int> unsatisfied_constraints = {};
 
@@ -682,13 +736,16 @@ namespace logical_solver{
         }
         else if (rule_id == 4) {
           applyFreeColSubstitutionPostsolve(row_index, col_index, rule_log.dependancies.at(0));
+        } 
+        else if (rule_id == 5) {
+          applyParallelRowPostsolve(row_index);
         }
 
         if (infeasible) {break;}
         // Remove rule from stack.
         presolve_stack_.pop();
-        std::vector<int> unsatisfied_constraints = getUnsatisfiedConstraintsPostsolve();
-        checkUnsatisfiedConstraintsPostsolve(unsatisfied_constraints, rule_id);
+        // std::vector<int> unsatisfied_constraints = getUnsatisfiedConstraintsPostsolve();
+        // checkUnsatisfiedConstraintsPostsolve(unsatisfied_constraints, rule_id);
       }
     }
   };
