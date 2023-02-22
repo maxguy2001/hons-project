@@ -1,7 +1,3 @@
-add_subdirectory(logical_solver)
-add_subdirectory(dual_simplex)
-add_subdirectory(primal_simplex)
-add_subdirectory(revised_primal_solver)
 add_subdirectory(utils)
 add_subdirectory(core)
 add_subdirectory(solvers)

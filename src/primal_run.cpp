@@ -1,6 +1,6 @@
 #include "primal_run.hpp"
 
-int run_primal() {
+void PrimalRun::runPrimalSolver() {
 
   const std::string pp = "/home/maxguy/projects/hons/hons-project/problems/"
                          "feasibility_testcases.txt";
@@ -13,7 +13,7 @@ int run_primal() {
   utils::Reformatter rf_;
 
   // problem 2019 is first basis fault!
-  int num_to_solve = 10'000;
+  int num_to_solve = 20'000;
   int num_failed = 0;
   int num_empty = 0;
 
@@ -60,22 +60,4 @@ int run_primal() {
             << std::endl;
   std::cout << "Num basis failures: " << solver_.num_basis_failures
             << std::endl;
-
-  /*
-  auto problem = reader_.getNextProblem();
-  core::FormattedProblem rf_prob = rf_.reformatProblem(*problem);
-  solver_.setProblem(rf_prob.problem_matrix);
-  solver_.setBasis(rf_prob.basic_variables);
-  auto solution_row = solver_.solveProblem(true);
-
-  // print problem
-  for (std::size_t i = 0; i < rf_prob.problem_matrix.size(); ++i) {
-    for (std::size_t j = 0; j < rf_prob.problem_matrix.at(0).size(); ++j) {
-      std::cout << rf_prob.problem_matrix.at(i).at(j) << " ";
-    }
-    std::cout << std::endl;
-  }
-  */
-
-  return 0;
 }

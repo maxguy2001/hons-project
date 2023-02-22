@@ -1,6 +1,6 @@
 #include "simplex.hpp"
-#include "../core/consts.hpp"
 #include <algorithm>
+#include <core/consts.hpp>
 #include <iostream>
 #include <iterator>
 

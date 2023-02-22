@@ -1,4 +1,4 @@
-#include "../../core/consts.hpp"
+#include <core/consts.hpp>
 
 namespace dual_simplex {
 
