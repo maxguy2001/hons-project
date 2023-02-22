@@ -86,7 +86,28 @@ int RevisedPrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
 }
 
 bool RevisedPrimalSimplex::switchBasis(const int pivot_row_index,
-                                       const int pivot_column_index) {
+                                       const int pivot_column_index,
+                                       const bool verbosity) {
+  // TODO: fix this monstrosity
+  if (verbosity) {
+    // print basis
+    std::cout << "Basis: " << std::endl;
+    for (std::size_t i = 0; i < basis_.size(); ++i) {
+      std::cout << basis_.at(i) << " ";
+    }
+    std::cout << std::endl;
+
+    // print problem size
+    std::cout << "Problem size: " << table_.size() << " rows, "
+              << table_.at(0).size() << " columns" << std::endl;
+
+    // print pivot row index
+    std::cout << "Pivot row index: " << pivot_row_index << std::endl;
+
+    // print pivot column index
+    std::cout << "Pivot column index: " << pivot_column_index << std::endl;
+  }
+
   // check fail state for now
   if (basis_.size() < pivot_row_index) {
     return false;
@@ -185,20 +206,22 @@ void RevisedPrimalSimplex::printObjectiveRow() {
   std::cout << std::endl;
 }
 
-std::optional<std::vector<float>> RevisedPrimalSimplex::solveProblem() {
+std::optional<std::vector<float>>
+RevisedPrimalSimplex::solveProblem(const bool run_verbose) {
 
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
     int pivot_column_index = getPivotColumnIndexFixed();
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
-      ++num_basis_failures;
+      ++num_pivot_row_failures;
       return std::nullopt;
     }
     // TODO: fix this function (guarantee that pivot_row_index is not >
     // len(basis)...)
     bool is_basis_switch_successful =
-        switchBasis(pivot_row_index, pivot_column_index);
+        switchBasis(pivot_row_index, pivot_column_index, run_verbose);
     if (!is_basis_switch_successful) {
+      ++num_basis_failures;
       return std::nullopt;
     }
     constructNewTable(pivot_row_index, pivot_column_index);

@@ -185,7 +185,6 @@ core::FormattedProblem Reformatter::getFullDualTable(
 
     // add row, increment identity position and clear temporary row
     dual_table.push_back(temp_row);
-    // TODO: change implementation
     ++identity_1_position;
     temp_row.clear();
   }

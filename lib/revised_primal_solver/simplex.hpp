@@ -9,6 +9,7 @@ public:
   RevisedPrimalSimplex();
 
   int num_basis_failures = 0;
+  int num_pivot_row_failures = 0;
 
   /**
    * @brief Set the table class member
@@ -28,10 +29,11 @@ public:
    * @brief solve the given problem
    *
    */
-  std::optional<std::vector<float>> solveProblem();
+  std::optional<std::vector<float>> solveProblem(const bool run_verbose);
 
-private:
-  // simplex table
+  // TODO: reinstate private section of class & remover verbose argument from
+  // solveProblem
+  // private: simplex table
   std::vector<std::vector<float>> table_;
 
   // simplex basis. Order of basis must be preserved!
@@ -69,7 +71,9 @@ private:
    * @param pivot_row_index found in getPivotRowIndex()
    * @param pivot_column_index found in getPivotColumnIndex()
    */
-  bool switchBasis(const int pivot_row_index, const int pivot_column_index);
+  bool switchBasis(const int pivot_row_index, const int pivot_column_index,
+                   const bool verbose);
+  // TODO: fixabove later
 
   /**
    * @brief constructs new table_ object, completing row operations to reduce
