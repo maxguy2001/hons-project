@@ -6,6 +6,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <chrono>
 
 void testOnTestProblem() {
   std::string test_problem = "/Users/pepe/hons-project/problems/presolve_test_problem2.txt";
@@ -71,9 +72,10 @@ void testOnMultipleProblems(int problems_count) {
 
   int reduced_to_empty_count = 0;
   int infeasible_count = 0;
+  int unsatisfied_constraints = 0;
 
   for (int n = 0; n < problems_count; n++) {
-    printf("Solving problem %d\n", n);
+    // printf("Solving problem %d\n", n);
 
     // Reading problem.
     reader.readNextProblem(problems_filestream);
@@ -84,31 +86,37 @@ void testOnMultipleProblems(int problems_count) {
         reader.lower_bounds_, reader.upper_bounds_,
         reader.num_inequalities_, reader.num_equalities_
       );
-      // if (n == 712) {
-      //   presolve.printLP();
-      // }
       presolve.applyPresolve();
       presolve.applyPostsolve();
+      if (presolve.unsatisfied_constraints) {
+        unsatisfied_constraints += 1;
+      }
       if (presolve.infeasible) {
         infeasible_count += 1;
       }
       else if (presolve.reduced_to_empty) {
-        std::cout << "REDUCED TO EMPTY\n" << std::endl;
+        // std::cout << "REDUCED TO EMPTY\n" << std::endl;
         reduced_to_empty_count += 1;
         // presolve.applyPostsolve();
       }
     }
   }
+  std::cout<<""<<std::endl;
   printf("%d problems were reduced to empty.\n", reduced_to_empty_count);
-  printf("%d gave us a double in free col\n", infeasible_count);
+  printf("%d problems were not feasible \n", infeasible_count);
+  printf("%d problems led to unsatisfied constraints\n", unsatisfied_constraints);
 
 }
 
 int main(){
   //testOnTestProblem();
-  //testOnSingleProblem(144187);
+  //testOnSingleProblem(755);
   const int all_test_cases_count = 150218;
+  auto start = std::chrono::high_resolution_clock::now();
   testOnMultipleProblems(all_test_cases_count);
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+  printf("Time taken (seconds): %d \n", int(seconds));
 
   return 0;
 }
