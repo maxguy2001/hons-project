@@ -607,8 +607,8 @@ namespace logical_solver{
     int col_index, int feasible_value
   ) {
     if (feasible_value < implied_lower_bounds_.at(col_index) || feasible_value > implied_upper_bounds_.at(col_index)) {
-      printf("Variable %d does not meet the implied bounds.", col_index);
-      printf("Implied bounds: Lower = %d, Upper = %d.", implied_lower_bounds_.at(col_index), implied_upper_bounds_.at(col_index));
+      // printf("Variable %d does not meet the implied bounds.", col_index);
+      // printf("Implied bounds: Lower = %d, Upper = %d.", implied_lower_bounds_.at(col_index), implied_upper_bounds_.at(col_index));
       return false;
     }
     return true;

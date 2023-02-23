@@ -88,9 +88,9 @@ void testOnMultipleProblems(int problems_count) {
       );
       presolve.applyPresolve();
       presolve.applyPostsolve();
-      // if (presolve.unsatisfied_constraints) {
-      //   unsatisfied_constraints += 1;
-      // }
+      if (presolve.unsatisfied_constraints) {
+        unsatisfied_constraints += 1;
+      }
       if (presolve.infeasible) {
         infeasible_count += 1;
       }
@@ -101,6 +101,7 @@ void testOnMultipleProblems(int problems_count) {
       }
     }
   }
+  std::cout<<""<<std::endl;
   printf("%d problems were reduced to empty.\n", reduced_to_empty_count);
   printf("%d problems were not feasible \n", infeasible_count);
   printf("%d problems led to unsatisfied constraints\n", unsatisfied_constraints);
