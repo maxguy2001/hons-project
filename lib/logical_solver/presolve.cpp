@@ -194,7 +194,7 @@ namespace logical_solver{
         row_index, col_index, variable_coefficient, RHS
       );
     } else {
-      variable_value = RHS/variable_coefficient;
+      variable_value = (double)RHS/variable_coefficient;
     } 
     if (variable_value != kInfinity) {
       presolve_active_rows_.at(row_index) = false;
@@ -458,11 +458,16 @@ namespace logical_solver{
     feasible_solution.at(col_index) = feasible_value;
   };
 
-  bool Presolve::isFreeColSubstitution(int row_index, int col_index) {
+  bool Presolve::isDoubletonEquation(int row_index, int col_index) {
     if (rows_non_zero_variables_.at(row_index).size() == 2) {
-      if (implied_lower_bounds_.at(col_index) == -kInfinity && implied_upper_bounds_.at(col_index) == kInfinity) {
-        return true;
-      }
+      return true;
+    }
+    return false;
+  };
+
+  bool Presolve::isFreeColSubstitution(int row_index, int col_index) {
+    if (implied_lower_bounds_.at(col_index) == -kInfinity && implied_upper_bounds_.at(col_index) == kInfinity) {
+      return true;
     }
     return false;
   };
@@ -487,8 +492,8 @@ namespace logical_solver{
   ) {
     // Get dependancy variable and store in dependancies vector to be 
     // stored in rule log struct.
-    int dependancy = getFreeColSubstitutionDependancy(row_index, col_index);
-    std::vector<int> dependancies_vector = {dependancy};
+    // int dependancy = getFreeColSubstitutionDependancy(row_index, col_index);
+    // std::vector<int> dependancies_vector = {dependancy};
 
     // Turn off row and col
     presolve_active_rows_.at(row_index) = false;
@@ -497,26 +502,48 @@ namespace logical_solver{
     presolve_active_columns_count -= 1;
 
     // Update presolve stack.
-    struct presolve_log log = {row_index, col_index, 4, dependancies_vector};
+    struct presolve_log log = {row_index, col_index, 4};
     presolve_stack_.push(log);
   };
 
+  double Presolve::getFreeColSubstitutionSumOfDependacies(
+    int row_index, int col_index
+  ) {
+    double sum_of_dependancies = 0;
+
+    for (int j : problem_matrix_.at(row_index)) {
+      // If it is not the singleton column, check if the coefficient
+      // in the problem is non-zero, and if it isn't if a feasible value
+      // has been found update sum of dependancies, and it not return 
+      // kinfinity.
+      if (j != col_index) {
+        int col_coefficient = problem_matrix_.at(row_index).at(j);
+
+        if (col_coefficient != 0) {
+          if (postsolve_active_cols_.at(j))  {
+            sum_of_dependancies += col_coefficient*feasible_solution.at(j);
+          } else {
+            return kInfinity;
+          }
+        }
+      }
+    }
+    return sum_of_dependancies;
+  };
+
   void Presolve::applyFreeColSubstitutionPostsolve(
-    int row_index, int col_index, int dependancy_index
+    int row_index, int col_index
   ) {
     // Check if a feasible value has been found for a 
     // variable, and if so apply postsolve.
-    if (postsolve_active_cols_.at(dependancy_index)) {
-      int constant_term = lower_bounds_.at(row_index);
-      int dependancy_feasible_value = feasible_solution.at(dependancy_index);
-      int dependancy_coefficient = problem_matrix_.at(row_index).at(dependancy_index);
-      int RHS = constant_term - dependancy_feasible_value*dependancy_coefficient;
+    double sum_of_dependancies = getFreeColSubstitutionSumOfDependacies(
+      row_index, col_index
+    );
+
+    if (sum_of_dependancies != kInfinity) {
+      double RHS = lower_bounds_.at(row_index) - sum_of_dependancies;
       int variable_coefficient = problem_matrix_.at(row_index).at(col_index);
       double feasible_value;
-
-      if (col_index == 8) {
-        printf("Dependancy index: %d\n Dependancy feasible value: %d\n",dependancy_index, dependancy_feasible_value);
-      }
 
       if (solve_MIP_) {
         feasible_value = getVariableFeasibleValueMIP(
@@ -747,7 +774,7 @@ namespace logical_solver{
           applyFixedColPostsolve(col_index);
         }
         else if (rule_id == 4) {
-          applyFreeColSubstitutionPostsolve(row_index, col_index, rule_log.dependancies.at(0));
+          applyFreeColSubstitutionPostsolve(row_index, col_index);
         } 
         else if (rule_id == 5) {
           applyParallelRowPostsolve(row_index);

@@ -312,14 +312,20 @@ namespace logical_solver{
 
   /**
    * @brief Function called in presolve when we know a column 
-   * only has one non-zero cofficient, in order to check whether it is
-   * a free column substitution column. A free column substitution column happens when there is only
-   * one non-zero coefficient in a free column, and it happens
-   * in a row where there is only one other variable. Thus,
-   * the variable in the column can be expressed in terms of 
-   * the other variable in the row. The function checks if the
-   * corresponding row only has two non-zero variables by checking the
-   * rows_non_zero_variables vector. 
+   * only has one non-zero cofficient, to check wherher it is 
+   * a doubleton equation, so it is in a row where there is 
+   * only one other varible.
+   * 
+   * @param row_index: of the corresponding row to check. 
+   * @param col_index: of the corresponding column. 
+   * @return bool: indicating whether or not column is a free column substitution col.
+   */
+  bool isDoubletonEquation(int row_index, int col_index);
+
+  /**
+   * @brief Checks if a column, which has already been found to be 
+   * a column singleton, is a free column, i.e if the implied bounds
+   * on the variable are minus and plus infinity.
    * 
    * @param row_index: of the corresponding row to check. 
    * @param col_index: of the corresponding column. 
@@ -350,6 +356,8 @@ namespace logical_solver{
    */
   void updateStateFreeColSubstitution(int row_index, int col_index);
 
+  double getFreeColSubstitutionSumOfDependacies(int row_index, int col_index);
+
   /**
    * @brief Finds the feasible value of a variable in postsolve
    * when the rule in presolve was free column substitution col - as per the 
@@ -367,7 +375,7 @@ namespace logical_solver{
    * @return void.
    */ 
   void applyFreeColSubstitutionPostsolve(
-    int row_index, int col_index, int dependancy_index
+    int row_index, int col_index
   );
 
   /**

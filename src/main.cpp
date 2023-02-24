@@ -117,8 +117,8 @@ void testOnMultipleProblems(int problems_count) {
 }
 
 int main(){
-  //testOnTestProblem();
-  testOnSingleProblem(755);
+  testOnTestProblem();
+  // testOnSingleProblem(755);
   // const int all_test_cases_count = 150218;
   // auto start = std::chrono::high_resolution_clock::now();
   // testOnMultipleProblems(all_test_cases_count);
