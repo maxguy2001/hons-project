@@ -1,5 +1,6 @@
 #include "main.hpp"
 #include <algorithm>
+#include <cmath>
 #include <iostream>
 #include <iterator>
 
@@ -72,7 +73,7 @@ int PrimalSimplex::getPivotColumnIndex() {
       std::min_element(objective_values.begin(), objective_values.end());
   int min_index;
   for (size_t i = 0; i < objective_values.size(); ++i) {
-    if (std::abs(objective_values.at(i) - *min_value) < core::kEpsilon) {
+    if (std::fabs(objective_values.at(i) - *min_value) < core::kEpsilon) {
       min_index = i;
     }
   }
@@ -104,7 +105,7 @@ int PrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
   auto min_ratio = std::min_element(ratios.begin(), ratios.end());
   int pivot_row_index;
   for (size_t i = 0; i < ratios.size(); ++i) {
-    if (std::abs(ratios.at(i) - *min_ratio) < core::kEpsilon) {
+    if (std::fabs(ratios.at(i) - *min_ratio) < core::kEpsilon) {
       pivot_row_index = i;
     }
   }
@@ -151,7 +152,7 @@ void PrimalSimplex::constructNewTable(const int pivot_row_index,
       new_table.push_back(new_row);
     }
     // case if pivot row element is already zero
-    else if (std::abs(pivot_column.at(i)) < core::kEpsilon) {
+    else if (std::fabs(pivot_column.at(i)) < core::kEpsilon) {
       // just add row to new table
       for (size_t j = 0; j < pivot_row.size(); ++j) {
         new_elem = table_.at(i).at(j);

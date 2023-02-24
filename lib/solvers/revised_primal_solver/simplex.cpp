@@ -1,5 +1,6 @@
 #include "simplex.hpp"
 #include <algorithm>
+#include <cmath>
 #include <core/consts.hpp>
 #include <iostream>
 #include <iterator>
@@ -151,7 +152,7 @@ void RevisedPrimalSimplex::constructNewTable(const int pivot_row_index,
       new_table.push_back(new_row);
     }
     // case if pivot row element is already zero
-    else if (std::abs(pivot_column.at(i)) < core::kEpsilon) {
+    else if (std::fabs(pivot_column.at(i)) < core::kEpsilon) {
       // just add row to new table
       for (size_t j = 0; j < pivot_row.size(); ++j) {
         new_elem = table_.at(i).at(j);
