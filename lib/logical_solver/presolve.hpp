@@ -13,8 +13,11 @@ namespace logical_solver{
   // PUBLIC INSTANCE VARIABLES:
   // problem
   std::vector<std::vector<int>> problem_matrix_;
-  std::vector<int> lower_bounds_;
-  std::vector<int> upper_bounds_;
+  std::vector<double> lower_bounds_;
+  std::vector<double> upper_bounds_;
+
+  // Problem type
+  bool solve_MIP_;
 
   // problem characteristics
   int variables_count_;
@@ -24,8 +27,8 @@ namespace logical_solver{
 
   // Vectors to keep track of implied lower and 
   // upper bounds during presolve.
-  std::vector<int> implied_lower_bounds_;
-  std::vector<int> implied_upper_bounds_;
+  std::vector<double> implied_lower_bounds_;
+  std::vector<double> implied_upper_bounds_;
 
   // feasible solution vector
   std::vector<int> feasible_solution;
@@ -41,7 +44,8 @@ namespace logical_solver{
     const std::vector<int> lower_bounds, 
     const std::vector<int> upper_bounds,
     const int inequalities_count,
-    const int equalities_count
+    const int equalities_count,
+    const bool solve_MIP
   );
 
   // PUBLIC METHODS
@@ -120,7 +124,7 @@ namespace logical_solver{
   }; 
 
   // PRIVATE CLASS VARIABLES:
-  // stack (vector) of presolve structs.
+  // stack of presolve structs.
   std::stack<presolve_log> presolve_stack_;
 
   // PRIVATE METHODS
@@ -383,11 +387,11 @@ namespace logical_solver{
   void applyPresolveColRules();
 
   /**
-   * @brief Called in postsolve to get the feasible value of 
-   * a variable once a postsolve function has simplified the 
-   * corresponding constraint to an integer coefficient times 
-   * the variable in the LHS, and an integer in the RHS. It checks 
-   * if the RHS divided by the coefficient is an integer that 
+   * @brief Called in postsolve, when solving MIPs, 
+   * to get the feasible value of a variable once a postsolve 
+   * function has simplified the corresponding constraint to an 
+   * integer coefficient times the variable in the LHS, 
+   * and an integer in the RHS. It checks if the RHS divided by the coefficient is an integer that 
    * satisfies the implied bounds. If not, if it is an inequality, 
    * tries rounding up to nearest integer and checks if the upper 
    * bound is satisfied.
@@ -396,25 +400,13 @@ namespace logical_solver{
    * @param int constraint_RHS: integer RHS of constraint.
    * @param int row_index.
    * @return int Inf if not feasible, int feasible value if feasible.
-   */ 
-  int getVariableFeasibleValue(
-    int row_index, int col_index, 
-    int variable_coefficient, int constraint_RHS
-  );
-
-  /**
-   * @brief Called from the postsolve functions after getting
-   * the variable feasible value with getVariableFeasibleValue.
-   * If feasible value is infinity, it sets the instance variable
-   * infeasible to true. Else, it updates the feasible_solution vector
-   * with the feasible value. It returns false if variable was not 
-   * feasible and true if it was.
-   * 
-   * @param int col_index: the index of the variable.
-   * @param int feasible_value: feasible value found for the variable.
-   * @return void.
    */
-  bool updateStateFeasibleValue(int col_index, int feasible_value);
+  int getVariableFeasibleValueMIP(
+    int row_index, 
+    int col_index, 
+    int variable_coefficient, 
+    int constraint_RHS
+  );
 
   /**
    * @brief Checks if the feasible value that has been found for
@@ -434,33 +426,7 @@ namespace logical_solver{
 
   bool checkConstraint(int row_index, int rule_id);
 
-  /**
-   * @brief Checks if each constraint is being satisfied correctly
-   * as we turn rows and columns back on during postsolve. If a 
-   * constraint is not satisfied, returns its index. If they are all
-   * satisfied returns -1.
-   * 
-   * @return void.
-   */
-  std::vector<int> getUnsatisfiedConstraintsPostsolve();
-  
-  /**
-   * @brief Given a vector of unsatisfied constrains checks if
-   * it is empty and if not it raises an exception specifiying 
-   * which ones have not been satisfied 
-   * 
-   * @param unsatisfied_constraints: vector of unsatisfied constraints.
-   * @param rule_id: rule after which constraints have not been satisfied.
-   * @return void.
-   */
-  void checkUnsatisfiedConstraintsPostsolve(
-    std::vector<int> unsatisfied_constraints,
-    int rule_id
-  );
-
   void printPresolveCurrentState();
-
-  
   };
 };
   

@@ -23,7 +23,8 @@ void testOnTestProblem() {
   logical_solver::Presolve presolve(
     reader.problem_matrix_, 
     reader.lower_bounds_, reader.upper_bounds_,
-    reader.num_inequalities_, reader.num_equalities_
+    reader.num_inequalities_, reader.num_equalities_,
+    false
   );
   problems_filestream.close();
 
@@ -50,7 +51,8 @@ void testOnSingleProblem(int problem_number) {
   logical_solver::Presolve presolve(
     reader.problem_matrix_, 
     reader.lower_bounds_, reader.upper_bounds_,
-    reader.num_inequalities_, reader.num_equalities_
+    reader.num_inequalities_, reader.num_equalities_,
+    false
   );
 
   presolve.printLP();
@@ -72,6 +74,7 @@ void testOnMultipleProblems(int problems_count) {
 
   int reduced_to_empty_count = 0;
   int infeasible_count = 0;
+  int infeasible_by_parallel_rows_count = 0;
   int unsatisfied_constraints = 0;
 
   for (int n = 0; n < problems_count; n++) {
@@ -84,14 +87,19 @@ void testOnMultipleProblems(int problems_count) {
       logical_solver::Presolve presolve(
         reader.problem_matrix_, 
         reader.lower_bounds_, reader.upper_bounds_,
-        reader.num_inequalities_, reader.num_equalities_
+        reader.num_inequalities_, reader.num_equalities_,
+        false
       );
       presolve.applyPresolve();
       presolve.applyPostsolve();
       if (presolve.unsatisfied_constraints) {
         unsatisfied_constraints += 1;
+        presolve.printLP();
+        presolve.printFeasibleSolution();
+        std::cout<<n<<std::endl;
+        break;
       }
-      if (presolve.infeasible) {
+      else if (presolve.infeasible) {
         infeasible_count += 1;
       }
       else if (presolve.reduced_to_empty) {
@@ -110,13 +118,13 @@ void testOnMultipleProblems(int problems_count) {
 
 int main(){
   //testOnTestProblem();
-  //testOnSingleProblem(755);
-  const int all_test_cases_count = 150218;
-  auto start = std::chrono::high_resolution_clock::now();
-  testOnMultipleProblems(all_test_cases_count);
-  auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
-  printf("Time taken (seconds): %d \n", int(seconds));
+  testOnSingleProblem(755);
+  // const int all_test_cases_count = 150218;
+  // auto start = std::chrono::high_resolution_clock::now();
+  // testOnMultipleProblems(all_test_cases_count);
+  // auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  // long long seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+  // printf("Time taken (seconds): %d \n", int(seconds));
 
   return 0;
 }
