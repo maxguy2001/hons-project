@@ -1,14 +1,16 @@
-#include "main.hpp"
+#include "simplex.hpp"
 #include <algorithm>
 #include <cmath>
+#include <core/consts.hpp>
 #include <iostream>
 #include <iterator>
 
-namespace primal_simplex {
+namespace revised_primal_simplex {
 
-PrimalSimplex::PrimalSimplex() {}
+RevisedPrimalSimplex::RevisedPrimalSimplex() {}
 
-void PrimalSimplex::setProblem(const std::vector<std::vector<float>> table) {
+void RevisedPrimalSimplex::setProblem(
+    const std::vector<std::vector<float>> table) {
   // clear old data
   table_.clear();
 
@@ -18,7 +20,7 @@ void PrimalSimplex::setProblem(const std::vector<std::vector<float>> table) {
   }
 }
 
-void PrimalSimplex::setBasis(const std::vector<int> basis) {
+void RevisedPrimalSimplex::setBasis(const std::vector<int> basis) {
   // clear old data
   basis_.clear();
 
@@ -29,7 +31,7 @@ void PrimalSimplex::setBasis(const std::vector<int> basis) {
 }
 
 std::vector<float>
-PrimalSimplex::extractColumnFromTable(const int column_index) {
+RevisedPrimalSimplex::extractColumnFromTable(const int column_index) {
   std::vector<float> column;
   float table_element;
   for (size_t i = 0; i < table_.size(); ++i) {
@@ -39,49 +41,33 @@ PrimalSimplex::extractColumnFromTable(const int column_index) {
   return column;
 }
 
-int PrimalSimplex::getPivotColumnIndex() {
+int RevisedPrimalSimplex::getPivotColumnIndexFixed() {
 
-  // get objective function from table and make copy
+  // get objective function
   const std::vector<float> objective_function = table_.at(0);
-  std::vector<float> objective_values;
-  std::copy(objective_function.begin(), objective_function.end(),
-            std::back_inserter(objective_values));
 
-  // make vector containing corresponding index for objective_values
-  std::vector<int> index;
-  for (size_t i = 0; i < objective_values.size(); ++i) {
-    index.push_back(i);
-  }
-
-  // make copy of basis
-  std::vector<int> basis_copy;
-  std::copy(basis_.begin(), basis_.end(), std::back_inserter(basis_copy));
-
-  // sort basis copy descending
-  std::sort(basis_copy.begin(), basis_copy.end(), std::greater<int>());
-
-  // remove basic variables from objective_values and index
-  int index_to_remove;
-  for (size_t i = 0; i < basis_copy.size(); ++i) {
-    index_to_remove = basis_copy.at(i);
-    objective_values.erase(objective_values.begin() + index_to_remove);
-    index.erase(index.begin() + index_to_remove);
-  }
-
-  // locate and return smallest nonbasic value in objective function
-  auto min_value =
-      std::min_element(objective_values.begin(), objective_values.end());
-  int min_index;
-  for (size_t i = 0; i < objective_values.size(); ++i) {
-    if (std::fabs(objective_values.at(i) - *min_value) < core::kEpsilon) {
-      min_index = i;
+  // set initial point for pivot column index
+  int pivot_column_index;
+  float min_value;
+  for (std::size_t i = 1; i < objective_function.size(); ++i) {
+    if (std::find(basis_.begin(), basis_.end(), i) == basis_.end()) {
+      pivot_column_index = i;
+      min_value = objective_function.at(i);
     }
   }
 
-  return index.at(min_index);
+  // find pivot column index
+  for (std::size_t i = 1; i < objective_function.size(); ++i) {
+    if (std::find(basis_.begin(), basis_.end(), i) == basis_.end() &&
+        objective_function.at(i) < min_value) {
+      pivot_column_index = i;
+      min_value = objective_function.at(i);
+    }
+  }
+  return pivot_column_index;
 }
 
-int PrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
+int RevisedPrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
 
   // extract pivot and bounds columns
   const std::vector<float> pivot_column =
@@ -89,37 +75,51 @@ int PrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
   const std::vector<float> bounds_column =
       extractColumnFromTable(table_.at(0).size() - 1);
 
-  // conduct ratios test
-  std::vector<float> ratios;
-  float ratio;
-  for (size_t i = 0; i < pivot_column.size(); ++i) {
-    if (pivot_column.at(i) <= 0) {
-      ratios.push_back(core::kFloatInfinity);
-    } else {
-      ratio = bounds_column.at(i) / pivot_column.at(i);
-      ratios.push_back(ratio);
-    }
+  const auto max_value =
+      std::max_element(pivot_column.begin(), pivot_column.end());
+  const int pivot_row_index = std::distance(pivot_column.begin(), max_value);
+
+  if (pivot_row_index <= 0) {
+    return -1;
   }
 
-  // return index of minimum ratio
-  auto min_ratio = std::min_element(ratios.begin(), ratios.end());
-  int pivot_row_index;
-  for (size_t i = 0; i < ratios.size(); ++i) {
-    if (std::fabs(ratios.at(i) - *min_ratio) < core::kEpsilon) {
-      pivot_row_index = i;
-    }
-  }
   return pivot_row_index;
 }
 
-void PrimalSimplex::switchBasis(const int pivot_row_index,
-                                const int pivot_column_index) {
+bool RevisedPrimalSimplex::switchBasis(const int pivot_row_index,
+                                       const int pivot_column_index,
+                                       const bool verbosity) {
+  // TODO: fix this monstrosity
+  if (verbosity) {
+    // print basis
+    std::cout << "Basis: " << std::endl;
+    for (std::size_t i = 0; i < basis_.size(); ++i) {
+      std::cout << basis_.at(i) << " ";
+    }
+    std::cout << std::endl;
+
+    // print problem size
+    std::cout << "Problem size: " << table_.size() << " rows, "
+              << table_.at(0).size() << " columns" << std::endl;
+
+    // print pivot row index
+    std::cout << "Pivot row index: " << pivot_row_index << std::endl;
+
+    // print pivot column index
+    std::cout << "Pivot column index: " << pivot_column_index << std::endl;
+  }
+
+  // check fail state for now
+  if (basis_.size() < pivot_row_index) {
+    return false;
+  }
   // update basis
   basis_.at(pivot_row_index - 1) = pivot_column_index;
+  return true;
 }
 
-void PrimalSimplex::constructNewTable(const int pivot_row_index,
-                                      const int pivot_column_index) {
+void RevisedPrimalSimplex::constructNewTable(const int pivot_row_index,
+                                             const int pivot_column_index) {
   // define new table
   std::vector<std::vector<float>> new_table;
 
@@ -187,7 +187,7 @@ void PrimalSimplex::constructNewTable(const int pivot_row_index,
   }
 }
 
-bool PrimalSimplex::checkOptimality() {
+bool RevisedPrimalSimplex::checkOptimality() {
 
   const std::vector<float> objective_row = table_.at(0);
 
@@ -199,38 +199,39 @@ bool PrimalSimplex::checkOptimality() {
   return true;
 }
 
-void PrimalSimplex::printSolution() {
-
-  // get bounds vector and remove first element
-  std::vector<float> bounds = extractColumnFromTable(table_.at(0).size() - 1);
-  bounds.erase(bounds.begin());
-
-  // print results to terminal
-  for (size_t i = 0; i < bounds.size(); ++i) {
-    std::cout << "Variable " << basis_.at(i) << " = " << bounds.at(i)
-              << std::endl;
+void RevisedPrimalSimplex::printObjectiveRow() {
+  std::vector<float> obj_row = table_.at(0);
+  for (std::size_t i = 0; i < obj_row.size(); ++i) {
+    std::cout << obj_row.at(i) << " ";
   }
-  std::cout << "All other variables were nonbasic and hence = 0" << std::endl;
+  std::cout << std::endl;
 }
 
-void PrimalSimplex::solveProblem() {
+std::optional<std::vector<float>>
+RevisedPrimalSimplex::solveProblem(const bool run_verbose) {
 
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
-    int pivot_column_index = getPivotColumnIndex();
+    int pivot_column_index = getPivotColumnIndexFixed();
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
-    switchBasis(pivot_row_index, pivot_column_index);
+    if (pivot_row_index == -1) {
+      ++num_pivot_row_failures;
+      return std::nullopt;
+    }
+    // TODO: fix this function (guarantee that pivot_row_index is not >
+    // len(basis)...)
+    bool is_basis_switch_successful =
+        switchBasis(pivot_row_index, pivot_column_index, run_verbose);
+    if (!is_basis_switch_successful) {
+      ++num_basis_failures;
+      return std::nullopt;
+    }
     constructNewTable(pivot_row_index, pivot_column_index);
 
     if (checkOptimality()) {
-      printSolution();
-      break;
-    }
-
-    if (i == core::kMaxIterations - 1) {
-      std::cout << "Max nuber of iterations reached. No solution found."
-                << std::endl;
+      return table_.at(0);
     }
   }
-}
+  return std::nullopt;
+} // namespace revised_primal_simplex
 
-} // namespace primal_simplex
+} // namespace revised_primal_simplex

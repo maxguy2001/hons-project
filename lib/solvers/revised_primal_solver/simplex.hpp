@@ -1,12 +1,15 @@
-#include "../../../lib/core/consts.hpp"
 #include <cstdint>
+#include <optional>
 #include <vector>
 
-namespace primal_simplex {
+namespace revised_primal_simplex {
 
-class PrimalSimplex : public core::ISolver {
+class RevisedPrimalSimplex {
 public:
-  PrimalSimplex();
+  RevisedPrimalSimplex();
+
+  int num_basis_failures = 0;
+  int num_pivot_row_failures = 0;
 
   /**
    * @brief Set the table class member
@@ -26,14 +29,15 @@ public:
    * @brief solve the given problem
    *
    */
-  void solveProblem();
+  std::optional<std::vector<float>> solveProblem(const bool run_verbose);
 
-private:
-  /**
-   * @brief prints solution to simplex problem to terminal
-   *
-   */
-  void printSolution();
+  // TODO: reinstate private section of class & remover verbose argument from
+  // solveProblem
+  // private: simplex table
+  std::vector<std::vector<float>> table_;
+
+  // simplex basis. Order of basis must be preserved!
+  std::vector<int> basis_;
 
   /**
    * @brief returns a column of the table as a vector. Useful for iterating over
@@ -49,7 +53,7 @@ private:
    *
    * @return int
    */
-  int getPivotColumnIndex();
+  int getPivotColumnIndexFixed();
 
   /**
    * @brief returns index of pivot row in table_ based on the minimum value
@@ -67,7 +71,9 @@ private:
    * @param pivot_row_index found in getPivotRowIndex()
    * @param pivot_column_index found in getPivotColumnIndex()
    */
-  void switchBasis(const int pivot_row_index, const int pivot_column_index);
+  bool switchBasis(const int pivot_row_index, const int pivot_column_index,
+                   const bool verbose);
+  // TODO: fixabove later
 
   /**
    * @brief constructs new table_ object, completing row operations to reduce
@@ -89,11 +95,8 @@ private:
    */
   bool checkOptimality();
 
-  // simplex table
-  std::vector<std::vector<float>> table_;
-
-  // simplex basis. Order of basis must be preserved!
-  std::vector<int> basis_;
+  // TODO: remove this?
+  void printObjectiveRow();
 };
 
-} // namespace primal_simplex
+} // namespace revised_primal_simplex
