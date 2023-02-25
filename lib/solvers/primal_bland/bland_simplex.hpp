@@ -2,14 +2,16 @@
 #include <optional>
 #include <vector>
 
-namespace solvers::revised_primal_simplex {
+namespace solvers::bland_simplex {
 
-class RevisedPrimalSimplex {
+class BlandPrimalSimplex {
 public:
-  RevisedPrimalSimplex();
+  BlandPrimalSimplex();
 
+  int num_already_optimal_ = 0;
   int num_basis_failures_ = 0;
   int num_pivot_row_failures_ = 0;
+  int num_not_converging_ = 0;
 
   /**
    * @brief Set the table class member
@@ -54,7 +56,7 @@ private:
    *
    * @return int
    */
-  int getPivotColumnIndexFixed();
+  int getPivotColumnIndex();
 
   /**
    * @brief returns index of pivot row in table_ based on the minimum value
@@ -72,8 +74,7 @@ private:
    * @param pivot_row_index found in getPivotRowIndex()
    * @param pivot_column_index found in getPivotColumnIndex()
    */
-  bool switchBasis(const int pivot_row_index, const int pivot_column_index,
-                   const bool verbose);
+  bool switchBasis(const int pivot_row_index, const int pivot_column_index);
   // TODO: fix above later
 
   /**
@@ -100,4 +101,4 @@ private:
   void printObjectiveRow();
 };
 
-} // namespace solvers::revised_primal_simplex
+} // namespace solvers::bland_simplex

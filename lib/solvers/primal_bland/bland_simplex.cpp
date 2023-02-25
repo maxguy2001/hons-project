@@ -1,15 +1,15 @@
-#include "simplex.hpp"
+#include "bland_simplex.hpp"
 #include <algorithm>
 #include <cmath>
 #include <core/consts.hpp>
 #include <iostream>
 #include <iterator>
 
-namespace solvers::revised_primal_simplex {
+namespace solvers::bland_simplex {
 
-RevisedPrimalSimplex::RevisedPrimalSimplex() {}
+BlandPrimalSimplex::BlandPrimalSimplex() {}
 
-void RevisedPrimalSimplex::setProblem(
+void BlandPrimalSimplex::setProblem(
     const std::vector<std::vector<float>> table) {
   // clear old data
   table_.clear();
@@ -20,7 +20,7 @@ void RevisedPrimalSimplex::setProblem(
   }
 }
 
-void RevisedPrimalSimplex::setBasis(const std::vector<int> basis) {
+void BlandPrimalSimplex::setBasis(const std::vector<int> basis) {
   // clear old data
   basis_.clear();
 
@@ -31,7 +31,7 @@ void RevisedPrimalSimplex::setBasis(const std::vector<int> basis) {
 }
 
 std::vector<float>
-RevisedPrimalSimplex::extractColumnFromTable(const int column_index) {
+BlandPrimalSimplex::extractColumnFromTable(const int column_index) {
   std::vector<float> column;
   float table_element;
   for (size_t i = 0; i < table_.size(); ++i) {
@@ -41,73 +41,37 @@ RevisedPrimalSimplex::extractColumnFromTable(const int column_index) {
   return column;
 }
 
-int RevisedPrimalSimplex::getPivotColumnIndexFixed() {
+int BlandPrimalSimplex::getPivotColumnIndex() {
 
   // get objective function
   const std::vector<float> objective_function = table_.at(0);
 
-  // set initial point for pivot column index
-  int pivot_column_index;
-  float min_value;
   for (std::size_t i = 1; i < objective_function.size(); ++i) {
-    if (std::find(basis_.begin(), basis_.end(), i) == basis_.end()) {
-      pivot_column_index = i;
-      min_value = objective_function.at(i);
+    if (objective_function.at(i) < 0 &&
+        std::find(basis_.begin(), basis_.end(), i) == basis_.end()) {
+      return i;
     }
   }
-
-  // find pivot column index
-  for (std::size_t i = 1; i < objective_function.size(); ++i) {
-    if (std::find(basis_.begin(), basis_.end(), i) == basis_.end() &&
-        objective_function.at(i) < min_value) {
-      pivot_column_index = i;
-      min_value = objective_function.at(i);
-    }
-  }
-  return pivot_column_index;
+  // if already optimal
+  return -1;
 }
 
-int RevisedPrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
+int BlandPrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
 
-  // extract pivot and bounds columns
+  // extract pivot column
   const std::vector<float> pivot_column =
       extractColumnFromTable(pivot_column_index);
-  const std::vector<float> bounds_column =
-      extractColumnFromTable(table_.at(0).size() - 1);
 
-  const auto max_value =
-      std::max_element(pivot_column.begin(), pivot_column.end());
-  const int pivot_row_index = std::distance(pivot_column.begin(), max_value);
-
-  if (pivot_row_index <= 0) {
-    return -1;
+  for (std::size_t i = 1; i < pivot_column.size(); ++i) {
+    if (pivot_column.at(i) > 0) {
+      return i;
+    }
   }
-
-  return pivot_row_index;
+  return -1;
 }
 
-bool RevisedPrimalSimplex::switchBasis(const int pivot_row_index,
-                                       const int pivot_column_index,
-                                       const bool verbosity) {
-  // TODO: fix this monstrosity
-  if (verbosity) {
-    // print basis
-    std::cout << "Basis: " << std::endl;
-    for (std::size_t i = 0; i < basis_.size(); ++i) {
-      std::cout << basis_.at(i) << " ";
-    }
-    std::cout << std::endl;
-
-    // print problem size
-    std::cout << "Problem size: " << table_.size() << " rows, "
-              << table_.at(0).size() << " columns" << std::endl;
-
-    // print pivot row index
-    std::cout << "Pivot row index: " << pivot_row_index << std::endl;
-
-    // print pivot column index
-    std::cout << "Pivot column index: " << pivot_column_index << std::endl;
-  }
+bool BlandPrimalSimplex::switchBasis(const int pivot_row_index,
+                                     const int pivot_column_index) {
 
   // check fail state for now
   if (basis_.size() < pivot_row_index) {
@@ -118,8 +82,8 @@ bool RevisedPrimalSimplex::switchBasis(const int pivot_row_index,
   return true;
 }
 
-void RevisedPrimalSimplex::constructNewTable(const int pivot_row_index,
-                                             const int pivot_column_index) {
+void BlandPrimalSimplex::constructNewTable(const int pivot_row_index,
+                                           const int pivot_column_index) {
   // define new table
   std::vector<std::vector<float>> new_table;
 
@@ -187,7 +151,7 @@ void RevisedPrimalSimplex::constructNewTable(const int pivot_row_index,
   }
 }
 
-bool RevisedPrimalSimplex::checkOptimality() {
+bool BlandPrimalSimplex::checkOptimality() {
 
   const std::vector<float> objective_row = table_.at(0);
 
@@ -199,7 +163,7 @@ bool RevisedPrimalSimplex::checkOptimality() {
   return true;
 }
 
-void RevisedPrimalSimplex::printObjectiveRow() {
+void BlandPrimalSimplex::printObjectiveRow() {
   std::vector<float> obj_row = table_.at(0);
   for (std::size_t i = 0; i < obj_row.size(); ++i) {
     std::cout << obj_row.at(i) << " ";
@@ -208,19 +172,21 @@ void RevisedPrimalSimplex::printObjectiveRow() {
 }
 
 std::optional<std::vector<float>>
-RevisedPrimalSimplex::solveProblem(const bool run_verbose) {
+BlandPrimalSimplex::solveProblem(const bool run_verbose) {
 
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
-    int pivot_column_index = getPivotColumnIndexFixed();
+    int pivot_column_index = getPivotColumnIndex();
+    if (pivot_column_index == -1) {
+      ++num_already_optimal_;
+      return table_.at(0);
+    }
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
       ++num_pivot_row_failures_;
       return std::nullopt;
     }
-    // TODO: fix this function (guarantee that pivot_row_index is not >
-    // len(basis)...)
     bool is_basis_switch_successful =
-        switchBasis(pivot_row_index, pivot_column_index, run_verbose);
+        switchBasis(pivot_row_index, pivot_column_index);
     if (!is_basis_switch_successful) {
       ++num_basis_failures_;
       return std::nullopt;
@@ -231,7 +197,8 @@ RevisedPrimalSimplex::solveProblem(const bool run_verbose) {
       return table_.at(0);
     }
   }
+  ++num_not_converging_;
   return std::nullopt;
-} // namespace revised_primal_simplex
+}
 
-} // namespace solvers::revised_primal_simplex
+} // namespace solvers::bland_simplex

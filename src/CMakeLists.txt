@@ -13,5 +13,6 @@ target_link_libraries(${target}
   utils
   logical_solver
   revised_primal_solver
+  primal_bland
   core
 )
