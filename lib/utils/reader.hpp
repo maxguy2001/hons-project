@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <cstdint>
+#include <limits>
 
 namespace utils{
 
@@ -28,7 +29,7 @@ namespace utils{
 
   std::vector<std::vector<int>> problem_matrix_;
 
-  const int kMaxInt = 32765;
+  const int kMaxInt = std::numeric_limits<int>::max(); 
 
   const int kMinInt = -32765;
 

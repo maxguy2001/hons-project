@@ -52,7 +52,7 @@ void testOnSingleProblem(int problem_number) {
     reader.problem_matrix_, 
     reader.lower_bounds_, reader.upper_bounds_,
     reader.num_inequalities_, reader.num_equalities_,
-    false
+    true
   );
 
   presolve.printLP();
@@ -62,6 +62,7 @@ void testOnSingleProblem(int problem_number) {
   }
   presolve.applyPostsolve();
   presolve.printFeasibleSolution();
+  if (presolve.infeasible) {std::cout<<"INFEASIBLE BITCH"<<std::endl;}
 }
 
 void testOnMultipleProblems(int problems_count) {
@@ -80,6 +81,7 @@ void testOnMultipleProblems(int problems_count) {
   for (int n = 0; n < problems_count; n++) {
     // printf("Solving problem %d\n", n);
 
+
     // Reading problem.
     reader.readNextProblem(problems_filestream);
 
@@ -92,14 +94,25 @@ void testOnMultipleProblems(int problems_count) {
       );
       presolve.applyPresolve();
       presolve.applyPostsolve();
+
       if (presolve.unsatisfied_constraints) {
         unsatisfied_constraints += 1;
-        presolve.printLP();
-        presolve.printFeasibleSolution();
-        std::cout<<n<<std::endl;
-        break;
+        // presolve.printLP();
+        // presolve.printFeasibleSolution();
+        // std::cout<<n<<std::endl;
       }
       else if (presolve.infeasible) {
+        if (presolve.infeasible_by_PR) {
+          infeasible_by_parallel_rows_count += 1;
+          // presolve.printLP();
+          // std::cout<<n<<std::endl;
+          // break;
+        }
+        // else {
+        //   presolve.printLP();
+        //   presolve.printFeasibleSolution();
+        //   std::cout<<n<<std::endl;
+        // }
         infeasible_count += 1;
       }
       else if (presolve.reduced_to_empty) {
@@ -109,22 +122,22 @@ void testOnMultipleProblems(int problems_count) {
       }
     }
   }
-  std::cout<<""<<std::endl;
-  printf("%d problems were reduced to empty.\n", reduced_to_empty_count);
-  printf("%d problems were not feasible \n", infeasible_count);
-  printf("%d problems led to unsatisfied constraints\n", unsatisfied_constraints);
+  printf("%d PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n", reduced_to_empty_count);
+  printf("%d Problems were not feasible. \n", infeasible_count);
+  printf("%d Problems were not feasible due to infeasible parallel rows. \n", infeasible_by_parallel_rows_count);
+  printf("%d Problems led to unsatisfied constraints.\n", unsatisfied_constraints);
 
 }
 
 int main(){
-  testOnTestProblem();
-  // testOnSingleProblem(755);
-  // const int all_test_cases_count = 150218;
-  // auto start = std::chrono::high_resolution_clock::now();
-  // testOnMultipleProblems(all_test_cases_count);
-  // auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  // long long seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
-  // printf("Time taken (seconds): %d \n", int(seconds));
+  // testOnTestProblem();
+  const int all_test_cases_count = 150218;
+  auto start = std::chrono::high_resolution_clock::now();
+  testOnMultipleProblems(all_test_cases_count);
+  auto elapsed = std::chrono::high_resolution_clock::now() - start;
+  long long seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+  printf("Time taken (seconds): %d \n", int(seconds));
 
   return 0;
+
 }

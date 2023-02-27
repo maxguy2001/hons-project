@@ -31,11 +31,12 @@ namespace logical_solver{
   std::vector<double> implied_upper_bounds_;
 
   // feasible solution vector
-  std::vector<int> feasible_solution;
+  std::vector<double> feasible_solution;
 
   // Boolean to check if problem has been reduced to empty.
   bool reduced_to_empty;
   bool infeasible;
+  bool infeasible_by_PR;
   bool unsatisfied_constraints;
 
   // CONSTRUCTOR
@@ -157,6 +158,8 @@ namespace logical_solver{
    */
   void getRowsAndColsNonZeros();
 
+  double getFeasibleValueCalculationBound(int row_index);
+
   /**
    * @brief Updates the state of the problem in presolve given that a 
    * redundant variable has been found. Turns off
@@ -251,7 +254,7 @@ namespace logical_solver{
   void updateStateParallelRow(
     int small_row_index, 
     int large_row_index,
-    int large_to_small_ratio, 
+    double large_to_small_ratio, 
     double large_bound_by_ratio
   );
 
@@ -308,7 +311,10 @@ namespace logical_solver{
    * @param col_index: column index.
    * @return void.
    */
-  void applyFixedColPostsolve(int col_index);
+  void applyFixedColPostsolve(
+    int col_index, 
+    std::vector<int> col_non_zeros
+  );
 
   /**
    * @brief Function called in presolve when we know a column 
@@ -356,7 +362,9 @@ namespace logical_solver{
    */
   void updateStateFreeColSubstitution(int row_index, int col_index);
 
-  double getFreeColSubstitutionSumOfDependacies(int row_index, int col_index);
+  double getFreeColSubstitutionSumOfDependancies(
+    int row_index, int col_index
+  );
 
   /**
    * @brief Finds the feasible value of a variable in postsolve
@@ -413,7 +421,7 @@ namespace logical_solver{
     int row_index, 
     int col_index, 
     int variable_coefficient, 
-    int constraint_RHS
+    double constraint_RHS
   );
 
   /**
@@ -437,4 +445,5 @@ namespace logical_solver{
   void printPresolveCurrentState();
   };
 };
+
   
