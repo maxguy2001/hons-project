@@ -81,7 +81,6 @@ void testOnMultipleProblems(int problems_count) {
   for (int n = 0; n < problems_count; n++) {
     // printf("Solving problem %d\n", n);
 
-
     // Reading problem.
     reader.readNextProblem(problems_filestream);
 
@@ -131,6 +130,7 @@ void testOnMultipleProblems(int problems_count) {
 
 int main(){
   // testOnTestProblem();
+  // testOnSingleProblem(144188);
   const int all_test_cases_count = 150218;
   auto start = std::chrono::high_resolution_clock::now();
   testOnMultipleProblems(all_test_cases_count);

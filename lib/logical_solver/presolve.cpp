@@ -82,10 +82,7 @@ namespace logical_solver{
     if (lower_bound != -kInfinity) {
       return lower_bound;
     }
-    if (upper_bound < kInfinity) {
-      return upper_bound;
-    } 
-    return 0.0;
+    return upper_bound;
   }
 
   int Presolve::getVariableFeasibleValueMIP(
@@ -151,7 +148,7 @@ namespace logical_solver{
   };
 
   void Presolve::applyFreeRowPostsolve(int row_index, int col_index) {
-    postsolve_active_cols_.at(row_index) = true;
+    postsolve_active_rows_.at(row_index) = true;
 
     if (col_index != -1) {
       feasible_solution.at(col_index) = 0;
@@ -335,13 +332,13 @@ namespace logical_solver{
   bool Presolve::checkAreParallelRowsFeasible(
     int small_row_index,
     int large_to_small_ratio,
-    double large_bound_by_ratio
+    double large_lower_bound_by_ratio
   ){
     // If we are dealing with an equality, check if the bounds
     // are also multiples of eachother and if they aren't
     // then the system is not feasible.
     if (small_row_index >= inequalities_count_) {
-      if (large_bound_by_ratio != lower_bounds_.at(small_row_index)) {
+      if (large_lower_bound_by_ratio != lower_bounds_.at(small_row_index)) {
         return false;
       }
     }
@@ -353,11 +350,11 @@ namespace logical_solver{
       // small inequality. Thus, if it is smaller than the small row's 
       // bound, the problem is infeasible.
       if (solve_MIP_) {
-        if (std::floor(large_bound_by_ratio) < lower_bounds_.at(small_row_index)) {
+        if (std::floor(large_lower_bound_by_ratio) < lower_bounds_.at(small_row_index)) {
           return false;
         }
       } else {
-        if (large_bound_by_ratio < lower_bounds_.at(small_row_index)) {
+        if (large_lower_bound_by_ratio < lower_bounds_.at(small_row_index)) {
           return false;
         }
       }
@@ -370,7 +367,7 @@ namespace logical_solver{
     int small_row_index, 
     int large_row_index,
     double large_to_small_ratio,
-    double large_bound_by_ratio
+    double large_lower_bound_by_ratio
   ) {
     // turn off large row and log into stack
     presolve_active_rows_.at(large_row_index) = false;
@@ -386,8 +383,8 @@ namespace logical_solver{
       // the ratio to ensure that constraints are satisfied when 
       // restricted to integers.
       double potential_lower_bound;
-      if (solve_MIP_) {potential_lower_bound = std::ceil(large_bound_by_ratio);}
-      else {potential_lower_bound = large_bound_by_ratio;}
+      if (solve_MIP_) {potential_lower_bound = std::ceil(large_lower_bound_by_ratio);}
+      else {potential_lower_bound = large_lower_bound_by_ratio;}
 
       int small_row_lower_bound = lower_bounds_.at(small_row_index);
 
@@ -406,9 +403,9 @@ namespace logical_solver{
         // lower bound, we will have already deemed the system unfeasible in 
         // checkAreParallelRowsFeasible.
         if (solve_MIP_) {
-          upper_bounds_.at(small_row_index) = std::floor(large_bound_by_ratio);
+          upper_bounds_.at(small_row_index) = std::floor(large_lower_bound_by_ratio);
         } else {
-          upper_bounds_.at(small_row_index) = large_bound_by_ratio;
+          upper_bounds_.at(small_row_index) = large_lower_bound_by_ratio;
         }
       }
     }
@@ -600,6 +597,13 @@ namespace logical_solver{
     for (int i = 0; i < constraints_count_; ++i) {
       // If row is active, apply row rules.
       if (presolve_active_rows_.at(i)) {
+        // Check if it is a free row, and if so update state
+        // accordingly and continue to the next iteration.
+        if (checkIsRowFree(i)) {
+          updateStateFreeRow(i);
+          continue;
+        }
+
         // Check if row is parallel to another row from row 0
         // to row i-1, or from the start of the equalities to i-1.
         int parallel_row_search_start = 0;
@@ -615,24 +619,21 @@ namespace logical_solver{
           int small_row_index = sorted_rows.at(0);
           int large_row_index = sorted_rows.at(1);
           double large_to_small_ratio = (double)problem_matrix_.at(large_row_index).at(rows_non_zero_variables_.at(large_row_index).at(0))/problem_matrix_.at(small_row_index).at(rows_non_zero_variables_.at(small_row_index).at(0));
-          double large_bound_by_ratio;
-
-          if (lower_bounds_.at(large_row_index) == -2147483648) {
-            large_bound_by_ratio = -2147483648/large_to_small_ratio;
-          } else {
-            large_bound_by_ratio = lower_bounds_.at(large_row_index)/large_to_small_ratio;
-          }
+          double large_lower_bound_by_ratio = lower_bounds_.at(large_row_index)/large_to_small_ratio;
 
           // If parallel row not feasible, set problem to infeasible
           // and break, else update state.
-          if (!checkAreParallelRowsFeasible(small_row_index, large_to_small_ratio, large_bound_by_ratio)) {
+          if (!checkAreParallelRowsFeasible(
+            small_row_index, large_to_small_ratio, 
+            large_lower_bound_by_ratio)
+          ) {
             infeasible = true;
             infeasible_by_PR = true;
             break;
           } else {
             updateStateParallelRow(
               small_row_index, large_row_index, 
-              large_to_small_ratio, large_bound_by_ratio
+              large_to_small_ratio, large_lower_bound_by_ratio
             );
           }
           // if row i was the large row in parallel rows it will have 
