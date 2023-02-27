@@ -160,9 +160,15 @@ namespace logical_solver{
 
   double getFeasibleValueCalculationBound(int row_index);
 
+  bool checkIsRowFree(int row_index);
+
+  void updateStateFreeRow(int row_index);
+
+  void applyFreeRowPostsolve(int row_index, int col_index);
+
   /**
    * @brief Updates the state of the problem in presolve given that a 
-   * redundant variable has been found. Turns off
+   * singleton variable has been found. Turns off
    * the row and column and logs the rule into the presolve stack as a 
    * row singleton.
    * 
@@ -173,7 +179,7 @@ namespace logical_solver{
   void updateStateSingletonVariable(int row_index, int col_index);
 
   /**
-   * @brief Applies the postsolve steps for a redundant variable. It
+   * @brief Applies the postsolve steps for a singleton variable. It
    * first finds the feasible value, which we take to be its lower 
    * bound, and checks it feasibility. Then, It logs the feasible value, 
    * sets the correponding postolve row and col to true,

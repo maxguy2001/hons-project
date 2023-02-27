@@ -116,6 +116,49 @@ namespace logical_solver{
     return kInfinity;
   };
 
+  bool Presolve::checkIsRowFree(int row_index) {
+    if (lower_bounds_.at(row_index) == -kInfinity && upper_bounds_.at(row_index) == kInfinity) {
+      return true;
+    }
+    return false;
+  }
+
+  void Presolve::updateStateFreeRow(int row_index) {
+    int row_non_zeros_count = rows_non_zero_variables_.at(row_index).size();
+    bool is_singleton_variable;
+    int col_index = -1;
+
+    // If the free row is a singleton variable we will store the 
+    // column index to provide a feasible value of 0 in postsolve,
+    // and we will turn off the column in presolve.
+    if (row_non_zeros_count == 1) {
+      col_index = rows_non_zero_variables_.at(row_index).at(0);
+      if (cols_non_zeros_indices_.at(col_index).size() == 1) {
+        is_singleton_variable = true;
+      }
+    }
+
+    if (is_singleton_variable) {
+      presolve_active_columns_.at(col_index) = false;
+      presolve_active_columns_count -= 1;
+    }
+    presolve_active_rows_.at(row_index) = false;
+    presolve_active_rows_count_ -= 1;
+
+    // Update presolve stack.
+    struct presolve_log log = {row_index, col_index, 0};
+    presolve_stack_.push(log);
+  };
+
+  void Presolve::applyFreeRowPostsolve(int row_index, int col_index) {
+    postsolve_active_cols_.at(row_index) = true;
+
+    if (col_index != -1) {
+      feasible_solution.at(col_index) = 0;
+      postsolve_active_cols_.at(col_index) = true;
+    }
+  };
+
   void Presolve::updateStateSingletonVariable(
     int row_index, int col_index
   ) {
@@ -125,7 +168,7 @@ namespace logical_solver{
     presolve_active_columns_count -= 1;
 
     // Update presolve stack.
-    struct presolve_log log = {row_index, col_index, 0};
+    struct presolve_log log = {row_index, col_index, 1};
     presolve_stack_.push(log);
   };
 
@@ -185,7 +228,7 @@ namespace logical_solver{
       implied_upper_bounds_.at(col_index) = variable_value;
 
       // Update presolve stack.
-      struct presolve_log log = {row_index, col_index, 1};
+      struct presolve_log log = {row_index, col_index, 2};
       presolve_stack_.push(log);
     } else {
       infeasible = true;
@@ -252,6 +295,7 @@ namespace logical_solver{
       if (row1_non_zero_col != row2_non_zero_col) {
         return false;
       }
+
       double ratio_new = (double)problem_matrix_.at(row1_index).at(row1_non_zero_col)/problem_matrix_.at(row2_index).at(row2_non_zero_col);
       if (ratio != ratio_new) {return false;}
       ratio = ratio_new;
@@ -328,15 +372,12 @@ namespace logical_solver{
     double large_to_small_ratio,
     double large_bound_by_ratio
   ) {
-    
     // turn off large row and log into stack
     presolve_active_rows_.at(large_row_index) = false;
     presolve_active_rows_count_ -= 1;
-
-    // Dependancy vector to keep track of the row we keep on and its
-    // original bound.
-    struct presolve_log log = {large_row_index, -1, 5};
+    struct presolve_log log = {large_row_index, -1, 3};
     presolve_stack_.push(log);
+
     // if we have an inequality, update the bound on the small row 
     // to ensure that both are satisfied.
     if (small_row_index < inequalities_count_) {
@@ -385,7 +426,7 @@ namespace logical_solver{
     presolve_active_columns_.at(col_index) = false;
     presolve_active_columns_count -= 1;
 
-    struct presolve_log log = {-1, col_index, 2};
+    struct presolve_log log = {-1, col_index, 4};
     presolve_stack_.push(log);
   };
 
@@ -415,7 +456,7 @@ namespace logical_solver{
     presolve_active_columns_count -= 1;
     // Log -1 in row index as not applicable in this 
     // rule.
-    struct presolve_log log = {-1, col_index, 3, cols_non_zeros_indices_.at(col_index)};
+    struct presolve_log log = {-1, col_index, 5, cols_non_zeros_indices_.at(col_index)};
     presolve_stack_.push(log);
   };
 
@@ -485,7 +526,7 @@ namespace logical_solver{
     presolve_active_columns_count -= 1;
 
     // Update presolve stack.
-    struct presolve_log log = {row_index, col_index, 4};
+    struct presolve_log log = {row_index, col_index, 6};
     presolve_stack_.push(log);
   };
 
@@ -547,7 +588,7 @@ namespace logical_solver{
         // row. If so, check if the row (constraint) is satisfied, and if 
         // so turn on row in postsolve.
         if (isRowActivePostsolve(row_index)) {
-          if (checkConstraint(row_index, 4)) {
+          if (checkConstraint(row_index, 6)) {
             postsolve_active_rows_.at(row_index) = true;
           }
         }
@@ -562,14 +603,13 @@ namespace logical_solver{
         // Check if row is parallel to another row from row 0
         // to row i-1, or from the start of the equalities to i-1.
         int parallel_row_search_start = 0;
-        if (i >= inequalities_count_) {parallel_row_search_start = inequalities_count_;}
-        // std::cout << "TRYYYY" <<std::endl;
-        // std::cout << i << std::endl;
-        
+        if (i >= inequalities_count_) {
+          parallel_row_search_start = inequalities_count_;
+        }
         int parallel_row = getParallelRow(i, parallel_row_search_start);
+
         // If parallel row is found, check feasibility and 
         // if feasible call updateSateParallelRows.
-
         if (parallel_row != -1) {
           std::vector<int> sorted_rows = sortParallelRowsBySize(i, parallel_row);
           int small_row_index = sorted_rows.at(0);
@@ -591,34 +631,32 @@ namespace logical_solver{
             break;
           } else {
             updateStateParallelRow(
-              small_row_index, 
-              large_row_index, 
-              large_to_small_ratio,
-              large_bound_by_ratio
+              small_row_index, large_row_index, 
+              large_to_small_ratio, large_bound_by_ratio
             );
           }
-          // if I was the large row in parallel rows it will have 
+          // if row i was the large row in parallel rows it will have 
           // been turned off so we don't check the rest of the rules.
           if (large_row_index == i) {continue;}
         }
 
-        int non_zeros_count = rows_non_zero_variables_.at(i).size();
+        int row_non_zeros_count = rows_non_zero_variables_.at(i).size();
 
-        // If row is a row singleton, check if it is a redundant 
+        // If row is a row singleton, check if it is a singleton 
         // variable, row singleton equality or row singleton inequality,
         // and update state accordingly.
-        if (non_zeros_count == 1) {
+        if (row_non_zeros_count == 1) {
           int non_zero_variable = rows_non_zero_variables_.at(i).at(0);
           int corresponding_col_non_zeros_count = cols_non_zeros_indices_.at(
             non_zero_variable
           ).size();
 
-          // If it is a redundant variable, update state accordingly.
+          // If it is a singleton variable, update state accordingly.
           if (corresponding_col_non_zeros_count == 1) {
             updateStateSingletonVariable(i, non_zero_variable);
           }
           
-          // If it is not a redundant variable, check if is an equality
+          // If it is not a singleton variable, check if is an equality
           // or an inequality and update state accordingly.
           else if (i < inequalities_count_) { // Inequality
             if (std::find(inequality_singletons_.begin(), inequality_singletons_.end(), i) == inequality_singletons_.end()) {
@@ -746,24 +784,27 @@ namespace logical_solver{
         int rule_id = rule_log.rule_id;
         int row_index = rule_log.constraint_index;
         int col_index = rule_log.variable_index;
-
+        
         if (rule_id == 0) {
-          applySingletonVariablePostsolve(row_index, col_index);
+          applyFreeRowPostsolve(row_index, col_index);
         }
         else if (rule_id == 1) {
-          applyRowSingletonPostsolve(row_index);
+          applySingletonVariablePostsolve(row_index, col_index);
         }
         else if (rule_id == 2) {
-          applyEmptyColPostsolve(col_index);
+          applyRowSingletonPostsolve(row_index);
         }
         else if (rule_id == 3) {
-          applyFixedColPostsolve(col_index, rule_log.dependancies);
+          applyParallelRowPostsolve(row_index);
         }
         else if (rule_id == 4) {
-          applyFreeColSubstitutionPostsolve(row_index, col_index);
-        } 
+          applyEmptyColPostsolve(col_index);
+        }
         else if (rule_id == 5) {
-          applyParallelRowPostsolve(row_index);
+          applyFixedColPostsolve(col_index, rule_log.dependancies);
+        } 
+        else if (rule_id == 6) {
+          applyFreeColSubstitutionPostsolve(row_index, col_index);
         }
 
         if (infeasible) {break;}
