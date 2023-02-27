@@ -170,7 +170,7 @@ namespace logical_solver{
    * @param column index. 
    * @return void.
    */
-  void updateStateRedundantVariable(int row_index, int col_index);
+  void updateStateSingletonVariable(int row_index, int col_index);
 
   /**
    * @brief Applies the postsolve steps for a redundant variable. It
@@ -182,7 +182,7 @@ namespace logical_solver{
    * @param column index. 
    * @return void.
    */
-  void applyRedundantVariablePostsolve(int row_index, int col_index);
+  void applySingletonVariablePostsolve(int row_index, int col_index);
 
   /**
    * @brief Updates the state of the problem in presolve given that a row 

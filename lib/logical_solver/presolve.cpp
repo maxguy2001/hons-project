@@ -116,7 +116,7 @@ namespace logical_solver{
     return kInfinity;
   };
 
-  void Presolve::updateStateRedundantVariable(
+  void Presolve::updateStateSingletonVariable(
     int row_index, int col_index
   ) {
     presolve_active_rows_.at(row_index) = false;
@@ -129,14 +129,14 @@ namespace logical_solver{
     presolve_stack_.push(log);
   };
 
-  void Presolve::applyRedundantVariablePostsolve(
+  void Presolve::applySingletonVariablePostsolve(
     int row_index, int col_index
   ) {
-    double feasible_value;
     int variable_coeff = problem_matrix_.at(row_index).at(col_index);
     double feasibleValueCalculationBound = getFeasibleValueCalculationBound(
       row_index
     );
+    double feasible_value;
 
     if (solve_MIP_) {
       feasible_value = getVariableFeasibleValueMIP(
@@ -239,17 +239,12 @@ namespace logical_solver{
     }
     int row1_first_non_zero_col = rows_non_zero_variables_.at(row1_index).at(0);
     int row2_first_non_zero_col = rows_non_zero_variables_.at(row2_index).at(0);
-    // if (row1_index == 2 && row2_index == 1){
-    //   printf("First non-zero col row2: %d\n", row1_first_non_zero_col);
-    //   printf("First non-zero col row1: %d\n", row2_first_non_zero_col);
-    // }
+
     if (row1_first_non_zero_col != row2_first_non_zero_col) {
       return false;
     }
     double ratio = (double)problem_matrix_.at(row1_index).at(row1_first_non_zero_col)/problem_matrix_.at(row2_index).at(row2_first_non_zero_col);
-    // if (row1_index == 2 && row2_index == 1){
-    //   printf("Ratio: %f\n", ratio);
-    // }
+
     for (int j = 1; j < rows_non_zero_variables_.at(row1_index).size(); j++) {
       int row1_non_zero_col = rows_non_zero_variables_.at(row1_index).at(j);
       int row2_non_zero_col = rows_non_zero_variables_.at(row2_index).at(j);
@@ -299,8 +294,8 @@ namespace logical_solver{
     double large_bound_by_ratio
   ){
     // If we are dealing with an equality, check if the bounds
-    // are also multiples of eachother and if not the parallel
-    // row is not feasible.
+    // are also multiples of eachother and if they aren't
+    // then the system is not feasible.
     if (small_row_index >= inequalities_count_) {
       if (large_bound_by_ratio != lower_bounds_.at(small_row_index)) {
         return false;
@@ -581,17 +576,13 @@ namespace logical_solver{
           int large_row_index = sorted_rows.at(1);
           double large_to_small_ratio = (double)problem_matrix_.at(large_row_index).at(rows_non_zero_variables_.at(large_row_index).at(0))/problem_matrix_.at(small_row_index).at(rows_non_zero_variables_.at(small_row_index).at(0));
           double large_bound_by_ratio;
-          // printf("Row %d", i);
-          // printf("Small row %d; Large row: %d\n", small_row_index, large_row_index);
-          // printPresolveCurrentState();
+
           if (lower_bounds_.at(large_row_index) == -2147483648) {
             large_bound_by_ratio = -2147483648/large_to_small_ratio;
           } else {
             large_bound_by_ratio = lower_bounds_.at(large_row_index)/large_to_small_ratio;
           }
-          // printf("Large to small ratio: %f\n", large_bound_by_ratio);
 
-          // std::cout << "TRYYYY 4" <<std::endl;
           // If parallel row not feasible, set problem to infeasible
           // and break, else update state.
           if (!checkAreParallelRowsFeasible(small_row_index, large_to_small_ratio, large_bound_by_ratio)) {
@@ -612,6 +603,7 @@ namespace logical_solver{
         }
 
         int non_zeros_count = rows_non_zero_variables_.at(i).size();
+
         // If row is a row singleton, check if it is a redundant 
         // variable, row singleton equality or row singleton inequality,
         // and update state accordingly.
@@ -623,7 +615,7 @@ namespace logical_solver{
 
           // If it is a redundant variable, update state accordingly.
           if (corresponding_col_non_zeros_count == 1) {
-            updateStateRedundantVariable(i, non_zero_variable);
+            updateStateSingletonVariable(i, non_zero_variable);
           }
           
           // If it is not a redundant variable, check if is an equality
@@ -705,18 +697,18 @@ namespace logical_solver{
     // Check if constraint is satisfied, and if not 
     // add index to unsatisfied constraints vector.
     if (constraint_value < lower_bounds_.at(row_index) || constraint_value > upper_bounds_.at(row_index)) {
-      // std::cout<<""<<std::endl;
-      // printf(
-      //   "Constraint %d was unsatisfied after applying rule %d.\n",
-      //   row_index, rule_id
-      // );
-      // printf("Constraint %d value: %d\n", row_index, (int)constraint_value);
-      // printf(
-      //   "Lower bound: %d; upper bound: %d\n", 
-      //   (int)lower_bounds_.at(row_index),
-      //   (int)upper_bounds_.at(row_index)
-      // );
-      // std::cout<<""<<std::endl;
+      std::cout<<""<<std::endl;
+      printf(
+        "Constraint %d was unsatisfied after applying rule %d.\n",
+        row_index, rule_id
+      );
+      printf("Constraint %d value: %f\n", row_index, constraint_value);
+      printf(
+        "Lower bound: %f; upper bound: %f\n", 
+        lower_bounds_.at(row_index),
+        upper_bounds_.at(row_index)
+      );
+      std::cout<<""<<std::endl;
       unsatisfied_constraints = true;
       return false;
     }
@@ -756,7 +748,7 @@ namespace logical_solver{
         int col_index = rule_log.variable_index;
 
         if (rule_id == 0) {
-          applyRedundantVariablePostsolve(row_index, col_index);
+          applySingletonVariablePostsolve(row_index, col_index);
         }
         else if (rule_id == 1) {
           applyRowSingletonPostsolve(row_index);
