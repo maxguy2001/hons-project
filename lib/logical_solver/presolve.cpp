@@ -121,39 +121,38 @@ namespace logical_solver{
   }
 
   void Presolve::updateStateFreeRow(int row_index) {
-    int row_non_zeros_count = rows_non_zero_variables_.at(row_index).size();
-    bool is_singleton_variable;
-    int col_index = -1;
-
-    // If the free row is a singleton variable we will store the 
-    // column index to provide a feasible value of 0 in postsolve,
-    // and we will turn off the column in presolve.
-    if (row_non_zeros_count == 1) {
-      col_index = rows_non_zero_variables_.at(row_index).at(0);
-      if (cols_non_zeros_indices_.at(col_index).size() == 1) {
-        is_singleton_variable = true;
-      }
-    }
-
-    if (is_singleton_variable) {
-      presolve_active_columns_.at(col_index) = false;
-      presolve_active_columns_count -= 1;
-    }
+    // int row_non_zeros_count = rows_non_zero_variables_.at(row_index).size();
+    // bool is_singleton_variable;
+    // int col_index = -1;
+    
+    // // If the free row is a singleton variable we will store the 
+    // // column index to provide a feasible value of 0 in postsolve,
+    // // and we will turn off the column in presolve.
+    // if (row_non_zeros_count == 1) {
+    //   col_index = rows_non_zero_variables_.at(row_index).at(0);
+    //   if (cols_non_zeros_indices_.at(col_index).size() == 1) {
+    //     is_singleton_variable = true;
+    //   }
+    // }
+    // if (is_singleton_variable) {
+    //   // presolve_active_columns_.at(col_index) = false;
+    //   presolve_active_columns_count -= 1;
+    // }
     presolve_active_rows_.at(row_index) = false;
     presolve_active_rows_count_ -= 1;
 
     // Update presolve stack.
-    struct presolve_log log = {row_index, col_index, 0};
+    struct presolve_log log = {row_index, -1, 0};
     presolve_stack_.push(log);
   };
 
   void Presolve::applyFreeRowPostsolve(int row_index, int col_index) {
     postsolve_active_rows_.at(row_index) = true;
 
-    if (col_index != -1) {
-      feasible_solution.at(col_index) = 0;
-      postsolve_active_cols_.at(col_index) = true;
-    }
+    // if (col_index != -1) {
+    //   feasible_solution.at(col_index) = 0;
+    //   postsolve_active_cols_.at(col_index) = true;
+    // }
   };
 
   void Presolve::updateStateSingletonVariable(
@@ -413,7 +412,7 @@ namespace logical_solver{
 
   void Presolve::applyParallelRowPostsolve(int row_index) {
     if (isRowActivePostsolve(row_index)) {
-      if (checkConstraint(row_index, 5)) {
+      if (checkConstraint(row_index, 3)) {
         postsolve_active_rows_.at(row_index) = true;
       }
     }
@@ -603,7 +602,6 @@ namespace logical_solver{
           updateStateFreeRow(i);
           continue;
         }
-
         // Check if row is parallel to another row from row 0
         // to row i-1, or from the start of the equalities to i-1.
         int parallel_row_search_start = 0;
@@ -640,7 +638,6 @@ namespace logical_solver{
           // been turned off so we don't check the rest of the rules.
           if (large_row_index == i) {continue;}
         }
-
         int row_non_zeros_count = rows_non_zero_variables_.at(i).size();
 
         // If row is a row singleton, check if it is a singleton 

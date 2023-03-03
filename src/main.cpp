@@ -60,7 +60,7 @@ void testOnSingleProblem(int problem_number) {
   if (presolve.reduced_to_empty) {
     printf("Reduced to empty\n");
   }
-  presolve.applyPostsolve();
+  // presolve.applyPostsolve();
   presolve.printFeasibleSolution();
   if (presolve.infeasible) {std::cout<<"INFEASIBLE BITCH"<<std::endl;}
 }
@@ -130,7 +130,7 @@ void testOnMultipleProblems(int problems_count) {
 
 int main(){
   // testOnTestProblem();
-  // testOnSingleProblem(144188);
+  // testOnSingleProblem(144187);
   const int all_test_cases_count = 150218;
   auto start = std::chrono::high_resolution_clock::now();
   testOnMultipleProblems(all_test_cases_count);
