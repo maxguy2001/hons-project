@@ -8,6 +8,7 @@ namespace core {
 struct InputRows {
   std::vector<std::vector<float>> equality_rows;
   std::vector<std::vector<float>> inequality_rows;
+  int num_variables;
 };
 
 struct FormattedProblem {

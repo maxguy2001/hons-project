@@ -171,9 +171,58 @@ void BlandPrimalSimplex::printObjectiveRow() {
   std::cout << std::endl;
 }
 
-core::SolveStatus verifySolution(core::InputRows original_problem,
-                                 std::vector<float> solution_row) {
-  // TODO: implement!
+core::SolveStatus
+BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
+                                   std::vector<float> solution_row) {
+
+  // extract primal solution from solution row
+  const int num_primal_variables = original_problem.num_variables - 1;
+
+  std::vector<float> x_negative;
+  const int x_neg_upper_bound = solution_row.size() - 1;
+  const int x_neg_lower_bound = solution_row.size() - num_primal_variables - 1;
+  for (std::size_t i = x_neg_lower_bound; i < x_neg_upper_bound; ++i) {
+    x_negative.push_back(solution_row.at(i));
+  }
+
+  std::vector<float> x_positive;
+  const int x_pos_upper_bound = solution_row.size() - num_primal_variables - 1;
+  const int x_pos_lower_bound =
+      solution_row.size() - num_primal_variables - num_primal_variables - 1;
+  for (std::size_t i = x_pos_lower_bound; i < x_pos_upper_bound; ++i) {
+    x_positive.push_back(solution_row.at(i));
+  }
+
+  std::vector<float> x;
+  for (std::size_t i = 0; i < num_primal_variables; ++i) {
+    x.push_back(x_positive.at(i) - x_negative.at(i));
+  }
+
+  // check inequalities hold
+  float total = 0;
+  for (std::size_t i = 0; i < original_problem.inequality_rows.size(); ++i) {
+    total += original_problem.inequality_rows.at(i).at(0);
+    for (std::size_t j = 0; j < num_primal_variables; ++j) {
+      total += original_problem.inequality_rows.at(i).at(j + 1) * x.at(j);
+    }
+    if (total < 0) {
+      return core::SolveStatus::kInfeasible;
+    }
+    total = 0;
+  }
+
+  total = 0;
+  for (std::size_t i = 0; i < original_problem.equality_rows.size(); ++i) {
+    total += original_problem.equality_rows.at(i).at(0);
+    for (std::size_t j = 1; j < num_primal_variables + 1; ++j) {
+      total += original_problem.equality_rows.at(i).at(0) * x.at(j - 1);
+    }
+    if (total != 0) {
+      return core::SolveStatus::kInfeasible;
+    }
+    total = 0;
+  }
+
   return core::SolveStatus::kFeasible;
 }
 

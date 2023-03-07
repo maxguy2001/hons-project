@@ -1,7 +1,6 @@
 #include "primal_run.hpp"
 
 void PrimalRun::runPrimalSolver() {
-  /*
 
   const std::string pp = "/home/maxguy/projects/hons/hons-project/problems/"
                          "feasibility_testcases.txt";
@@ -18,6 +17,10 @@ void PrimalRun::runPrimalSolver() {
   int num_to_solve = 150'000;
   int num_failed = 0;
   int num_empty = 0;
+  int num_sucessfully_solved = 0;
+  int num_infeasible = 0;
+  int num_error = 0;
+  int num_didnt_converge = 0;
 
   // time the run
   std::uint64_t start_time =
@@ -32,17 +35,25 @@ void PrimalRun::runPrimalSolver() {
       ++num_empty;
       // TODO: update conditions for number empty to include where row length is
       // 0
+      // TODO: check if(!problem since auto)
     } else {
 
-      core::FormattedProblem rf_prob = rf_.reformatProblem(*problem);
+      core::FormattedProblem rf_prob = rf_.reformatProblem(problem.value());
       solver_.setProblem(rf_prob.problem_matrix);
       solver_.setBasis(rf_prob.basic_variables);
-      //TODO: modify function inputs here to take in *problem.
-      //TODO: change checks on solution row since it now returns a status
-      auto solution_row = solver_.solveProblem(false);
+      // TODO: modify function inputs here to take in *problem.
+      // TODO: change checks on solution row since it now returns a status
+      // TODO: switch statement to find how many are sucessfully solved
 
-      if (!solution_row) {
-        ++num_failed;
+      auto solution_row = solver_.solveProblem(false, *problem);
+      if (solution_row == core::SolveStatus::kFeasible) {
+        ++num_sucessfully_solved;
+      } else if (solution_row == core::SolveStatus::kInfeasible) {
+        ++num_infeasible;
+      } else if (solution_row == core::SolveStatus::kError) {
+        ++num_error;
+      } else if (solution_row == core::SolveStatus::kDidntConverge) {
+        ++num_didnt_converge;
       }
     }
   }
@@ -56,6 +67,14 @@ void PrimalRun::runPrimalSolver() {
   double time_taken_secs =
       static_cast<double>(time_taken_nanos) / 1'000'000'000;
 
+  std::cout << "Number sucessfully solved " << num_sucessfully_solved
+            << std::endl;
+  std::cout << "Number infeasible " << num_infeasible << std::endl;
+  std::cout << "Number error " << num_error << std::endl;
+  std::cout << "Number didn't converge " << num_didnt_converge << std::endl;
+  std::cout << "Number empty " << num_empty << std::endl;
+
+  /*
   std::cout << "Number of problems solved: " << num_to_solve << std::endl;
   std::cout << "Number of falures: " << num_failed << std::endl;
   std::cout << "Number of empty problems: " << num_empty << std::endl;
@@ -69,5 +88,4 @@ void PrimalRun::runPrimalSolver() {
   std::cout << "Num that didn't converge: " << solver_.num_not_converging_
             << std::endl;
   */
-  std::cout << "did nothing" << std::endl;
 }
