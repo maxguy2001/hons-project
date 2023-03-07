@@ -15,6 +15,8 @@ struct FormattedProblem {
   std::vector<int> basic_variables;
 };
 
+enum class SolveStatus { kInfeasible = 0, kFeasible, kError, kDidntConverge };
+
 // define value for infinity
 const int kIntInfinity = std::numeric_limits<int>::max();
 const float kFloatInfinity = std::numeric_limits<float>::max();

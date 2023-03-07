@@ -2,6 +2,8 @@
 #include <optional>
 #include <vector>
 
+#include "../../core/consts.hpp"
+
 namespace solvers::bland_simplex {
 
 class BlandPrimalSimplex {
@@ -31,7 +33,8 @@ public:
    * @brief solve the given problem
    *
    */
-  std::optional<std::vector<float>> solveProblem(const bool run_verbose);
+  core::SolveStatus solveProblem(const bool run_verbose,
+                                 const core::InputRows original_problem);
 
   // TODO: reinstate private section of class & remover verbose argument from
   // solveProblem
@@ -96,6 +99,9 @@ private:
    * @return false
    */
   bool checkOptimality();
+
+  core::SolveStatus verifySolution(core::InputRows original_problem,
+                                   std::vector<float> solution_row);
 
   // TODO: remove this?
   void printObjectiveRow();

@@ -171,34 +171,45 @@ void BlandPrimalSimplex::printObjectiveRow() {
   std::cout << std::endl;
 }
 
-std::optional<std::vector<float>>
-BlandPrimalSimplex::solveProblem(const bool run_verbose) {
+core::SolveStatus verifySolution(core::InputRows original_problem,
+                                 std::vector<float> solution_row) {
+  // TODO: implement!
+  return core::SolveStatus::kFeasible;
+}
+
+core::SolveStatus
+BlandPrimalSimplex::solveProblem(const bool run_verbose,
+                                 const core::InputRows original_problem) {
 
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
     int pivot_column_index = getPivotColumnIndex();
     if (pivot_column_index == -1) {
       ++num_already_optimal_;
-      return table_.at(0);
+      core::SolveStatus solution_status =
+          verifySolution(original_problem, table_.at(0));
+      return solution_status;
     }
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
       ++num_pivot_row_failures_;
-      return std::nullopt;
+      return core::SolveStatus::kInfeasible;
     }
     bool is_basis_switch_successful =
         switchBasis(pivot_row_index, pivot_column_index);
     if (!is_basis_switch_successful) {
       ++num_basis_failures_;
-      return std::nullopt;
+      return core::SolveStatus::kError;
     }
     constructNewTable(pivot_row_index, pivot_column_index);
 
     if (checkOptimality()) {
-      return table_.at(0);
+      core::SolveStatus solution_status =
+          verifySolution(original_problem, table_.at(0));
+      return solution_status;
     }
   }
   ++num_not_converging_;
-  return std::nullopt;
+  return core::SolveStatus::kDidntConverge;
 }
 
 } // namespace solvers::bland_simplex

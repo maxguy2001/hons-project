@@ -1,6 +1,7 @@
 #include "primal_run.hpp"
 
 void PrimalRun::runPrimalSolver() {
+  /*
 
   const std::string pp = "/home/maxguy/projects/hons/hons-project/problems/"
                          "feasibility_testcases.txt";
@@ -36,6 +37,8 @@ void PrimalRun::runPrimalSolver() {
       core::FormattedProblem rf_prob = rf_.reformatProblem(*problem);
       solver_.setProblem(rf_prob.problem_matrix);
       solver_.setBasis(rf_prob.basic_variables);
+      //TODO: modify function inputs here to take in *problem.
+      //TODO: change checks on solution row since it now returns a status
       auto solution_row = solver_.solveProblem(false);
 
       if (!solution_row) {
@@ -65,4 +68,6 @@ void PrimalRun::runPrimalSolver() {
             << std::endl;
   std::cout << "Num that didn't converge: " << solver_.num_not_converging_
             << std::endl;
+  */
+  std::cout << "did nothing" << std::endl;
 }
