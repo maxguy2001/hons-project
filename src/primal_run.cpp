@@ -1,5 +1,26 @@
 #include "primal_run.hpp"
 
+void PrimalRun::printProblem(const core::InputRows input_rows) {
+  std::cout << "Inequality rows: " << std::endl;
+  for (std::size_t i = 0; i < input_rows.inequality_rows.size(); ++i) {
+    for (std::size_t j = 0; j < input_rows.inequality_rows.at(0).size(); ++j) {
+      std::cout << input_rows.inequality_rows.at(i).at(j) << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << std::endl;
+  std::cout << "Equality Rows: " << std::endl;
+  for (std::size_t i = 0; i < input_rows.equality_rows.size(); ++i) {
+    for (std::size_t j = 0; j < input_rows.equality_rows.at(0).size(); ++j) {
+      std::cout << input_rows.equality_rows.at(i).at(j) << " ";
+    }
+    std::cout << std::endl;
+  }
+
+  std::cout << std::endl;
+}
+
 void PrimalRun::runPrimalSolver() {
 
   const std::string pp = "/home/maxguy/projects/hons/hons-project/problems/"
@@ -21,6 +42,8 @@ void PrimalRun::runPrimalSolver() {
   int num_infeasible = 0;
   int num_error = 0;
   int num_didnt_converge = 0;
+
+  int counter = 0;
 
   // time the run
   std::uint64_t start_time =
@@ -45,14 +68,26 @@ void PrimalRun::runPrimalSolver() {
       // TODO: change checks on solution row since it now returns a status
       // TODO: switch statement to find how many are sucessfully solved
 
-      auto solution_row = solver_.solveProblem(false, *problem);
-      if (solution_row == core::SolveStatus::kFeasible) {
+      auto solve_state = solver_.solveProblem(false, *problem);
+      if (solve_state == core::SolveStatus::kFeasible) {
         ++num_sucessfully_solved;
-      } else if (solution_row == core::SolveStatus::kInfeasible) {
+      } else if (solve_state == core::SolveStatus::kInfeasible) {
         ++num_infeasible;
-      } else if (solution_row == core::SolveStatus::kError) {
+        if (problem->inequality_rows.size() < 5 &&
+            problem->equality_rows.size() < 5) {
+          std::cout << "Problem number: " << i << std::endl;
+          printProblem(problem.value());
+          solver_.printSolution();
+          std::cout << std::endl;
+          std::cout << std::endl;
+          ++counter;
+          if (counter > 5) {
+            return;
+          }
+        }
+      } else if (solve_state == core::SolveStatus::kError) {
         ++num_error;
-      } else if (solution_row == core::SolveStatus::kDidntConverge) {
+      } else if (solve_state == core::SolveStatus::kDidntConverge) {
         ++num_didnt_converge;
       }
     }

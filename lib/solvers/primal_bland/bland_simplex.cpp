@@ -194,16 +194,19 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
   }
 
   std::vector<float> x;
+  x.push_back(1); // to multpiply scalar by 1
   for (std::size_t i = 0; i < num_primal_variables; ++i) {
     x.push_back(x_positive.at(i) - x_negative.at(i));
   }
 
+  solution_ = x;
+
   // check inequalities hold
   float total = 0;
   for (std::size_t i = 0; i < original_problem.inequality_rows.size(); ++i) {
-    total += original_problem.inequality_rows.at(i).at(0);
-    for (std::size_t j = 0; j < num_primal_variables; ++j) {
-      total += original_problem.inequality_rows.at(i).at(j + 1) * x.at(j);
+    // total += original_problem.inequality_rows.at(i).at(0);
+    for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
+      total += original_problem.inequality_rows.at(i).at(j) * x.at(j);
     }
     if (total < 0) {
       return core::SolveStatus::kInfeasible;
@@ -226,10 +229,20 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
   return core::SolveStatus::kFeasible;
 }
 
+void BlandPrimalSimplex::printSolution() {
+  std::cout << "Solution:" << std::endl;
+  for (std::size_t i = 0; i < solution_.size(); ++i) {
+    std::cout << solution_.at(i) << " ";
+  }
+  std::cout << std::endl;
+}
+
 core::SolveStatus
 BlandPrimalSimplex::solveProblem(const bool run_verbose,
                                  const core::InputRows original_problem) {
 
+  // TODO: remove
+  solution_.clear();
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
     int pivot_column_index = getPivotColumnIndex();
     if (pivot_column_index == -1) {

@@ -18,4 +18,5 @@ public:
   PrimalRun() {}
 
   void runPrimalSolver();
+  void printProblem(const core::InputRows input_rows);
 };

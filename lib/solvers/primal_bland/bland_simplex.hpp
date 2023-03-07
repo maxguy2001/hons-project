@@ -36,11 +36,17 @@ public:
   core::SolveStatus solveProblem(const bool run_verbose,
                                  const core::InputRows original_problem);
 
+  // TODO:remove
+  void printSolution();
+
   // TODO: reinstate private section of class & remover verbose argument from
   // solveProblem
 private:
   // simplex table
   std::vector<std::vector<float>> table_;
+
+  // TODO:remove
+  std::vector<float> solution_;
 
   // simplex basis. Order of basis must be preserved!
   std::vector<int> basis_;
