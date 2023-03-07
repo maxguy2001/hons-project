@@ -44,6 +44,7 @@ void PrimalRun::runPrimalSolver() {
   int num_didnt_converge = 0;
 
   int counter = 0;
+  bool debug = false;
 
   // time the run
   std::uint64_t start_time =
@@ -59,22 +60,26 @@ void PrimalRun::runPrimalSolver() {
       // TODO: update conditions for number empty to include where row length is
       // 0
       // TODO: check if(!problem since auto)
+    } else if (problem->equality_rows.size() == 0 &&
+               problem->inequality_rows.size() == 1) {
+      ++num_sucessfully_solved;
+    } else if (problem->equality_rows.size() == 1 &&
+               problem->inequality_rows.size() == 0) {
+      ++num_sucessfully_solved;
     } else {
 
       core::FormattedProblem rf_prob = rf_.reformatProblem(problem.value());
       solver_.setProblem(rf_prob.problem_matrix);
       solver_.setBasis(rf_prob.basic_variables);
-      // TODO: modify function inputs here to take in *problem.
-      // TODO: change checks on solution row since it now returns a status
       // TODO: switch statement to find how many are sucessfully solved
-
+      // TODO: fix floating point errors?
       auto solve_state = solver_.solveProblem(false, *problem);
       if (solve_state == core::SolveStatus::kFeasible) {
         ++num_sucessfully_solved;
       } else if (solve_state == core::SolveStatus::kInfeasible) {
         ++num_infeasible;
-        if (problem->inequality_rows.size() < 5 &&
-            problem->equality_rows.size() < 5) {
+        if (problem->inequality_rows.size() < 7 &&
+            problem->equality_rows.size() < 7 && debug == true) {
           std::cout << "Problem number: " << i << std::endl;
           printProblem(problem.value());
           solver_.printSolution();

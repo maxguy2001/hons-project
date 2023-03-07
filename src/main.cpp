@@ -1,3 +1,4 @@
+#include "main.hpp"
 #include "primal_run.hpp"
 
 int main() {

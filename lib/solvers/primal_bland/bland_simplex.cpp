@@ -199,6 +199,12 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
     x.push_back(x_positive.at(i) - x_negative.at(i));
   }
 
+  if (solution_row.at(0) != 1) {
+    for (std::size_t i = 1; i < x.size(); ++i) {
+      x.at(i) /= solution_row.at(0);
+    }
+  }
+
   solution_ = x;
 
   // check inequalities hold
@@ -216,9 +222,9 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
 
   total = 0;
   for (std::size_t i = 0; i < original_problem.equality_rows.size(); ++i) {
-    total += original_problem.equality_rows.at(i).at(0);
-    for (std::size_t j = 1; j < num_primal_variables + 1; ++j) {
-      total += original_problem.equality_rows.at(i).at(0) * x.at(j - 1);
+    // total += original_problem.equality_rows.at(i).at(0);
+    for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
+      total += original_problem.equality_rows.at(i).at(j) * x.at(j);
     }
     if (total != 0) {
       return core::SolveStatus::kInfeasible;
