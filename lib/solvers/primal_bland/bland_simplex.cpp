@@ -214,7 +214,7 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
     for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
       total += original_problem.inequality_rows.at(i).at(j) * x.at(j);
     }
-    if (total < 0) {
+    if (total < -core::kEpsilon) {
       return core::SolveStatus::kInfeasible;
     }
     total = 0;
@@ -226,7 +226,7 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
     for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
       total += original_problem.equality_rows.at(i).at(j) * x.at(j);
     }
-    if (total != 0) {
+    if (std::fabs(total) > core::kEpsilon) {
       return core::SolveStatus::kInfeasible;
     }
     total = 0;
