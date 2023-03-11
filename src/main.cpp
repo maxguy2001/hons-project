@@ -117,7 +117,6 @@ void testOnMultipleProblems(int problems_count) {
       else if (presolve.reduced_to_empty) {
         // std::cout << "REDUCED TO EMPTY\n" << std::endl;
         reduced_to_empty_count += 1;
-        // presolve.applyPostsolve();
       }
     }
   }
@@ -131,6 +130,7 @@ void testOnMultipleProblems(int problems_count) {
 int main(){
   // testOnTestProblem();
   // testOnSingleProblem(144187);
+  
   const int all_test_cases_count = 150218;
   auto start = std::chrono::high_resolution_clock::now();
   testOnMultipleProblems(all_test_cases_count);

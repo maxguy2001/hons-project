@@ -368,7 +368,7 @@ namespace logical_solver{
       if (large_to_small_ratio > 0) {
         // If the inequalities both have the same sign then we use 
         // the bound that takes up all the slack.
-        if (small_row_lower_bound < potential_lower_bound) {
+        if (small_row_lower_bound > potential_lower_bound) {
           lower_bounds_.at(small_row_index) = potential_lower_bound;
         }
       } else {
