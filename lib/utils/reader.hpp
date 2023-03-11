@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstdint>
 #include <limits>
+#include "../core/consts.hpp"
 
 namespace utils{
 
@@ -39,7 +40,6 @@ namespace utils{
 
   int num_inequalities_;
   int num_equalities_;
-  
 
 
   private:
@@ -56,7 +56,6 @@ namespace utils{
   std::vector<int> getProblemRowAsIntVector(const std::string problem_row_string);
 
   std::vector<int> spliceVector(std::vector<int> to_splice, const int range_start, const int range_end);
-
   };
 
 

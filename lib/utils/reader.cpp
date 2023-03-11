@@ -45,6 +45,7 @@ void Reader::readNextProblem(std::fstream &problems_filestream){
   std::vector<int> problem_matrix_row; // Formatted constraint without the 
   // constant term.
 
+
   //read inequality in rows, add vectors to problem matrix
   for(size_t i = 0; i < num_inequalities_; ++i){
     std::getline(problems_filestream, temp_string);

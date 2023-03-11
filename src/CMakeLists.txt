@@ -13,4 +13,6 @@ target_link_libraries(${target}
   primal_simplex
   utils
   logical_solver
+  revised_primal_solver
+  core
 )
