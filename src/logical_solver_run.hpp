@@ -1,4 +1,4 @@
-#include "../lib/logical_solver/presolve.hpp"
+#include "../lib/solvers/logical_solver/presolve.hpp"
 #include "../lib/utils/reader.hpp"
 #include <vector>
 #include <iostream>
