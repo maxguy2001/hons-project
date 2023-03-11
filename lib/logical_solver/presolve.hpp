@@ -12,18 +12,7 @@ namespace logical_solver{
   class Presolve
   {
   public:
-  // PUBLIC INSTANCE VARIABLES:
-  // problem
-  std::vector<std::vector<int>> problem_matrix_;
-  std::vector<double> lower_bounds_;
-  std::vector<double> upper_bounds_;
-
-  // problem characteristics
-  int variables_count_;
-  int constraints_count_;
-  int inequalities_count_;
-  int equalities_count_;
-
+  // PUBLIC CLASS MEMBERS:
   // Boolean to check if problem has been reduced to empty.
   bool reduced_to_empty_;
   bool infeasible_;
@@ -76,10 +65,21 @@ namespace logical_solver{
   void printImpliedBounds();
 
   private:
-  // PRIVATE INSTANCE VARIABLES 
+  // PRIVATE CLASS MEMBERS
+    // problem
+  std::vector<std::vector<int>> problem_matrix_;
+  std::vector<double> lower_bounds_;
+  std::vector<double> upper_bounds_;
+
+  // problem characteristics
+  int variables_count_;
+  int constraints_count_;
+  int inequalities_count_;
+  int equalities_count_;
+  
   // Problem type
   bool solve_MIP_;
-  
+
   // Vectors to keep track of implied lower and 
   // upper bounds during presolve.
   std::vector<double> implied_lower_bounds_;
