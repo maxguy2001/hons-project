@@ -706,7 +706,7 @@ namespace logical_solver{
       return false;
     }
     return true;
-  };
+  }
 
   bool Presolve::isRowActivePostsolve(const int row_index) {
     for (std::size_t j = 0; j < variables_count_; ++j) {
