@@ -26,14 +26,6 @@ namespace logical_solver{
   int inequalities_count_;
   int equalities_count_;
 
-  // Vectors to keep track of implied lower and 
-  // upper bounds during presolve.
-  std::vector<double> implied_lower_bounds_;
-  std::vector<double> implied_upper_bounds_;
-
-  // feasible solution vector
-  std::vector<double> feasible_solution_;
-
   // Boolean to check if problem has been reduced to empty.
   bool reduced_to_empty_;
   bool infeasible_;
@@ -87,7 +79,13 @@ namespace logical_solver{
 
   private:
   // PRIVATE INSTANCE VARIABLES 
-  int kInfinity;
+  // Vectors to keep track of implied lower and 
+  // upper bounds during presolve.
+  std::vector<double> implied_lower_bounds_;
+  std::vector<double> implied_upper_bounds_;
+
+  // feasible solution vector
+  std::vector<double> feasible_solution_;
 
   // vectors to keep track of active rows and columns
   // during presolve
@@ -131,24 +129,6 @@ namespace logical_solver{
 
   // PRIVATE METHODS
   /**
-   * @brief Gets the indices of the non-zero columns
-   * of each row (non-zero variables) and stores in the 
-   * instance variable rows_non_zero_variables.
-   * 
-   * @return void
-   */
-  void getRowsNonZeros();
-
-  /**
-   * @brief Gets the indices of the non-zero rows (coefficients)
-   * of each column and stores in the 
-   * instance variable cols_non_zeros_indices.
-   * 
-   * @return void
-   */
-  void getColsNonZeros();
-
-  /**
    * @brief Gets the indices of the non-zero rows (coefficients)
    * of each column and stores in the 
    * instance variable cols_non_zeros_indices;
@@ -159,13 +139,15 @@ namespace logical_solver{
    */
   void getRowsAndColsNonZeros();
 
-  double getFeasibleValueCalculationBound(int row_index);
+  double getFeasibleValueCalculationBound(const int row_index);
 
-  bool checkIsRowFree(int row_index);
+  bool checkIsRowFree(const int row_index);
 
-  void updateStateFreeRow(int row_index);
+  void updateStateFreeRow(const int row_index);
 
-  void applyFreeRowPostsolve(int row_index, int col_index);
+  void applyFreeRowPostsolve(
+    const int row_index, const int col_index
+  );
 
   /**
    * @brief Updates the state of the problem in presolve given that a 
@@ -177,7 +159,9 @@ namespace logical_solver{
    * @param column index. 
    * @return void.
    */
-  void updateStateSingletonVariable(int row_index, int col_index);
+  void updateStateSingletonVariable(
+    const int row_index, const int col_index
+  );
 
   /**
    * @brief Applies the postsolve steps for a singleton variable. It
@@ -189,7 +173,9 @@ namespace logical_solver{
    * @param column index. 
    * @return void.
    */
-  void applySingletonVariablePostsolve(int row_index, int col_index);
+  void applySingletonVariablePostsolve(
+    const int row_index, const int col_index
+  );
 
   /**
    * @brief Updates the state of the problem in presolve given that a row 
@@ -200,7 +186,9 @@ namespace logical_solver{
    * @param col_index: column index. 
    * @return void.
    */
-  void updateStateRowSingletonEquality(int row_index, int col_index);
+  void updateStateRowSingletonEquality(
+    const int row_index, const int col_index
+  );
 
   /**
    * @brief Updates the state of the problem in presolve given that a row 
@@ -211,7 +199,9 @@ namespace logical_solver{
    * @param column index. 
    * @return void.
    */
-  void updateStateRowSingletonInequality(int row_index, int col_index);
+  void updateStateRowSingletonInequality(
+    const int row_index, const int col_index
+  );
 
   /**
    * @brief Finds the feasible value of a variable in postsolve
@@ -223,7 +213,7 @@ namespace logical_solver{
    * @param column index. 
    * @return void.
    */
-  void applyRowSingletonPostsolve(int row_index);
+  void applyRowSingletonPostsolve(const int row_index);
 
   /**
    * @brief Checks whether two rows are paralell
@@ -232,7 +222,9 @@ namespace logical_solver{
    * @param int row_index_2: index of second row.
    * @return bool.
    */
-  bool checkAreRowsParallel(int row1_index, int row2_index);
+  bool checkAreRowsParallel(
+    const int row1_index, const int row2_index
+  );
 
   /**
    * @brief Given a row, checks if it is parallel to any
@@ -248,24 +240,26 @@ namespace logical_solver{
    * @return int, either row in 0 to i-1 parallel to i or -1 if
    * none were found.
    */
-  int getParallelRow(int row_index, int start);
+  int getParallelRow(const int row_index, const int start);
 
-  std::vector<int> sortParallelRowsBySize(int row, int parallel_row);
+  std::vector<int> sortParallelRowsBySize(
+    const int row, const int parallel_row
+  );
 
   bool checkAreParallelRowsFeasible(
-    int small_row_index, 
-    int large_to_small_ratio,
-    double large_bound_by_ratio
+    const int small_row_index, 
+    const int large_to_small_ratio,
+    const double large_bound_by_ratio
   );
 
   void updateStateParallelRow(
-    int small_row_index, 
-    int large_row_index,
-    double large_to_small_ratio, 
-    double large_bound_by_ratio
+    const int small_row_index, 
+    const int large_row_index,
+    const double large_to_small_ratio, 
+    const double large_bound_by_ratio
   );
 
-  void applyParallelRowPostsolve(int row_index);
+  void applyParallelRowPostsolve(const int row_index);
 
   /**
    * @brief Updates the state of the problem in presolve when an
@@ -275,7 +269,7 @@ namespace logical_solver{
    * @param col_index: column index.
    * @return void.
    */
-  void updateStateEmptyCol(int col_index);
+  void updateStateEmptyCol(const int col_index);
 
   /**
    * @brief Finds the feasible value of a variable in postsolve
@@ -287,7 +281,7 @@ namespace logical_solver{
    * @param col_index: column index.
    * @return void.
    */
-  void applyEmptyColPostsolve(int col_index);
+  void applyEmptyColPostsolve(const int col_index);
 
   /**
    * @brief Checks if a column is a fixed column by checking 
@@ -296,7 +290,7 @@ namespace logical_solver{
    * @param col_index: column index.
    * @return void.
    */
-  bool isFixedCol(int col_index);
+  bool isFixedCol(const int col_index);
 
   /**
    * @brief Updates state when a fixed col has been found 
@@ -307,7 +301,7 @@ namespace logical_solver{
    * @param col_index: column index.
    * @return void.
    */
-  void updateStateFixedCol(int col_index);
+  void updateStateFixedCol(const int col_index);
 
   /**
    * @brief Carries out the fixed column postsolve procedure.
@@ -319,8 +313,8 @@ namespace logical_solver{
    * @return void.
    */
   void applyFixedColPostsolve(
-    int col_index, 
-    std::vector<int> col_non_zeros
+    const int col_index, 
+    const std::vector<int> col_non_zeros
   );
 
   /**
@@ -333,7 +327,9 @@ namespace logical_solver{
    * @param col_index: of the corresponding column. 
    * @return bool: indicating whether or not column is a free column substitution col.
    */
-  bool isDoubletonEquation(int row_index, int col_index);
+  bool isDoubletonEquation(
+    const int row_index, const int col_index
+  );
 
   /**
    * @brief Checks if a column, which has already been found to be 
@@ -344,7 +340,9 @@ namespace logical_solver{
    * @param col_index: of the corresponding column. 
    * @return bool: indicating whether or not column is a free column substitution col.
    */
-  bool isFreeColSubstitution(int row_index, int col_index);
+  bool isFreeColSubstitution(
+    const int row_index, const int col_index
+  );
 
   /**
    * @brief Finds the dependancy variable of a free column substitution column,
@@ -354,7 +352,8 @@ namespace logical_solver{
    * @param column index. 
    * @return int - the index of the dependancy variable.
    */
-  int getFreeColSubstitutionDependancy(int row_index, int col_index);
+  int getFreeColSubstitutionDependancy(
+    const int row_index, const int col_index);
 
   /**
    * @brief Updates state of the problem in presolve when a free column substitution
@@ -367,10 +366,11 @@ namespace logical_solver{
    * @param column index. 
    * @return void.
    */
-  void updateStateFreeColSubstitution(int row_index, int col_index);
+  void updateStateFreeColSubstitution(
+    const int row_index, const int col_index);
 
   double getFreeColSubstitutionSumOfDependancies(
-    int row_index, int col_index
+    const int row_index, const int col_index
   );
 
   /**
@@ -390,7 +390,7 @@ namespace logical_solver{
    * @return void.
    */ 
   void applyFreeColSubstitutionPostsolve(
-    int row_index, int col_index
+    const int row_index, const int col_index
   );
 
   /**
@@ -425,10 +425,10 @@ namespace logical_solver{
    * @return int Inf if not feasible, int feasible value if feasible.
    */
   int getVariableFeasibleValueMIP(
-    int row_index, 
-    int col_index, 
-    int variable_coefficient, 
-    double constraint_RHS
+    const int row_index, 
+    const int col_index, 
+    const int variable_coefficient, 
+    const double constraint_RHS
   );
 
   /**
@@ -442,12 +442,12 @@ namespace logical_solver{
    * @return bool.
    */
   bool checkVariableImpliedBounds(
-    int col_index, int feasible_value
+    const int col_index, const int feasible_value
   );
 
-  bool isRowActivePostsolve(int row_index);
+  bool isRowActivePostsolve(const int row_index);
 
-  bool checkConstraint(int row_index, int rule_id);
+  bool checkConstraint(const int row_index, const int rule_id);
 
   void printPresolveCurrentState();
   };
