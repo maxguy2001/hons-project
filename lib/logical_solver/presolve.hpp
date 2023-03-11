@@ -31,7 +31,7 @@ namespace logical_solver{
   std::vector<double> implied_upper_bounds_;
 
   // feasible solution vector
-  std::vector<double> feasible_solution;
+  std::vector<double> feasible_solution_;
 
   // Boolean to check if problem has been reduced to empty.
   bool reduced_to_empty;

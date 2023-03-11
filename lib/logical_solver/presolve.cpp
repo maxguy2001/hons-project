@@ -42,7 +42,7 @@ namespace logical_solver{
 
     implied_lower_bounds_.resize(variables_count_, -kInfinity);
     implied_upper_bounds_.resize(variables_count_, kInfinity);
-    feasible_solution.resize(variables_count_, -999);
+    feasible_solution_.resize(variables_count_, -999);
 
     reduced_to_empty = false;
     infeasible = false;
@@ -166,7 +166,7 @@ namespace logical_solver{
 
     if (feasible_value == kInfinity) {infeasible = true;}
     else {
-      feasible_solution.at(col_index) = feasible_value;
+      feasible_solution_.at(col_index) = feasible_value;
       postsolve_active_cols_.at(col_index) = true;
       // Check if we have found feasible values for all variables in the 
       // row. If so, check if the row (constraint) is satisfied, and if 
@@ -405,7 +405,7 @@ namespace logical_solver{
   };
 
   void Presolve::applyEmptyColPostsolve(int col_index) {
-    feasible_solution.at(col_index) = 0;
+    feasible_solution_.at(col_index) = 0;
     postsolve_active_cols_.at(col_index) = true;
   };
 
@@ -453,7 +453,7 @@ namespace logical_solver{
     }
 
     postsolve_active_cols_.at(col_index) = true;
-    feasible_solution.at(col_index) = feasible_value;
+    feasible_solution_.at(col_index) = feasible_value;
   };
 
   bool Presolve::isDoubletonEquation(int row_index, int col_index) {
@@ -519,7 +519,7 @@ namespace logical_solver{
 
         if (col_coefficient != 0) {
           if (postsolve_active_cols_.at(j))  {
-            sum_of_dependancies += col_coefficient*feasible_solution.at(j);
+            sum_of_dependancies += col_coefficient*feasible_solution_.at(j);
           } else {
             return kInfinity;
           }
@@ -556,7 +556,7 @@ namespace logical_solver{
 
       if (feasible_value == kInfinity) {infeasible = true;}
       else {
-        feasible_solution.at(col_index) = feasible_value;
+        feasible_solution_.at(col_index) = feasible_value;
         postsolve_active_cols_.at(col_index) = true;
         // Check if we have found feasible values for all variables in the 
         // row. If so, check if the row (constraint) is satisfied, and if 
@@ -704,7 +704,7 @@ namespace logical_solver{
     // constraint value.
     for (int j = 0; j < variables_count_; j++) {
       if (postsolve_active_cols_.at(j)) {
-        constraint_value += problem_matrix_.at(row_index).at(j)*feasible_solution.at(j);
+        constraint_value += problem_matrix_.at(row_index).at(j)*feasible_solution_.at(j);
       }
     }
 
@@ -792,7 +792,7 @@ namespace logical_solver{
 
   void Presolve::printFeasibleSolution() {
     for (int i = 0; i < variables_count_; i++) {
-      printf("Variable %d = %f\n", i, feasible_solution.at(i));
+      printf("Variable %d = %f\n", i, feasible_solution_.at(i));
     }
     std::cout<<" "<<std::endl;
   };
