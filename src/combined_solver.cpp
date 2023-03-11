@@ -20,6 +20,10 @@ void CombinedRun::runSolver(const std::string problems_filepath) {
   int num_error = 0;
   int num_didnt_converge = 0;
 
+  // to be reused
+  int num_equality_constraints;
+  int num_inequality_constraints;
+
   // time the run
   std::uint64_t start_time =
       std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -43,10 +47,15 @@ void CombinedRun::runSolver(const std::string problems_filepath) {
       core::FormattedLogicalProblem logical_problem =
           lrf_.reformatProblem(problem.value());
 
+      num_inequality_constraints =
+          static_cast<int>(problem->inequality_rows.size());
+      num_equality_constraints =
+          static_cast<int>(problem->equality_rows.size());
+
       logical_solver::Presolve presolve(
           logical_problem.problem_matrix, logical_problem.lower_bounds,
-          logical_problem.upper_bounds, problem->inequality_rows.size(),
-          problem->equality_rows.size(), false);
+          logical_problem.upper_bounds, num_inequality_constraints,
+          num_equality_constraints, false);
 
       presolve.applyPresolve();
       presolve.applyPostsolve();
