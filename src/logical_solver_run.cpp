@@ -1,7 +1,8 @@
 #include "logical_solver_run.hpp"
 
 void LogicalSolverRun::testOnTestProblem() {
-  std::string test_problem = "/Users/pepe/hons-project/problems/presolve_test_problem2.txt";
+  std::string test_problem =
+      "/Users/pepe/hons-project/problems/presolve_test_problem2.txt";
   utils::Reader reader;
   // Start filestream to pass to reader.
   std::fstream problems_filestream;
@@ -10,11 +11,8 @@ void LogicalSolverRun::testOnTestProblem() {
   reader.readNextProblem(problems_filestream);
 
   logical_solver::Presolve presolve(
-    reader.problem_matrix_, 
-    reader.lower_bounds_, reader.upper_bounds_,
-    reader.num_inequalities_, reader.num_equalities_,
-    false
-  );
+      reader.problem_matrix_, reader.lower_bounds_, reader.upper_bounds_,
+      reader.num_inequalities_, reader.num_equalities_, false);
   problems_filestream.close();
 
   presolve.printLP();
@@ -23,26 +21,23 @@ void LogicalSolverRun::testOnTestProblem() {
   if (presolve.reduced_to_empty_) {
     printf("Reduced to empty\n");
   }
-  if (!presolve.infeasible_){
+  if (!presolve.infeasible_) {
     presolve.printFeasibleSolution();
-  }
-  else {
+  } else {
     std::cout << "Infeasible" << std::endl;
   }
   // presolve.printImpliedBounds();
 }
 
 void LogicalSolverRun::testOnSingleProblem(const int problem_number) {
-  std::string all_test_problems = "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
+  std::string all_test_problems =
+      "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
   utils::Reader reader;
   reader.readProblem(all_test_problems, problem_number);
 
   logical_solver::Presolve presolve(
-    reader.problem_matrix_, 
-    reader.lower_bounds_, reader.upper_bounds_,
-    reader.num_inequalities_, reader.num_equalities_,
-    true
-  );
+      reader.problem_matrix_, reader.lower_bounds_, reader.upper_bounds_,
+      reader.num_inequalities_, reader.num_equalities_, true);
 
   presolve.printLP();
   presolve.applyPresolve();
@@ -51,11 +46,16 @@ void LogicalSolverRun::testOnSingleProblem(const int problem_number) {
   }
   // presolve.applyPostsolve();
   presolve.printFeasibleSolution();
-  if (presolve.infeasible_) {std::cout<<"INFEASIBLE"<<std::endl;}
+  if (presolve.infeasible_) {
+    std::cout << "INFEASIBLE" << std::endl;
+  }
 }
 
 void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
-  std::string all_test_problems = "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
+  // std::string all_test_problems =
+  // "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
+  std::string all_test_problems = "/home/maxguy/projects/hons/hons-project/"
+                                  "problems/feasibility_testcases.txt";
   utils::Reader reader;
 
   // Start filestream to pass to reader.
@@ -75,32 +75,31 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
 
     if (reader.problem_matrix_.size() > 0) {
       logical_solver::Presolve presolve(
-        reader.problem_matrix_, 
-        reader.lower_bounds_, reader.upper_bounds_,
-        reader.num_inequalities_, reader.num_equalities_,
-        false
-      );
+          reader.problem_matrix_, reader.lower_bounds_, reader.upper_bounds_,
+          reader.num_inequalities_, reader.num_equalities_, false);
       presolve.applyPresolve();
       presolve.applyPostsolve();
 
       if (presolve.unsatisfied_constraints_) {
         unsatisfied_constraints += 1;
-      }
-      else if (presolve.infeasible_) {
+      } else if (presolve.infeasible_) {
         if (presolve.infeasible_by_PR_) {
           infeasible_by_parallel_rows_count += 1;
         }
         infeasible_count += 1;
-      }
-      else if (presolve.reduced_to_empty_) {
+      } else if (presolve.reduced_to_empty_) {
         reduced_to_empty_count += 1;
       }
     }
   }
-  printf("%d PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n", reduced_to_empty_count);
+  printf(
+      "%d PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n",
+      reduced_to_empty_count);
   printf("%d Problems were not feasible. \n", infeasible_count);
-  printf("%d Problems were not feasible due to infeasible parallel rows. \n", infeasible_by_parallel_rows_count);
-  printf("%d Problems led to unsatisfied constraints.\n", unsatisfied_constraints);
+  printf("%d Problems were not feasible due to infeasible parallel rows. \n",
+         infeasible_by_parallel_rows_count);
+  printf("%d Problems led to unsatisfied constraints.\n",
+         unsatisfied_constraints);
 }
 
 void LogicalSolverRun::testOnFullTestSet() {
@@ -108,6 +107,7 @@ void LogicalSolverRun::testOnFullTestSet() {
   auto start = std::chrono::high_resolution_clock::now();
   testOnMultipleProblems(all_test_cases_count);
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
-  long long seconds = std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
+  long long seconds =
+      std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
   printf("Time taken (seconds): %d \n", int(seconds));
 }

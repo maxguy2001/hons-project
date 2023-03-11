@@ -7,8 +7,8 @@ LogicalReformatter::LogicalReformatter() {}
 core::FormattedLogicalProblem
 LogicalReformatter::reformatProblem(const core::InputRows input_rows) {
   std::vector<std::vector<int>> problem_matrix = getProblemMatrix(input_rows);
-  std::vector<double> lower_bounds = getLowerBounds(input_rows);
-  std::vector<double> upper_bounds = getUpperBounds(input_rows, lower_bounds);
+  std::vector<int> lower_bounds = getLowerBounds(input_rows);
+  std::vector<int> upper_bounds = getUpperBounds(input_rows, lower_bounds);
   core::FormattedLogicalProblem problem;
   problem.problem_matrix = problem_matrix;
   problem.lower_bounds = lower_bounds;
@@ -41,31 +41,31 @@ LogicalReformatter::getProblemMatrix(const core::InputRows input_rows) {
   return problem_matrix;
 }
 
-std::vector<double>
+std::vector<int>
 LogicalReformatter::getLowerBounds(const core::InputRows input_rows) {
-  std::vector<double> lower_bounds;
-  double bounds_element;
+  std::vector<int> lower_bounds;
+  int bounds_element;
 
   for (std::size_t i = 0; i < input_rows.inequality_rows.size(); ++i) {
-    bounds_element = -1.0 * input_rows.inequality_rows.at(i).at(0);
+    bounds_element = -1 * input_rows.inequality_rows.at(i).at(0);
     lower_bounds.push_back(bounds_element);
   }
 
   for (std::size_t i = 0; i < input_rows.equality_rows.size(); ++i) {
-    bounds_element = -1.0 * input_rows.equality_rows.at(i).at(0);
+    bounds_element = -1 * input_rows.equality_rows.at(i).at(0);
     lower_bounds.push_back(bounds_element);
   }
 
   return lower_bounds;
 }
 
-std::vector<double>
+std::vector<int>
 LogicalReformatter::getUpperBounds(const core::InputRows input_rows,
-                                   const std::vector<double> lower_bounds) {
-  std::vector<double> upper_bounds;
+                                   const std::vector<int> lower_bounds) {
+  std::vector<int> upper_bounds;
 
   for (std::size_t i = 0; i < input_rows.inequality_rows.size(); ++i) {
-    upper_bounds.push_back(core::kFloatInfinity);
+    upper_bounds.push_back(core::kIntInfinity);
   }
 
   for (std::size_t j = input_rows.inequality_rows.size();

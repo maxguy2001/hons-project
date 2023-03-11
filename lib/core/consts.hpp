@@ -5,10 +5,10 @@
 
 namespace core {
 
-enum class PresolveRulesIds { 
-  freeRowId = 0, 
-  singletonVariableId, 
-  rowSingletonId, 
+enum class PresolveRulesIds {
+  freeRowId = 0,
+  singletonVariableId,
+  rowSingletonId,
   parallelRowId,
   emptyColId,
   fixedColId,
@@ -28,15 +28,15 @@ struct FormattedPrimalProblem {
 
 struct FormattedLogicalProblem {
   std::vector<std::vector<int>> problem_matrix;
-  std::vector<double> lower_bounds;
-  std::vector<double> upper_bounds;
+  std::vector<int> lower_bounds;
+  std::vector<int> upper_bounds;
 };
 
 enum class SolveStatus { kInfeasible = 0, kFeasible, kError, kDidntConverge };
 
 // define value for infinity
 const int kIntInfinity = std::numeric_limits<int>::max();
-const float kFloatInfinity = std::numeric_limits<float>::max();
+const double kFloatInfinity = std::numeric_limits<double>::max();
 const float kEpsilon = 1e-14;
 const int kMaxIterations = 1000;
 
