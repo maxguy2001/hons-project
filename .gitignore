@@ -47,3 +47,6 @@ build
 
 #vscode
 .vscode
+
+#mac os
+.DS_Store

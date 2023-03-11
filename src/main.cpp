@@ -1,9 +1,8 @@
-#include "main.hpp"
+#include "logical_solver_run.hpp"
 #include "primal_run.hpp"
 
-int main() {
-  PrimalRun run_;
-  run_.runPrimalSolver();
+
+int main(){
 
   return 0;
 }

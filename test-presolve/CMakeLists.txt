@@ -1,8 +1,6 @@
-set(target run_main)
-set(CMAKE_CXX_STANDARD 17)
-file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
+set(target basic_test)
 file(GLOB code "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
-add_executable(${target} ${headers} ${code})
+add_executable(${target} ${code})
 target_include_directories(${target}
     INTERFACE "${CMAKE_SOURCE_DIR}/lib"
     "${CMAKE_CURRENT_SOURCE_DIR}"
@@ -13,7 +11,4 @@ target_link_libraries(${target}
   primal_simplex
   utils
   logical_solver
-  revised_primal_solver
-  primal_bland
-  core
 )
