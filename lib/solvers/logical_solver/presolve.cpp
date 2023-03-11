@@ -12,7 +12,7 @@ namespace logical_solver{
     const bool solve_MIP
     ) 
     :problem_matrix_(problem_matrix),
-    solve_MIP_(solve_MIP),
+    solve_mip_(solve_MIP),
     variables_count_(problem_matrix[0].size()),
     constraints_count_(problem_matrix.size()),
     inequalities_count_(inequalities_count),
@@ -153,7 +153,7 @@ namespace logical_solver{
     );
     double feasible_value;
 
-    if (solve_MIP_) {
+    if (solve_mip_) {
       feasible_value = getVariableFeasibleValueMIP(
         row_index, col_index, problem_matrix_.at(row_index).at(col_index), 
         feasibleValueCalculationBound
@@ -186,7 +186,7 @@ namespace logical_solver{
     // we check it is feasible in presolve already so that we 
     // do not continue the process of it is not feasible.
     double variable_value;
-    if (solve_MIP_) {
+    if (solve_mip_) {
       variable_value = getVariableFeasibleValueMIP(
         row_index, col_index, variable_coefficient, RHS
       );
@@ -331,7 +331,7 @@ namespace logical_solver{
       // integers if solving MIP) now becomes an upper bound of the 
       // small inequality. Thus, if it is smaller than the small row's 
       // bound, the problem is infeasible.
-      if (solve_MIP_) {
+      if (solve_mip_) {
         if (std::floor(large_lower_bound_by_ratio) < lower_bounds_.at(small_row_index)) {
           return false;
         }
@@ -368,7 +368,7 @@ namespace logical_solver{
       // the ratio to ensure that constraints are satisfied when 
       // restricted to integers.
       double potential_lower_bound;
-      if (solve_MIP_) {potential_lower_bound = std::ceil(large_lower_bound_by_ratio);}
+      if (solve_mip_) {potential_lower_bound = std::ceil(large_lower_bound_by_ratio);}
       else {potential_lower_bound = large_lower_bound_by_ratio;}
 
       int small_row_lower_bound = lower_bounds_.at(small_row_index);
@@ -387,7 +387,7 @@ namespace logical_solver{
         // this upper bound is smaller than the small one's
         // lower bound, we will have already deemed the system unfeasible in 
         // checkAreParallelRowsFeasible.
-        if (solve_MIP_) {
+        if (solve_mip_) {
           upper_bounds_.at(small_row_index) = std::floor(large_lower_bound_by_ratio);
         } else {
           upper_bounds_.at(small_row_index) = large_lower_bound_by_ratio;
@@ -568,7 +568,7 @@ namespace logical_solver{
       int variable_coefficient = problem_matrix_.at(row_index).at(col_index);
       double feasible_value;
 
-      if (solve_MIP_) {
+      if (solve_mip_) {
         feasible_value = getVariableFeasibleValueMIP(
           row_index, col_index, variable_coefficient, RHS
         );

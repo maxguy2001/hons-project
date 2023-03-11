@@ -67,18 +67,18 @@ namespace logical_solver{
   private:
   // PRIVATE CLASS MEMBERS
     // problem
-  std::vector<std::vector<int>> problem_matrix_;
+  const std::vector<std::vector<int>> problem_matrix_;
   std::vector<double> lower_bounds_;
   std::vector<double> upper_bounds_;
 
   // problem characteristics
-  int variables_count_;
-  int constraints_count_;
-  int inequalities_count_;
-  int equalities_count_;
+  const int variables_count_;
+  const int constraints_count_;
+  const int inequalities_count_;
+  const int equalities_count_;
   
   // Problem type
-  bool solve_MIP_;
+  const bool solve_mip_;
 
   // Vectors to keep track of implied lower and 
   // upper bounds during presolve.
