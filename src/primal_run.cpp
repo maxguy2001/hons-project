@@ -32,7 +32,7 @@ void PrimalRun::runPrimalSolver() {
   utils::ModifiedPrimalReader reader_(filestream);
   // solvers::revised_primal_simplex::RevisedPrimalSimplex solver_;
   solvers::bland_simplex::BlandPrimalSimplex solver_;
-  utils::Reformatter rf_;
+  utils::PrimalReformatter rf_;
 
   // problem 2019 is first basis fault!
   int num_to_solve = 150'000;
@@ -68,7 +68,8 @@ void PrimalRun::runPrimalSolver() {
       ++num_sucessfully_solved;
     } else {
 
-      core::FormattedProblem rf_prob = rf_.reformatProblem(problem.value());
+      core::FormattedPrimalProblem rf_prob =
+          rf_.reformatProblem(problem.value());
       solver_.setProblem(rf_prob.problem_matrix);
       solver_.setBasis(rf_prob.basic_variables);
       // TODO: switch statement to find how many are sucessfully solved

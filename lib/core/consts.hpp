@@ -11,9 +11,15 @@ struct InputRows {
   int num_variables;
 };
 
-struct FormattedProblem {
+struct FormattedPrimalProblem {
   std::vector<std::vector<float>> problem_matrix;
   std::vector<int> basic_variables;
+};
+
+struct FormattedLogicalProblem {
+  std::vector<std::vector<int>> problem_matrix;
+  std::vector<double> lower_bounds;
+  std::vector<double> upper_bounds;
 };
 
 enum class SolveStatus { kInfeasible = 0, kFeasible, kError, kDidntConverge };
