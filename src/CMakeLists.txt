@@ -1,5 +1,5 @@
 set(target run_main)
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
 file(GLOB headers "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp")
 file(GLOB code "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp")
 add_executable(${target} ${headers} ${code})

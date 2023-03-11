@@ -92,7 +92,7 @@ namespace logical_solver{
   std::vector<bool> presolve_active_rows_;
   std::vector<bool> presolve_active_columns_;
   int presolve_active_rows_count_;
-  int presolve_active_columns_count;
+  int presolve_active_cols_count_;
 
   // Vector to check we don't apply inequality row 
   // singletons presolve twice to the same inequality.

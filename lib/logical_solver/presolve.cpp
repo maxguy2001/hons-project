@@ -10,19 +10,20 @@ namespace logical_solver{
     const int inequalities_count,
     const int equalities_count,
     const bool solve_MIP
-  ) {
-    // Define problem
-    problem_matrix_ = problem_matrix;
-
-    // Problem type
-    solve_MIP_ = solve_MIP;
-
-    // Get problem attributes
-    variables_count_ = problem_matrix[0].size();
-    constraints_count_ = problem_matrix.size();
-    inequalities_count_ = inequalities_count;
-    equalities_count_ = equalities_count;
-
+    ) 
+    :problem_matrix_(problem_matrix),
+    solve_MIP_(solve_MIP),
+    variables_count_(problem_matrix[0].size()),
+    constraints_count_(problem_matrix.size()),
+    inequalities_count_(inequalities_count),
+    equalities_count_(equalities_count),
+    reduced_to_empty_(false),
+    infeasible_(false),
+    infeasible_by_PR_(false),
+    unsatisfied_constraints_(false),
+    presolve_active_rows_count_(constraints_count_),
+    presolve_active_cols_count_(variables_count_)
+  {
     // Set up constraints lower and upper bounds as 
     // vector of doubles.
     for (int i=0; i < constraints_count_; ++i) {
@@ -40,14 +41,6 @@ namespace logical_solver{
     implied_lower_bounds_.resize(variables_count_, -core::kIntInfinity);
     implied_upper_bounds_.resize(variables_count_, core::kIntInfinity);
     feasible_solution_.resize(variables_count_, -999);
-
-    reduced_to_empty_ = false;
-    infeasible_ = false;
-    infeasible_by_PR_ = false;
-    unsatisfied_constraints_ = false;
-
-    presolve_active_rows_count_ = constraints_count_;
-    presolve_active_columns_count = variables_count_;
   }
 
   void Presolve::getRowsAndColsNonZeros() {
@@ -138,7 +131,7 @@ namespace logical_solver{
     presolve_active_rows_.at(row_index) = false;
     presolve_active_columns_.at(col_index) = false;
     presolve_active_rows_count_ -= 1;
-    presolve_active_columns_count -= 1;
+    presolve_active_cols_count_ -= 1;
 
     // Update presolve stack.
     struct presolve_log log = {row_index, col_index, 1};
@@ -401,7 +394,7 @@ namespace logical_solver{
 
   void Presolve::updateStateEmptyCol(const int col_index) {
     presolve_active_columns_.at(col_index) = false;
-    presolve_active_columns_count -= 1;
+    presolve_active_cols_count_ -= 1;
 
     struct presolve_log log = {-1, col_index, 4};
     presolve_stack_.push(log);
@@ -430,7 +423,7 @@ namespace logical_solver{
     }
 
     presolve_active_columns_.at(col_index) = false;
-    presolve_active_columns_count -= 1;
+    presolve_active_cols_count_ -= 1;
     // Log -1 in row index as not applicable in this 
     // rule.
     struct presolve_log log = {-1, col_index, 5, cols_non_zeros_indices_.at(col_index)};
@@ -504,7 +497,7 @@ namespace logical_solver{
     presolve_active_rows_.at(row_index) = false;
     presolve_active_columns_.at(col_index) = false;
     presolve_active_rows_count_ -= 1;
-    presolve_active_columns_count -= 1;
+    presolve_active_cols_count_ -= 1;
 
     // Update presolve stack.
     struct presolve_log log = {row_index, col_index, 6};
@@ -740,22 +733,22 @@ namespace logical_solver{
 
   void Presolve::applyPresolve() {
     int iteration_active_rows = presolve_active_rows_count_;
-    int iteration_active_cols = presolve_active_columns_count;
+    int iteration_active_cols = presolve_active_cols_count_;
     while (presolve_active_rows_count_ > 0) {
       getRowsAndColsNonZeros();
       applyPresolveRowRules();
       applyPresolveColRules();
       if (infeasible_) {break;}
       
-      if (presolve_active_rows_count_ == iteration_active_rows && presolve_active_columns_count == iteration_active_cols) {
+      if (presolve_active_rows_count_ == iteration_active_rows && presolve_active_cols_count_ == iteration_active_cols) {
         break;
       } else {
         iteration_active_rows = presolve_active_rows_count_;
-        iteration_active_cols = presolve_active_columns_count;
+        iteration_active_cols = presolve_active_cols_count_;
       }
     }
 
-    if (presolve_active_rows_count_ == 0 && presolve_active_columns_count == 0) {
+    if (presolve_active_rows_count_ == 0 && presolve_active_cols_count_ == 0) {
       reduced_to_empty_ = true;
     }
   }
