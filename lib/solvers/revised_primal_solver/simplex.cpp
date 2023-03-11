@@ -5,7 +5,7 @@
 #include <iostream>
 #include <iterator>
 
-namespace revised_primal_simplex {
+namespace solvers::revised_primal_simplex {
 
 RevisedPrimalSimplex::RevisedPrimalSimplex() {}
 
@@ -214,7 +214,7 @@ RevisedPrimalSimplex::solveProblem(const bool run_verbose) {
     int pivot_column_index = getPivotColumnIndexFixed();
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
-      ++num_pivot_row_failures;
+      ++num_pivot_row_failures_;
       return std::nullopt;
     }
     // TODO: fix this function (guarantee that pivot_row_index is not >
@@ -222,7 +222,7 @@ RevisedPrimalSimplex::solveProblem(const bool run_verbose) {
     bool is_basis_switch_successful =
         switchBasis(pivot_row_index, pivot_column_index, run_verbose);
     if (!is_basis_switch_successful) {
-      ++num_basis_failures;
+      ++num_basis_failures_;
       return std::nullopt;
     }
     constructNewTable(pivot_row_index, pivot_column_index);
@@ -234,4 +234,4 @@ RevisedPrimalSimplex::solveProblem(const bool run_verbose) {
   return std::nullopt;
 } // namespace revised_primal_simplex
 
-} // namespace revised_primal_simplex
+} // namespace solvers::revised_primal_simplex

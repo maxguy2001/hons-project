@@ -6,11 +6,12 @@
 
 namespace utils {
 
-class Reformatter {
+class PrimalReformatter {
 public:
-  Reformatter();
+  PrimalReformatter();
 
-  core::FormattedProblem reformatProblem(const core::InputRows input_rows);
+  core::FormattedPrimalProblem
+  reformatProblem(const core::InputRows input_rows);
 
 private:
   std::vector<float> getPrimalBounds(const core::InputRows input_rows);
@@ -22,7 +23,7 @@ private:
   getDualObjectiveRow(const std::vector<float> primal_bounds,
                       const std::vector<std::vector<float>> primal_table);
 
-  core::FormattedProblem
+  core::FormattedPrimalProblem
   getFullDualTable(const std::vector<std::vector<float>> primal_table,
                    const std::vector<float> objective_row);
 
