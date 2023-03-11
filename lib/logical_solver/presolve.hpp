@@ -450,6 +450,6 @@ namespace logical_solver{
 
   void printPresolveCurrentState();
   };
-};
+}
 
   

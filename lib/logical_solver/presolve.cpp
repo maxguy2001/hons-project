@@ -51,7 +51,7 @@ namespace logical_solver{
 
     presolve_active_rows_count_ = constraints_count_;
     presolve_active_columns_count = variables_count_;
-  };
+  }
 
   void Presolve::getRowsAndColsNonZeros() {
     rows_non_zero_variables_.clear();
@@ -73,7 +73,7 @@ namespace logical_solver{
         }
       }
     }
-  };
+  }
 
   double Presolve::getFeasibleValueCalculationBound(int row_index) {
     double lower_bound = lower_bounds_.at(row_index);
@@ -111,7 +111,7 @@ namespace logical_solver{
       return feasible_value;
     }
     return kInfinity;
-  };
+  }
 
   bool Presolve::checkIsRowFree(int row_index) {
     if (lower_bounds_.at(row_index) == -kInfinity && upper_bounds_.at(row_index) == kInfinity) {
@@ -127,11 +127,11 @@ namespace logical_solver{
     // Update presolve stack.
     struct presolve_log log = {row_index, -1, 0};
     presolve_stack_.push(log);
-  };
+  }
 
   void Presolve::applyFreeRowPostsolve(int row_index, int col_index) {
     postsolve_active_rows_.at(row_index) = true;
-  };
+  }
 
   void Presolve::updateStateSingletonVariable(
     int row_index, int col_index
@@ -144,7 +144,7 @@ namespace logical_solver{
     // Update presolve stack.
     struct presolve_log log = {row_index, col_index, 1};
     presolve_stack_.push(log);
-  };
+  }
 
   void Presolve::applySingletonVariablePostsolve(
     int row_index, int col_index
@@ -177,7 +177,7 @@ namespace logical_solver{
         }
       }
     }
-  };
+  }
 
   void Presolve::updateStateRowSingletonEquality(
     int row_index, int col_index
@@ -207,7 +207,7 @@ namespace logical_solver{
     } else {
       infeasible_ = true;
     }
-  };
+  }
 
   void Presolve::updateStateRowSingletonInequality(
     int row_index, int col_index
@@ -235,7 +235,7 @@ namespace logical_solver{
       );
       implied_lower_bounds_.at(col_index) = implied_bound;
     }
-  };
+  }
 
   void Presolve::applyRowSingletonPostsolve(int row_index){
     // Since row singleton equality leads to a fixed column 
@@ -248,7 +248,7 @@ namespace logical_solver{
         postsolve_active_rows_.at(row_index) = true;
       }
     }
-  };
+  }
 
   bool Presolve::checkAreRowsParallel(int row1_index, int row2_index) {
     if (rows_non_zero_variables_.at(row1_index).size() != rows_non_zero_variables_.at(row2_index).size()) {
@@ -276,7 +276,7 @@ namespace logical_solver{
     }
 
     return true;
-  };
+  }
 
   int Presolve::getParallelRow(int row_index, int start) {
     if (row_index == start) {return -1;}
@@ -286,7 +286,7 @@ namespace logical_solver{
     }
 
     return -1;
-  };
+  }
 
   std::vector<int> Presolve::sortParallelRowsBySize(int row, int parallel_row) {
     // Get index of first non-zero variable in row.
@@ -304,7 +304,7 @@ namespace logical_solver{
     // is a row singleton or reduntant variable afterwards, which would
     // mean we turn off both rows in the same iteration.
     return {row, parallel_row};
-  };
+  }
 
   bool Presolve::checkAreParallelRowsFeasible(
     int small_row_index,
@@ -338,7 +338,7 @@ namespace logical_solver{
     }
     return true;
 
-  };
+  }
 
   void Presolve::updateStateParallelRow(
     int small_row_index, 
@@ -386,7 +386,7 @@ namespace logical_solver{
         }
       }
     }
-  };
+  }
 
   void Presolve::applyParallelRowPostsolve(int row_index) {
     if (isRowActivePostsolve(row_index)) {
@@ -394,7 +394,7 @@ namespace logical_solver{
         postsolve_active_rows_.at(row_index) = true;
       }
     }
-  };
+  }
 
   void Presolve::updateStateEmptyCol(int col_index) {
     presolve_active_columns_.at(col_index) = false;
@@ -402,19 +402,19 @@ namespace logical_solver{
 
     struct presolve_log log = {-1, col_index, 4};
     presolve_stack_.push(log);
-  };
+  }
 
   void Presolve::applyEmptyColPostsolve(int col_index) {
     feasible_solution_.at(col_index) = 0;
     postsolve_active_cols_.at(col_index) = true;
-  };
+  }
 
   bool Presolve::isFixedCol(int col_index) {
     if (implied_lower_bounds_.at(col_index) == implied_upper_bounds_.at(col_index)) {
       return true;
     }
     return false;
-  };
+  }
 
   void Presolve::updateStateFixedCol(int col_index) {
     int variable_value = implied_lower_bounds_.at(col_index);
@@ -432,7 +432,7 @@ namespace logical_solver{
     // rule.
     struct presolve_log log = {-1, col_index, 5, cols_non_zeros_indices_.at(col_index)};
     presolve_stack_.push(log);
-  };
+  }
 
   void Presolve::applyFixedColPostsolve(
     int col_index, std::vector<int> col_non_zeros
@@ -454,21 +454,21 @@ namespace logical_solver{
 
     postsolve_active_cols_.at(col_index) = true;
     feasible_solution_.at(col_index) = feasible_value;
-  };
+  }
 
   bool Presolve::isDoubletonEquation(int row_index, int col_index) {
     if (rows_non_zero_variables_.at(row_index).size() == 2) {
       return true;
     }
     return false;
-  };
+  }
 
   bool Presolve::isFreeColSubstitution(int row_index, int col_index) {
     if (implied_lower_bounds_.at(col_index) == -kInfinity && implied_upper_bounds_.at(col_index) == kInfinity) {
       return true;
     }
     return false;
-  };
+  }
 
   int Presolve::getFreeColSubstitutionDependancy(
     int row_index, int col_index
@@ -483,7 +483,7 @@ namespace logical_solver{
 
     // return -1 if dependancy was not found.
     return -1;
-  };
+  }
 
   void Presolve::updateStateFreeColSubstitution(
     int row_index, int col_index
@@ -502,7 +502,7 @@ namespace logical_solver{
     // Update presolve stack.
     struct presolve_log log = {row_index, col_index, 6};
     presolve_stack_.push(log);
-  };
+  }
 
   double Presolve::getFreeColSubstitutionSumOfDependancies(
     int row_index, int col_index
@@ -527,7 +527,7 @@ namespace logical_solver{
       }
     }
     return sum_of_dependancies;
-  };
+  }
 
   void Presolve::applyFreeColSubstitutionPostsolve(
     int row_index, int col_index
@@ -568,7 +568,7 @@ namespace logical_solver{
         }
       }
     }
-  };
+  }
 
   void Presolve::applyPresolveRowRules() {
     for (int i = 0; i < constraints_count_; ++i) {
@@ -646,7 +646,7 @@ namespace logical_solver{
         }
       }
     }
-  };
+  }
 
   void Presolve::applyPresolveColRules() {
     for (int j = 0; j < variables_count_; j++) {
@@ -673,7 +673,7 @@ namespace logical_solver{
         }
       }
     }
-  };
+  }
 
   bool Presolve::checkVariableImpliedBounds(
     int col_index, int feasible_value
@@ -695,7 +695,7 @@ namespace logical_solver{
       }
     }
     return true;
-  };
+  }
 
   bool Presolve::checkConstraint(int row_index, int rule_id) {
     double constraint_value = 0;
@@ -727,7 +727,7 @@ namespace logical_solver{
       return false;
     }
     return true;
-  };
+  }
 
   void Presolve::applyPresolve() {
     int iteration_active_rows = presolve_active_rows_count_;
@@ -749,7 +749,7 @@ namespace logical_solver{
     if (presolve_active_rows_count_ == 0 && presolve_active_columns_count == 0) {
       reduced_to_empty_ = true;
     }
-  };
+  }
 
   void Presolve::applyPostsolve() {
     postsolve_active_rows_.resize(constraints_count_, false);
@@ -788,14 +788,14 @@ namespace logical_solver{
         presolve_stack_.pop();
       }
     }
-  };
+  }
 
   void Presolve::printFeasibleSolution() {
     for (int i = 0; i < variables_count_; i++) {
       printf("Variable %d = %f\n", i, feasible_solution_.at(i));
     }
     std::cout<<" "<<std::endl;
-  };
+  }
 
   void Presolve::printBounds() {
     std::cout<<"Constraints Bounds"<<std::endl;;
@@ -823,7 +823,7 @@ namespace logical_solver{
     }
 
     std::cout<<" "<<std::endl;
-  };
+  }
 
   void Presolve::printImpliedBounds() {
     std::cout<<"Implied Bounds"<<std::endl;;
@@ -851,7 +851,7 @@ namespace logical_solver{
     }
 
     std::cout<<" "<<std::endl;
-  };
+  }
 
   void Presolve::printLP() {
     int max_width = 0;
@@ -872,7 +872,7 @@ namespace logical_solver{
     std::cout<<" "<<std::endl;
 
     printBounds();
-  };
+  }
 
   void Presolve::printPresolveCurrentState() {
     for (int i=0; i < constraints_count_; i++) {
