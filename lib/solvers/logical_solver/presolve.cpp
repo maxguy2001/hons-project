@@ -115,7 +115,10 @@ namespace logical_solver{
     presolve_active_rows_count_ -= 1;
 
     // Update presolve stack.
-    struct presolve_log log = {row_index, -1, 0};
+    struct presolve_log log = {
+      row_index, -1, 
+      static_cast<int>(core::PresolveRulesIds::freeRowId)
+    };
     presolve_stack_.push(log);
   }
 
@@ -134,7 +137,10 @@ namespace logical_solver{
     presolve_active_cols_count_ -= 1;
 
     // Update presolve stack.
-    struct presolve_log log = {row_index, col_index, 1};
+    struct presolve_log log = {
+      row_index, col_index, 
+      static_cast<int>(core::PresolveRulesIds::singletonVariableId)
+    };
     presolve_stack_.push(log);
   }
 
@@ -164,7 +170,7 @@ namespace logical_solver{
       // row. If so, check if the row (constraint) is satisfied, and if 
       // so turn on row in postsolve.
       if (isRowActivePostsolve(row_index)) {
-        if (checkConstraint(row_index, 0)) {
+        if (checkConstraint(row_index, static_cast<int>(core::PresolveRulesIds::singletonVariableId))) {
           postsolve_active_rows_.at(row_index) = true;
         }
       }
@@ -194,7 +200,10 @@ namespace logical_solver{
       implied_upper_bounds_.at(col_index) = variable_value;
 
       // Update presolve stack.
-      struct presolve_log log = {row_index, col_index, 2};
+      struct presolve_log log = {
+        row_index, col_index, 
+        static_cast<int>(core::PresolveRulesIds::rowSingletonId)
+      };
       presolve_stack_.push(log);
     } else {
       infeasible_ = true;
@@ -236,7 +245,7 @@ namespace logical_solver{
     // the row on on postsolve so that it can be included in the 
     // constraints checks.
     if (isRowActivePostsolve(row_index)) {
-      if (checkConstraint(row_index, 1)) {
+      if (checkConstraint(row_index, static_cast<int>(core::PresolveRulesIds::rowSingletonId))) {
         postsolve_active_rows_.at(row_index) = true;
       }
     }
@@ -345,7 +354,10 @@ namespace logical_solver{
     // turn off large row and log into stack
     presolve_active_rows_.at(large_row_index) = false;
     presolve_active_rows_count_ -= 1;
-    struct presolve_log log = {large_row_index, -1, 3};
+    struct presolve_log log = {
+      large_row_index, -1, 
+      static_cast<int>(core::PresolveRulesIds::parallelRowId)
+    };
     presolve_stack_.push(log);
 
     // if we have an inequality, update the bound on the small row 
@@ -386,7 +398,7 @@ namespace logical_solver{
 
   void Presolve::applyParallelRowPostsolve(const int row_index) {
     if (isRowActivePostsolve(row_index)) {
-      if (checkConstraint(row_index, 3)) {
+      if (checkConstraint(row_index, static_cast<int>(core::PresolveRulesIds::parallelRowId))) {
         postsolve_active_rows_.at(row_index) = true;
       }
     }
@@ -396,7 +408,10 @@ namespace logical_solver{
     presolve_active_columns_.at(col_index) = false;
     presolve_active_cols_count_ -= 1;
 
-    struct presolve_log log = {-1, col_index, 4};
+    struct presolve_log log = {
+      -1, col_index, 
+      static_cast<int>(core::PresolveRulesIds::emptyColId)
+    };
     presolve_stack_.push(log);
   }
 
@@ -426,7 +441,11 @@ namespace logical_solver{
     presolve_active_cols_count_ -= 1;
     // Log -1 in row index as not applicable in this 
     // rule.
-    struct presolve_log log = {-1, col_index, 5, cols_non_zeros_indices_.at(col_index)};
+    struct presolve_log log = {
+      -1, col_index, 
+      static_cast<int>(core::PresolveRulesIds::fixedColId), 
+      cols_non_zeros_indices_.at(col_index)
+    };
     presolve_stack_.push(log);
   }
 
@@ -500,7 +519,10 @@ namespace logical_solver{
     presolve_active_cols_count_ -= 1;
 
     // Update presolve stack.
-    struct presolve_log log = {row_index, col_index, 6};
+    struct presolve_log log = {
+      row_index, col_index, 
+      static_cast<int>(core::PresolveRulesIds::freeColSubsId)
+    };
     presolve_stack_.push(log);
   }
 
@@ -763,25 +785,25 @@ namespace logical_solver{
         int row_index = rule_log.constraint_index;
         int col_index = rule_log.variable_index;
         
-        if (rule_id == 0) {
+        if (rule_id == static_cast<int>(core::PresolveRulesIds::freeRowId)) {
           applyFreeRowPostsolve(row_index, col_index);
         }
-        else if (rule_id == 1) {
+        else if (rule_id == static_cast<int>(core::PresolveRulesIds::singletonVariableId)) {
           applySingletonVariablePostsolve(row_index, col_index);
         }
-        else if (rule_id == 2) {
+        else if (rule_id == static_cast<int>(core::PresolveRulesIds::rowSingletonId)) {
           applyRowSingletonPostsolve(row_index);
         }
-        else if (rule_id == 3) {
+        else if (rule_id == static_cast<int>(core::PresolveRulesIds::parallelRowId)) {
           applyParallelRowPostsolve(row_index);
         }
-        else if (rule_id == 4) {
+        else if (rule_id == static_cast<int>(core::PresolveRulesIds::emptyColId)) {
           applyEmptyColPostsolve(col_index);
         }
-        else if (rule_id == 5) {
+        else if (rule_id == static_cast<int>(core::PresolveRulesIds::fixedColId)) {
           applyFixedColPostsolve(col_index, rule_log.dependancies);
         } 
-        else if (rule_id == 6) {
+        else if (rule_id == static_cast<int>(core::PresolveRulesIds::freeColSubsId)) {
           applyFreeColSubstitutionPostsolve(row_index, col_index);
         }
 

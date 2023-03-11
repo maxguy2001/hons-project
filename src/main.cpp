@@ -3,8 +3,8 @@
 
 
 int main(){
-  // LogicalSolverRun logical_run_;
-  // logical_run_.testOnFullTestSet();
+  LogicalSolverRun logical_run_;
+  logical_run_.testOnFullTestSet();
   // PrimalRun run_;
   // run_.runPrimalSolver();
 
