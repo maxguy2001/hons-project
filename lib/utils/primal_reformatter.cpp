@@ -1,23 +1,23 @@
-#include "reformatter.hpp"
+#include "primal_reformatter.hpp"
 
 namespace utils {
 
-Reformatter::Reformatter() {}
+PrimalReformatter::PrimalReformatter() {}
 
-core::FormattedProblem
-Reformatter::reformatProblem(const core::InputRows input_rows) {
+core::FormattedPrimalProblem
+PrimalReformatter::reformatProblem(const core::InputRows input_rows) {
   const std::vector<float> primal_bounds = getPrimalBounds(input_rows);
   const std::vector<std::vector<float>> primal_table =
       getPrimalTable(input_rows);
   const std::vector<float> dual_objective_row =
       getDualObjectiveRow(primal_bounds, primal_table);
-  const core::FormattedProblem dual_table =
+  const core::FormattedPrimalProblem dual_table =
       getFullDualTable(primal_table, dual_objective_row);
   return dual_table;
 }
 
 std::vector<float>
-Reformatter::getPrimalBounds(const core::InputRows input_rows) {
+PrimalReformatter::getPrimalBounds(const core::InputRows input_rows) {
 
   const float negative_one = -1.0;
   std::vector<float> primal_bounds;
@@ -43,7 +43,7 @@ Reformatter::getPrimalBounds(const core::InputRows input_rows) {
 }
 
 std::vector<std::vector<float>>
-Reformatter::getPrimalTable(const core::InputRows input_rows) {
+PrimalReformatter::getPrimalTable(const core::InputRows input_rows) {
 
   std::vector<std::vector<float>> primal_table;
 
@@ -83,7 +83,7 @@ Reformatter::getPrimalTable(const core::InputRows input_rows) {
   return primal_table;
 }
 
-std::vector<float> Reformatter::getDualObjectiveRow(
+std::vector<float> PrimalReformatter::getDualObjectiveRow(
     const std::vector<float> primal_bounds,
     const std::vector<std::vector<float>> primal_table) {
 
@@ -114,7 +114,7 @@ std::vector<float> Reformatter::getDualObjectiveRow(
   return dual_objective_row;
 }
 
-core::FormattedProblem Reformatter::getFullDualTable(
+core::FormattedPrimalProblem PrimalReformatter::getFullDualTable(
     const std::vector<std::vector<float>> primal_table,
     const std::vector<float> objective_row) {
 
@@ -196,7 +196,7 @@ core::FormattedProblem Reformatter::getFullDualTable(
     initial_basis.push_back(i);
   }
 
-  core::FormattedProblem formatted_problem;
+  core::FormattedPrimalProblem formatted_problem;
   formatted_problem.problem_matrix = dual_table;
   formatted_problem.basic_variables = initial_basis;
 

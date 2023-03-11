@@ -67,6 +67,7 @@ std::optional<core::InputRows> ModifiedPrimalReader::getNextProblem() {
   core::InputRows next_problem;
   next_problem.inequality_rows = inequality_rows;
   next_problem.equality_rows = equality_rows;
+  next_problem.num_variables = num_variables;
 
   return next_problem;
 }

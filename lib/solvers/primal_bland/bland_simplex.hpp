@@ -2,14 +2,18 @@
 #include <optional>
 #include <vector>
 
-namespace solvers::revised_primal_simplex {
+#include "../../core/consts.hpp"
 
-class RevisedPrimalSimplex {
+namespace solvers::bland_simplex {
+
+class BlandPrimalSimplex {
 public:
-  RevisedPrimalSimplex();
+  BlandPrimalSimplex();
 
+  int num_already_optimal_ = 0;
   int num_basis_failures_ = 0;
   int num_pivot_row_failures_ = 0;
+  int num_not_converging_ = 0;
 
   /**
    * @brief Set the table class member
@@ -29,13 +33,20 @@ public:
    * @brief solve the given problem
    *
    */
-  std::optional<std::vector<float>> solveProblem(const bool run_verbose);
+  core::SolveStatus solveProblem(const bool run_verbose,
+                                 const core::InputRows original_problem);
+
+  // TODO:remove
+  void printSolution();
 
   // TODO: reinstate private section of class & remover verbose argument from
   // solveProblem
 private:
   // simplex table
   std::vector<std::vector<float>> table_;
+
+  // TODO:remove
+  std::vector<float> solution_;
 
   // simplex basis. Order of basis must be preserved!
   std::vector<int> basis_;
@@ -54,7 +65,7 @@ private:
    *
    * @return int
    */
-  int getPivotColumnIndexFixed();
+  int getPivotColumnIndex();
 
   /**
    * @brief returns index of pivot row in table_ based on the minimum value
@@ -72,8 +83,7 @@ private:
    * @param pivot_row_index found in getPivotRowIndex()
    * @param pivot_column_index found in getPivotColumnIndex()
    */
-  bool switchBasis(const int pivot_row_index, const int pivot_column_index,
-                   const bool verbose);
+  bool switchBasis(const int pivot_row_index, const int pivot_column_index);
   // TODO: fix above later
 
   /**
@@ -96,8 +106,11 @@ private:
    */
   bool checkOptimality();
 
+  core::SolveStatus verifySolution(core::InputRows original_problem,
+                                   std::vector<float> solution_row);
+
   // TODO: remove this?
   void printObjectiveRow();
 };
 
-} // namespace solvers::revised_primal_simplex
+} // namespace solvers::bland_simplex
