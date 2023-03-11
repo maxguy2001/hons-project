@@ -11,9 +11,6 @@ namespace logical_solver{
     const int equalities_count,
     const bool solve_MIP
   ) {
-    // Infitnity - eventually to be defined in types.
-    kInfinity = std::numeric_limits<int>::max(); 
-
     // Define problem
     problem_matrix_ = problem_matrix;
 
@@ -40,8 +37,8 @@ namespace logical_solver{
     presolve_active_columns_.resize(variables_count_, true);
     inequality_singletons_ = {};
 
-    implied_lower_bounds_.resize(variables_count_, -kInfinity);
-    implied_upper_bounds_.resize(variables_count_, kInfinity);
+    implied_lower_bounds_.resize(variables_count_, -core::kIntInfinity);
+    implied_upper_bounds_.resize(variables_count_, core::kIntInfinity);
     feasible_solution_.resize(variables_count_, -999);
 
     reduced_to_empty_ = false;
@@ -79,7 +76,7 @@ namespace logical_solver{
     double lower_bound = lower_bounds_.at(row_index);
     double upper_bound = upper_bounds_.at(row_index);
 
-    if (lower_bound != -kInfinity) {
+    if (lower_bound != -core::kIntInfinity) {
       return lower_bound;
     }
     return upper_bound;
@@ -102,7 +99,7 @@ namespace logical_solver{
           }
         }
       }
-      return kInfinity;
+      return core::kIntInfinity;
     }
     // If RHS/coeff is integer, calculate it and check if 
     // implied bounds satisfied.
@@ -110,11 +107,11 @@ namespace logical_solver{
     if (checkVariableImpliedBounds(col_index, feasible_value)) {
       return feasible_value;
     }
-    return kInfinity;
+    return core::kIntInfinity;
   }
 
   bool Presolve::checkIsRowFree(int row_index) {
-    if (lower_bounds_.at(row_index) == -kInfinity && upper_bounds_.at(row_index) == kInfinity) {
+    if (lower_bounds_.at(row_index) == -core::kIntInfinity && upper_bounds_.at(row_index) == core::kIntInfinity) {
       return true;
     }
     return false;
@@ -164,7 +161,7 @@ namespace logical_solver{
       feasible_value = feasibleValueCalculationBound/variable_coeff;
     }
 
-    if (feasible_value == kInfinity) {infeasible_ = true;}
+    if (feasible_value == core::kIntInfinity) {infeasible_ = true;}
     else {
       feasible_solution_.at(col_index) = feasible_value;
       postsolve_active_cols_.at(col_index) = true;
@@ -195,7 +192,7 @@ namespace logical_solver{
     } else {
       variable_value = (double)RHS/variable_coefficient;
     } 
-    if (variable_value != kInfinity) {
+    if (variable_value != core::kIntInfinity) {
       presolve_active_rows_.at(row_index) = false;
       presolve_active_rows_count_ -= 1;
       implied_lower_bounds_.at(col_index) = variable_value;
@@ -464,7 +461,7 @@ namespace logical_solver{
   }
 
   bool Presolve::isFreeColSubstitution(int row_index, int col_index) {
-    if (implied_lower_bounds_.at(col_index) == -kInfinity && implied_upper_bounds_.at(col_index) == kInfinity) {
+    if (implied_lower_bounds_.at(col_index) == -core::kIntInfinity && implied_upper_bounds_.at(col_index) == core::kIntInfinity) {
       return true;
     }
     return false;
@@ -513,7 +510,7 @@ namespace logical_solver{
       // If it is not the singleton column, check if the coefficient
       // in the problem is non-zero, and if it isn't if a feasible value
       // has been found update sum of dependancies, and it not return 
-      // kinfinity.
+      // core::kIntInfinity.
       if (j != col_index) {
         int col_coefficient = problem_matrix_.at(row_index).at(j);
 
@@ -521,7 +518,7 @@ namespace logical_solver{
           if (postsolve_active_cols_.at(j))  {
             sum_of_dependancies += col_coefficient*feasible_solution_.at(j);
           } else {
-            return kInfinity;
+            return core::kIntInfinity;
           }
         }
       }
@@ -541,7 +538,7 @@ namespace logical_solver{
       row_index
     );
 
-    if (sum_of_dependancies != kInfinity) {
+    if (sum_of_dependancies != core::kIntInfinity) {
       double RHS = feasibleValueCalculationBound - sum_of_dependancies;
       int variable_coefficient = problem_matrix_.at(row_index).at(col_index);
       double feasible_value;
@@ -554,7 +551,7 @@ namespace logical_solver{
         feasible_value = RHS/variable_coefficient;
       }
 
-      if (feasible_value == kInfinity) {infeasible_ = true;}
+      if (feasible_value == core::kIntInfinity) {infeasible_ = true;}
       else {
         feasible_solution_.at(col_index) = feasible_value;
         postsolve_active_cols_.at(col_index) = true;
@@ -807,13 +804,13 @@ namespace logical_solver{
       std::string lower_str;
       std::string upper_str;
 
-      if (lower_bound == -kInfinity) {
+      if (lower_bound == -core::kIntInfinity) {
         lower_str = "-Inf";
       } else {
         lower_str = std::to_string(lower_bound);
       }
 
-      if (upper_bound == kInfinity) {
+      if (upper_bound == core::kIntInfinity) {
         upper_str = "Inf";
       } else {
         upper_str = std::to_string(upper_bound);
@@ -835,13 +832,13 @@ namespace logical_solver{
       std::string lower_str;
       std::string upper_str;
 
-      if (lower_bound == -kInfinity) {
+      if (lower_bound == -core::kIntInfinity) {
         lower_str = "-Inf";
       } else {
         lower_str = std::to_string(lower_bound);
       }
 
-      if (upper_bound == kInfinity) {
+      if (upper_bound == core::kIntInfinity) {
         upper_str = "Inf";
       } else {
         upper_str = std::to_string(upper_bound);
