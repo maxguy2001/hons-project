@@ -44,10 +44,10 @@ namespace logical_solver{
     implied_upper_bounds_.resize(variables_count_, kInfinity);
     feasible_solution_.resize(variables_count_, -999);
 
-    reduced_to_empty = false;
-    infeasible = false;
-    infeasible_by_PR = false;
-    unsatisfied_constraints = false;
+    reduced_to_empty_ = false;
+    infeasible_ = false;
+    infeasible_by_PR_ = false;
+    unsatisfied_constraints_ = false;
 
     presolve_active_rows_count_ = constraints_count_;
     presolve_active_columns_count = variables_count_;
@@ -164,7 +164,7 @@ namespace logical_solver{
       feasible_value = feasibleValueCalculationBound/variable_coeff;
     }
 
-    if (feasible_value == kInfinity) {infeasible = true;}
+    if (feasible_value == kInfinity) {infeasible_ = true;}
     else {
       feasible_solution_.at(col_index) = feasible_value;
       postsolve_active_cols_.at(col_index) = true;
@@ -205,7 +205,7 @@ namespace logical_solver{
       struct presolve_log log = {row_index, col_index, 2};
       presolve_stack_.push(log);
     } else {
-      infeasible = true;
+      infeasible_ = true;
     }
   };
 
@@ -554,7 +554,7 @@ namespace logical_solver{
         feasible_value = RHS/variable_coefficient;
       }
 
-      if (feasible_value == kInfinity) {infeasible = true;}
+      if (feasible_value == kInfinity) {infeasible_ = true;}
       else {
         feasible_solution_.at(col_index) = feasible_value;
         postsolve_active_cols_.at(col_index) = true;
@@ -603,8 +603,8 @@ namespace logical_solver{
             small_row_index, large_to_small_ratio, 
             large_lower_bound_by_ratio)
           ) {
-            infeasible = true;
-            infeasible_by_PR = true;
+            infeasible_ = true;
+            infeasible_by_PR_ = true;
             break;
           } else {
             updateStateParallelRow(
@@ -723,7 +723,7 @@ namespace logical_solver{
         upper_bounds_.at(row_index)
       );
       std::cout<<""<<std::endl;
-      unsatisfied_constraints = true;
+      unsatisfied_constraints_ = true;
       return false;
     }
     return true;
@@ -736,7 +736,7 @@ namespace logical_solver{
       getRowsAndColsNonZeros();
       applyPresolveRowRules();
       applyPresolveColRules();
-      if (infeasible) {break;}
+      if (infeasible_) {break;}
       
       if (presolve_active_rows_count_ == iteration_active_rows && presolve_active_columns_count == iteration_active_cols) {
         break;
@@ -747,14 +747,14 @@ namespace logical_solver{
     }
 
     if (presolve_active_rows_count_ == 0 && presolve_active_columns_count == 0) {
-      reduced_to_empty = true;
+      reduced_to_empty_ = true;
     }
   };
 
   void Presolve::applyPostsolve() {
     postsolve_active_rows_.resize(constraints_count_, false);
     postsolve_active_cols_.resize(variables_count_, false);
-    if (!infeasible) {
+    if (!infeasible_) {
       while (!presolve_stack_.empty()) {
         presolve_log rule_log = presolve_stack_.top();
         int rule_id = rule_log.rule_id;
@@ -783,7 +783,7 @@ namespace logical_solver{
           applyFreeColSubstitutionPostsolve(row_index, col_index);
         }
 
-        if (infeasible) {break;}
+        if (infeasible_) {break;}
         // Remove rule from stack.
         presolve_stack_.pop();
       }

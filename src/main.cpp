@@ -31,10 +31,10 @@ void testOnTestProblem() {
   presolve.printLP();
   presolve.applyPresolve();
   presolve.applyPostsolve();
-  if (presolve.reduced_to_empty) {
+  if (presolve.reduced_to_empty_) {
     printf("Reduced to empty\n");
   }
-  if (!presolve.infeasible){
+  if (!presolve.infeasible_){
     presolve.printFeasibleSolution();
   }
   else {
@@ -57,12 +57,12 @@ void testOnSingleProblem(int problem_number) {
 
   presolve.printLP();
   presolve.applyPresolve();
-  if (presolve.reduced_to_empty) {
+  if (presolve.reduced_to_empty_) {
     printf("Reduced to empty\n");
   }
   // presolve.applyPostsolve();
   presolve.printFeasibleSolution();
-  if (presolve.infeasible) {std::cout<<"INFEASIBLE BITCH"<<std::endl;}
+  if (presolve.infeasible_) {std::cout<<"INFEASIBLE"<<std::endl;}
 }
 
 void testOnMultipleProblems(int problems_count) {
@@ -94,14 +94,14 @@ void testOnMultipleProblems(int problems_count) {
       presolve.applyPresolve();
       presolve.applyPostsolve();
 
-      if (presolve.unsatisfied_constraints) {
+      if (presolve.unsatisfied_constraints_) {
         unsatisfied_constraints += 1;
         // presolve.printLP();
         // presolve.printFeasibleSolution();
         // std::cout<<n<<std::endl;
       }
-      else if (presolve.infeasible) {
-        if (presolve.infeasible_by_PR) {
+      else if (presolve.infeasible_) {
+        if (presolve.infeasible_by_PR_) {
           infeasible_by_parallel_rows_count += 1;
           // presolve.printLP();
           // std::cout<<n<<std::endl;
@@ -114,7 +114,7 @@ void testOnMultipleProblems(int problems_count) {
         // }
         infeasible_count += 1;
       }
-      else if (presolve.reduced_to_empty) {
+      else if (presolve.reduced_to_empty_) {
         // std::cout << "REDUCED TO EMPTY\n" << std::endl;
         reduced_to_empty_count += 1;
       }
@@ -130,7 +130,7 @@ void testOnMultipleProblems(int problems_count) {
 int main(){
   // testOnTestProblem();
   // testOnSingleProblem(144187);
-  
+
   const int all_test_cases_count = 150218;
   auto start = std::chrono::high_resolution_clock::now();
   testOnMultipleProblems(all_test_cases_count);

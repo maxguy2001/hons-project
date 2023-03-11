@@ -34,10 +34,10 @@ namespace logical_solver{
   std::vector<double> feasible_solution_;
 
   // Boolean to check if problem has been reduced to empty.
-  bool reduced_to_empty;
-  bool infeasible;
-  bool infeasible_by_PR;
-  bool unsatisfied_constraints;
+  bool reduced_to_empty_;
+  bool infeasible_;
+  bool infeasible_by_PR_;
+  bool unsatisfied_constraints_;
 
   // CONSTRUCTOR
   Presolve(
