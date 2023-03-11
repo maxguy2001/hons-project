@@ -4,7 +4,7 @@
 
 int main() {
 
-  const std::string user = "max";
+  const std::string user = "josep";
 
   std::string problem_path;
   if (user == "josep") {

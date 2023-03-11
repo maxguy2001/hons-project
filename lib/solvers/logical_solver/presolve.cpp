@@ -27,7 +27,11 @@ namespace logical_solver{
     // Set up constraints lower and upper bounds as 
     // vector of doubles.
     for (std::size_t i=0; i < constraints_count_; ++i) {
-      lower_bounds_.push_back(static_cast<double>(lower_bounds.at(i)));
+      if (lower_bounds.at(i) == -2147483648) {
+        lower_bounds_.push_back(static_cast<double>(-core::kIntInfinity));
+      } else {
+        lower_bounds_.push_back(static_cast<double>(lower_bounds.at(i)));
+      }
       upper_bounds_.push_back(static_cast<double>(upper_bounds.at(i)));
     }
 
