@@ -5,6 +5,7 @@
 #include <limits>
 #include <cmath>
 #include <iomanip>
+#include <algorithm>
 
 namespace logical_solver{
 
@@ -16,9 +17,6 @@ namespace logical_solver{
   std::vector<std::vector<int>> problem_matrix_;
   std::vector<double> lower_bounds_;
   std::vector<double> upper_bounds_;
-
-  // Problem type
-  bool solve_MIP_;
 
   // problem characteristics
   int variables_count_;
@@ -79,6 +77,9 @@ namespace logical_solver{
 
   private:
   // PRIVATE INSTANCE VARIABLES 
+  // Problem type
+  bool solve_MIP_;
+  
   // Vectors to keep track of implied lower and 
   // upper bounds during presolve.
   std::vector<double> implied_lower_bounds_;
