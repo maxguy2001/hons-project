@@ -5,6 +5,16 @@
 
 namespace core {
 
+enum class PresolveRulesIds { 
+  freeRowId = 0, 
+  singletonVariableId, 
+  rowSingletonId, 
+  parallelRowId,
+  emptyColId,
+  fixedColId,
+  freeColSubsId
+};
+
 struct InputRows {
   std::vector<std::vector<float>> equality_rows;
   std::vector<std::vector<float>> inequality_rows;
