@@ -5,10 +5,10 @@
 
 namespace core {
 
-enum class PresolveRulesIds { 
-  freeRowId = 0, 
-  singletonVariableId, 
-  rowSingletonId, 
+enum class PresolveRulesIds {
+  freeRowId = 0,
+  singletonVariableId,
+  rowSingletonId,
   parallelRowId,
   emptyColId,
   fixedColId,
@@ -22,6 +22,11 @@ struct InputRows {
 };
 
 struct FormattedPrimalProblem {
+  std::vector<std::vector<float>> problem_matrix;
+  std::vector<int> basic_variables;
+};
+
+struct FormattedDualProblem {
   std::vector<std::vector<float>> problem_matrix;
   std::vector<int> basic_variables;
 };

@@ -9,7 +9,7 @@ target_include_directories(${target}
 )
 
 target_link_libraries(${target}
-  dual_simplex
+  dual_bland
   primal_simplex
   utils
   logical_solver
