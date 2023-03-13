@@ -1,4 +1,4 @@
-add_subdirectory(dual_simplex)
+add_subdirectory(dual_bland)
 add_subdirectory(primal_simplex)
 add_subdirectory(logical_solver)
 add_subdirectory(revised_primal_solver)
