@@ -11,17 +11,12 @@ public:
   core::FormattedDualProblem reformatProblem(const core::InputRows input_rows);
 
 private:
-  std::vector<float> getDualBounds(const core::InputRows input_rows);
+  std::vector<float> getBounds(const core::InputRows input_rows);
 
-  std::vector<std::vector<float>>
-  getDualTable(const core::InputRows input_rows);
-
-  std::vector<float>
-  getObjectiveRow(const std::vector<float> dual_bounds,
-                  const std::vector<std::vector<float>> dual_table);
+  std::vector<std::vector<float>> getTable(const core::InputRows input_rows);
 
   core::FormattedDualProblem
-  getFullTable(const std::vector<std::vector<float>> dual_table,
-               const std::vector<float> objective_row);
+  getFullTable(const std::vector<std::vector<float>> input_table,
+               const std::vector<float> bounds);
 };
 } // namespace utils
