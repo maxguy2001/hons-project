@@ -86,6 +86,9 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
       if (presolve.unsatisfied_constraints_) {
         unsatisfied_constraints += 1;
       } else if (presolve.infeasible_) {
+        presolve.printLP();
+        std::cout<<n<<std::endl;
+        break;
         if (presolve.infeasible_by_PR_) {
           infeasible_by_parallel_rows_count += 1;
         }
