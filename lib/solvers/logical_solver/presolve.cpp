@@ -21,6 +21,7 @@ namespace logical_solver{
     infeasible_(false),
     infeasible_by_PR_(false),
     unsatisfied_constraints_(false),
+    print_unsatisfied_constraints_(false),
     presolve_active_rows_count_(constraints_count_),
     presolve_active_cols_count_(variables_count_)
   {
@@ -79,6 +80,48 @@ namespace logical_solver{
     return upper_bound;
   }
 
+  int Presolve::getDependancyIndexRowDoubletonMIP(
+    const int row_index, const int col_index
+  ) {
+    int nonzero_count = 0;
+    int dependancy_index = -1;
+
+    for (std::size_t j = 0; j < variables_count_; ++j) {
+      int coefficient = problem_matrix_.at(row_index).at(j);
+      if (coefficient != 0) {
+        if (nonzero_count == 0 && j != col_index) {
+          dependancy_index = j;
+          nonzero_count += 1;
+          return dependancy_index;
+        }
+        else if (nonzero_count == 1) {
+          return -1;
+        }
+      }
+    }
+
+    return dependancy_index;
+  }
+
+  bool Presolve::checkEqualityDependancyMIP(
+    const int dependancy_new_feasible_value, 
+    const int dependancy_col_index
+  ) {
+    double dependancy_feasible_value = feasible_solution_.at(dependancy_col_index);
+
+    for (std::size_t i; i < constraints_count_; ++i) {
+      if (problem_matrix_.at(i).at(dependancy_col_index) && postsolve_active_rows_.at(i)) {
+        feasible_solution_.at(dependancy_col_index) = dependancy_feasible_value;
+        bool is_constraint_satisfied = checkConstraint(i, 0);
+        feasible_solution_.at(dependancy_col_index) = dependancy_feasible_value;
+
+        if (!is_constraint_satisfied) {return false;}
+      }
+    }
+
+    return true;
+  }
+
   int Presolve::getVariableFeasibleValueMIP(
     const int row_index, const int col_index, 
     const int variable_coefficient, const double constraint_RHS
@@ -90,10 +133,21 @@ namespace logical_solver{
       // bound and implied bounds.
       if (row_index < inequalities_count_) {
         int feasible_value = ceil(constraint_RHS/variable_coefficient);
-        if (feasible_value <= upper_bounds_.at(row_index)) {
-          if (checkVariableImpliedBounds(col_index, feasible_value)) {
-            return feasible_value;
-          }
+        if (checkVariableImpliedBounds(col_index, feasible_value)) {
+          return feasible_value;
+        }
+      } 
+      // We now know we have an equality which is not satisfied.
+      // We will check if there is only one other variable in the row,
+      // and if so we will attempt to change the feasible value
+      // of the other variable to the variable coefficient of 
+      // the original variable in order to make the equality feasible.
+      int row_doubleton_dependancy = getDependancyIndexRowDoubletonMIP(
+        row_index, col_index
+      );
+      if (row_doubleton_dependancy != -1) {
+        if (checkEqualityDependancyMIP(variable_coefficient, row_doubleton_dependancy)) {
+          return variable_coefficient;
         }
       }
       return core::kIntInfinity;
@@ -485,15 +539,6 @@ namespace logical_solver{
     feasible_solution_.at(col_index) = feasible_value;
   }
 
-  bool Presolve::isDoubletonEquation(
-    const int row_index, const int col_index
-  ) {
-    if (rows_non_zero_variables_.at(row_index).size() == 2) {
-      return true;
-    }
-    return false;
-  }
-
   bool Presolve::isFreeColSubstitution(
     const int row_index, const int col_index
   ) {
@@ -501,21 +546,6 @@ namespace logical_solver{
       return true;
     }
     return false;
-  }
-
-  int Presolve::getFreeColSubstitutionDependancy(
-    const int row_index, const int col_index
-  ) {
-    for (std::size_t i = 0; i < 2; ++i) {
-      int variable_index = rows_non_zero_variables_.at(row_index).at(i);
-
-      if (variable_index != col_index) {
-        return variable_index;
-      }
-    }
-
-    // return -1 if dependancy was not found.
-    return -1;
   }
 
   void Presolve::updateStateFreeColSubstitution(
@@ -576,6 +606,10 @@ namespace logical_solver{
     double feasibleValueCalculationBound = getFeasibleValueCalculationBound(
       row_index
     );
+    // if (row_index == 6) {
+    //   printf("Sum of dependancies: %0.1f\n", sum_of_dependancies);
+    //   printf("Calculation bound: %0.1f\n", feasibleValueCalculationBound);
+    // }
 
     if (sum_of_dependancies != core::kIntInfinity) {
       double RHS = feasibleValueCalculationBound - sum_of_dependancies;
@@ -733,6 +767,10 @@ namespace logical_solver{
     return true;
   }
 
+  void Presolve::setPrintUnsatisfiedConstraints() {
+    print_unsatisfied_constraints_ = true;
+  }
+
   bool Presolve::checkConstraint(
     const int row_index, const int rule_id
   ) {
@@ -749,18 +787,20 @@ namespace logical_solver{
     // Check if constraint is satisfied, and if not 
     // add index to unsatisfied constraints vector.
     if (constraint_value < lower_bounds_.at(row_index) || constraint_value > upper_bounds_.at(row_index)) {
-      std::cout<<""<<std::endl;
-      printf(
-        "Constraint %d was unsatisfied after applying rule %d.\n",
-        row_index, rule_id
-      );
-      printf("Constraint %d value: %f\n", row_index, constraint_value);
-      printf(
-        "Lower bound: %f; upper bound: %f\n", 
-        lower_bounds_.at(row_index),
-        upper_bounds_.at(row_index)
-      );
-      std::cout<<""<<std::endl;
+      if (print_unsatisfied_constraints_) {
+        std::cout<<""<<std::endl;
+        printf(
+          "Constraint %d was unsatisfied after applying rule %d.\n",
+          row_index, rule_id
+        );
+        printf("Constraint %d value: %f\n", row_index, constraint_value);
+        printf(
+          "Lower bound: %f; upper bound: %f\n", 
+          lower_bounds_.at(row_index),
+          upper_bounds_.at(row_index)
+        );
+        std::cout<<""<<std::endl;
+      }
       unsatisfied_constraints_ = true;
       return false;
     }
@@ -798,6 +838,11 @@ namespace logical_solver{
         int rule_id = rule_log.rule_id;
         int row_index = rule_log.constraint_index;
         int col_index = rule_log.variable_index;
+
+        // if (col_index == 3) {
+        //   printf("Col 3 rule id: %d\n", rule_id);
+        //   printf("Corresponding row: %d\n", row_index);
+        // }
         
         if (rule_id == static_cast<int>(core::PresolveRulesIds::freeRowId)) {
           applyFreeRowPostsolve(row_index, col_index);
@@ -821,7 +866,12 @@ namespace logical_solver{
           applyFreeColSubstitutionPostsolve(row_index, col_index);
         }
 
-        if (infeasible_) {break;}
+        if (infeasible_) {
+          // printf("Row %d\n", row_index);
+          // printf("Col %d\n", col_index);
+          // printf("Rule %d\n", rule_id);
+          break;
+        }
         // Remove rule from stack.
         presolve_stack_.pop();
       }
@@ -889,6 +939,15 @@ namespace logical_solver{
     }
 
     std::cout<<" "<<std::endl;
+  }
+
+  void Presolve::printRow(const int row_index) {
+    std::cout<<""<<std::endl;
+    printf("Row %d:", row_index);
+    for (const int& e : problem_matrix_.at(row_index)) {
+        std::cout << e << " ";
+    }
+    std::cout << std::endl;
   }
 
   void Presolve::printLP() {

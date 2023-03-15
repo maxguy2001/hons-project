@@ -23,6 +23,7 @@ int main() {
   LogicalSolverRun run_;
   run_.testOnFullTestSet();
   // run_.testOnTestProblem();
+  // run_.testOnSingleProblem(755);
 
   return 0;
 }

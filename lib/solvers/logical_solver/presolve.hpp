@@ -18,6 +18,7 @@ namespace logical_solver{
   bool infeasible_;
   bool infeasible_by_PR_;
   bool unsatisfied_constraints_;
+  bool print_unsatisfied_constraints_;
 
   // CONSTRUCTOR
   Presolve(
@@ -64,6 +65,8 @@ namespace logical_solver{
    */
   void printImpliedBounds();
 
+  void printRow(const int row_index);
+
   /**
    * @brief Public method to check if the feasible solution
    * of a problem is integer valued.
@@ -72,6 +75,13 @@ namespace logical_solver{
    * solution are integers.
    */
   bool isFeasibleSolutionInteger();
+
+  /**
+   * @brief Called if user wished presolve to print 
+   * any constraints that are unsatisfied with details
+   * of which rule and row led to the unsatisfied constraint.
+   */
+  void setPrintUnsatisfiedConstraints();
 
   private:
   // PRIVATE CLASS MEMBERS
@@ -150,6 +160,36 @@ namespace logical_solver{
   void getRowsAndColsNonZeros();
 
   double getFeasibleValueCalculationBound(const int row_index);
+  
+  int getDependancyIndexRowDoubletonMIP(
+    const int row_index, const int col_index
+  );
+
+  bool checkEqualityDependancyMIP(
+    const int feasible_value, const int dependancy_col_index
+  );
+
+  /**
+   * @brief Called in postsolve, when solving MIPs, 
+   * to get the feasible value of a variable once a postsolve 
+   * function has simplified the corresponding constraint to an 
+   * integer coefficient times the variable in the LHS, 
+   * and an integer in the RHS. It checks if the RHS divided by the coefficient is an integer that 
+   * satisfies the implied bounds. If not, if it is an inequality, 
+   * tries rounding up to nearest integer and checks if the upper 
+   * bound is satisfied.
+   * 
+   * @param int variable_coefficient: integer coefficient of the variable.
+   * @param int constraint_RHS: integer RHS of constraint.
+   * @param int row_index.
+   * @return int Inf if not feasible, int feasible value if feasible.
+   */
+  int getVariableFeasibleValueMIP(
+    const int row_index, 
+    const int col_index, 
+    const int variable_coefficient, 
+    const double constraint_RHS
+  );
 
   bool checkIsRowFree(const int row_index);
 
@@ -418,28 +458,6 @@ namespace logical_solver{
    * @return void.
    */
   void applyPresolveColRules();
-
-  /**
-   * @brief Called in postsolve, when solving MIPs, 
-   * to get the feasible value of a variable once a postsolve 
-   * function has simplified the corresponding constraint to an 
-   * integer coefficient times the variable in the LHS, 
-   * and an integer in the RHS. It checks if the RHS divided by the coefficient is an integer that 
-   * satisfies the implied bounds. If not, if it is an inequality, 
-   * tries rounding up to nearest integer and checks if the upper 
-   * bound is satisfied.
-   * 
-   * @param int variable_coefficient: integer coefficient of the variable.
-   * @param int constraint_RHS: integer RHS of constraint.
-   * @param int row_index.
-   * @return int Inf if not feasible, int feasible value if feasible.
-   */
-  int getVariableFeasibleValueMIP(
-    const int row_index, 
-    const int col_index, 
-    const int variable_coefficient, 
-    const double constraint_RHS
-  );
 
   /**
    * @brief Checks if the feasible value that has been found for

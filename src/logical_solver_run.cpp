@@ -44,6 +44,7 @@ void LogicalSolverRun::testOnSingleProblem(const int problem_number) {
 
   presolve.printLP();
   presolve.applyPresolve();
+  presolve.applyPostsolve();
   if (presolve.reduced_to_empty_) {
     printf("Reduced to empty\n");
   }
@@ -79,16 +80,20 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
     if (reader.problem_matrix_.size() > 0) {
       logical_solver::Presolve presolve(
           reader.problem_matrix_, reader.lower_bounds_, reader.upper_bounds_,
-          reader.num_inequalities_, reader.num_equalities_, false);
+          reader.num_inequalities_, reader.num_equalities_, true);
+
+      // if (n == 59619) {
+      // presolve.printRow(6);
       presolve.applyPresolve();
       presolve.applyPostsolve();
+      // presolve.printLP();
+      // presolve.printFeasibleSolution();
 
       if (presolve.unsatisfied_constraints_) {
         unsatisfied_constraints += 1;
       } else if (presolve.infeasible_) {
-        presolve.printLP();
-        std::cout<<n<<std::endl;
-        break;
+        // printf("%d\n", n);
+        // break;
         if (presolve.infeasible_by_PR_) {
           infeasible_by_parallel_rows_count += 1;
         }
@@ -99,17 +104,11 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
           integer_feasible_count += 1;
         }
       }
+      // }
     }
   }
-  printf(
-      "%d PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n",
-      reduced_to_empty_count);
-  printf("%d Problems had an integer feasible solution. \n", integer_feasible_count);
-  printf("%d Problems were not feasible. \n", infeasible_count);
-  printf("%d Problems were not feasible due to infeasible parallel rows. \n",
-         infeasible_by_parallel_rows_count);
-  printf("%d Problems led to unsatisfied constraints.\n",
-         unsatisfied_constraints);
+  
+
 }
 
 void LogicalSolverRun::testOnFullTestSet() {
