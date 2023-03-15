@@ -23,6 +23,9 @@ void LogicalSolverRun::testOnTestProblem() {
   }
   if (!presolve.infeasible_) {
     presolve.printFeasibleSolution();
+    if (presolve.isFeasibleSolutionInteger()) {
+      std::cout<<"Interger solution"<<std::endl;
+    }
   } else {
     std::cout << "Infeasible" << std::endl;
   }
@@ -52,10 +55,9 @@ void LogicalSolverRun::testOnSingleProblem(const int problem_number) {
 }
 
 void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
-  // std::string all_test_problems =
-  // "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
-  std::string all_test_problems = "/home/maxguy/projects/hons/hons-project/"
-                                  "problems/feasibility_testcases.txt";
+  std::string all_test_problems = "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
+  // std::string all_test_problems = "/home/maxguy/projects/hons/hons-project/"
+  //                                 "problems/feasibility_testcases.txt";
   utils::Reader reader;
 
   // Start filestream to pass to reader.
@@ -64,6 +66,7 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
 
   int reduced_to_empty_count = 0;
   int infeasible_count = 0;
+  int integer_feasible_count = 0;
   int infeasible_by_parallel_rows_count = 0;
   int unsatisfied_constraints = 0;
 
@@ -89,12 +92,16 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
         infeasible_count += 1;
       } else if (presolve.reduced_to_empty_) {
         reduced_to_empty_count += 1;
+        if (presolve.isFeasibleSolutionInteger()) {
+          integer_feasible_count += 1;
+        }
       }
     }
   }
   printf(
       "%d PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n",
       reduced_to_empty_count);
+  printf("%d Problems had an integer feasible solution. \n", integer_feasible_count);
   printf("%d Problems were not feasible. \n", infeasible_count);
   printf("%d Problems were not feasible due to infeasible parallel rows. \n",
          infeasible_by_parallel_rows_count);

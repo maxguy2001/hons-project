@@ -107,6 +107,16 @@ namespace logical_solver{
     return core::kIntInfinity;
   }
 
+  bool Presolve::isFeasibleSolutionInteger() {
+    for (const double& feasible_value : feasible_solution_) {
+        if (std::floor(feasible_value) != feasible_value) {
+            // feasible value is not an integer.
+            return false;
+        }
+    }
+    return true;
+  }
+
   bool Presolve::checkIsRowFree(const int row_index) {
     if (lower_bounds_.at(row_index) == -core::kIntInfinity && upper_bounds_.at(row_index) == core::kIntInfinity) {
       return true;

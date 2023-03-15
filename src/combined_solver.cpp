@@ -59,12 +59,9 @@ void CombinedRun::runSolver(const std::string problems_filepath) {
 
       presolve.applyPresolve();
       presolve.applyPostsolve();
-      /*
       if (presolve.infeasible_) {
         ++num_infeasible;
-      } else
-      */
-      if (presolve.reduced_to_empty_) {
+      } else if (presolve.reduced_to_empty_) {
         ++num_sucessfully_solved;
       } else {
         // try simplex solver

@@ -64,6 +64,15 @@ namespace logical_solver{
    */
   void printImpliedBounds();
 
+  /**
+   * @brief Public method to check if the feasible solution
+   * of a problem is integer valued.
+   * 
+   * @return Bool: whether or not all variables in the feasible
+   * solution are integers.
+   */
+  bool isFeasibleSolutionInteger();
+
   private:
   // PRIVATE CLASS MEMBERS
     // problem
