@@ -80,6 +80,29 @@ namespace logical_solver{
     return upper_bound;
   }
 
+  bool Presolve::checkConstraintByFasibleValue(
+    const int row_index, const int col_index, const double feasible_value
+  ) {
+    double constraint_value = 0;
+
+    // Loop through row active columns working out the 
+    // constraint value.
+    for (std::size_t j = 0; j < variables_count_; ++j) {
+      if (j == col_index) {
+        constraint_value += problem_matrix_.at(row_index).at(j)*feasible_value;
+      } else {
+        constraint_value += problem_matrix_.at(row_index).at(j)*feasible_solution_.at(j);
+      }
+    }
+
+    // Check if constraint is satisfied
+    if (constraint_value < lower_bounds_.at(row_index) || constraint_value > upper_bounds_.at(row_index)) {
+      return false;
+    }
+
+    return true;
+  }
+
   int Presolve::getDependancyIndexRowDoubletonMIP(
     const int row_index, const int col_index
   ) {
@@ -103,14 +126,14 @@ namespace logical_solver{
     return dependancy_index;
   }
 
-  bool Presolve::checkEqualityDependancyMIP(
+  bool Presolve::checkDependancyMIP(
     const int dependancy_new_feasible_value, 
     const int dependancy_col_index
   ) {
     double dependancy_feasible_value = feasible_solution_.at(dependancy_col_index);
 
     for (std::size_t i; i < constraints_count_; ++i) {
-      if (problem_matrix_.at(i).at(dependancy_col_index) && postsolve_active_rows_.at(i)) {
+      if (problem_matrix_.at(i).at(dependancy_col_index) != 0 && postsolve_active_rows_.at(i)) {
         feasible_solution_.at(dependancy_col_index) = dependancy_feasible_value;
         bool is_constraint_satisfied = checkConstraint(i, 0);
         feasible_solution_.at(dependancy_col_index) = dependancy_feasible_value;
@@ -127,12 +150,17 @@ namespace logical_solver{
     const int variable_coefficient, const double constraint_RHS
   ) {
     // Check if RHS/coeff is not an integer
-
     if (static_cast<int>(constraint_RHS) % variable_coefficient != 0) {
-      // If inequality, check if rounding up satisfies upper
-      // bound and implied bounds.
+      // If inequality, check if rounding satisfies implied bounds.
       if (row_index < inequalities_count_) {
-        int feasible_value = ceil(constraint_RHS/variable_coefficient);
+        int feasible_value;
+
+        if (variable_coefficient > 0) {
+          feasible_value = ceil(constraint_RHS/variable_coefficient);
+        } else {
+          feasible_value = floor(constraint_RHS/variable_coefficient);
+        }
+
         if (checkVariableImpliedBounds(col_index, feasible_value)) {
           return feasible_value;
         }
@@ -142,12 +170,13 @@ namespace logical_solver{
       // and if so we will attempt to change the feasible value
       // of the other variable to the variable coefficient of 
       // the original variable in order to make the equality feasible.
-      int row_doubleton_dependancy = getDependancyIndexRowDoubletonMIP(
+      int dependancy_index = getDependancyIndexRowDoubletonMIP(
         row_index, col_index
       );
-      if (row_doubleton_dependancy != -1) {
-        if (checkEqualityDependancyMIP(variable_coefficient, row_doubleton_dependancy)) {
-          return variable_coefficient;
+      if (dependancy_index != -1) {
+        if (checkDependancyMIP(variable_coefficient, dependancy_index)) {
+          feasible_solution_.at(dependancy_index) = variable_coefficient;
+          return 1;
         }
       }
       return core::kIntInfinity;
@@ -172,6 +201,11 @@ namespace logical_solver{
   }
 
   bool Presolve::checkIsRowFree(const int row_index) {
+    if (solve_mip_) {
+      if (lower_bounds_.at(row_index) == -2147483646.000000) {
+        lower_bounds_.at(row_index) = -core::kIntInfinity;
+      }
+    }
     if (lower_bounds_.at(row_index) == -core::kIntInfinity && upper_bounds_.at(row_index) == core::kIntInfinity) {
       return true;
     }
@@ -229,7 +263,6 @@ namespace logical_solver{
     } else {
       feasible_value = feasibleValueCalculationBound/variable_coeff;
     }
-
     if (feasible_value == core::kIntInfinity) {infeasible_ = true;}
     else {
       feasible_solution_.at(col_index) = feasible_value;
@@ -606,7 +639,8 @@ namespace logical_solver{
     double feasibleValueCalculationBound = getFeasibleValueCalculationBound(
       row_index
     );
-    // if (row_index == 6) {
+    // if (row_index == 2) {
+    //   printf("Col index: %d\n", col_index);
     //   printf("Sum of dependancies: %0.1f\n", sum_of_dependancies);
     //   printf("Calculation bound: %0.1f\n", feasibleValueCalculationBound);
     // }

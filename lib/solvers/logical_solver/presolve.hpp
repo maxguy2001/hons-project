@@ -165,7 +165,11 @@ namespace logical_solver{
     const int row_index, const int col_index
   );
 
-  bool checkEqualityDependancyMIP(
+  bool checkConstraintByFasibleValue(
+    const int row_index, const int col_index, const double feasible_value
+  );
+
+  bool checkDependancyMIP(
     const int feasible_value, const int dependancy_col_index
   );
 
