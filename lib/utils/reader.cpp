@@ -1,260 +1,111 @@
 #include "reader.hpp"
-
 #include <iostream>
-#include <fstream>
 
-namespace utils{
+namespace utils {
+// Must be initialised with OPEN filestream
+ModifiedPrimalReader::ModifiedPrimalReader(std::fstream &filestream)
+    : filestream_(filestream), current_probelm_number_(0) {}
 
-Reader::Reader(){}
+std::optional<core::InputRows> ModifiedPrimalReader::getNextProblem() {
 
-void Reader::readNextProblem(std::fstream &problems_filestream){
-  //clear anything still sored in class members from previous read
-  problem_matrix_.clear();
-  lower_bounds_.clear();
-  upper_bounds_.clear();
-
-  //check file is open
-  if(!problems_filestream.is_open()){
+  if (!filestream_.is_open()) {
     std::cout << "ERROR: Unable to open file" << std::endl;
   }
-  
-  //initialise strings for storing elements read from file
-  std::string temp_string;
-  std::string num_variables_string;
-  std::string num_inequality_rows_string;
-  std::string num_equality_rows_string;
-
-  // get number of variables we are reading in, taking into 
-  // account whether the line is a separation line or not 
-  // (it is only not a separation line in the first problem.)
-  std::getline(problems_filestream, temp_string);
-  if (temp_string.find('~') != std::string::npos) {
-    std::getline(problems_filestream, num_variables_string);
-  } else {
-    num_variables_string = temp_string;
-  }
-  const int num_variables = static_cast<int>(atoi(num_variables_string.c_str()));
-
-  // Get number of inequalities.
-  std::getline(problems_filestream, num_inequality_rows_string);
-  num_inequalities_ = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
-
-  // Define vectors to read in constraints.
-  std::vector<int> problem_row; // A line in the input file
-  int constant_term;
-  std::vector<int> problem_matrix_row; // Formatted constraint without the 
-  // constant term.
-
-
-  //read inequality in rows, add vectors to problem matrix
-  for(size_t i = 0; i < num_inequalities_; ++i){
-    std::getline(problems_filestream, temp_string);
-    problem_row = getProblemRowAsIntVector(temp_string);
-
-    constant_term = problem_row.at(0)*(-1);
-    problem_matrix_row = spliceVector(problem_row, 1, num_variables);
-
-    //check vector size
-    if(problem_matrix_row.size() != num_variables){
-      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_variables << " was expected" << std::endl;
-    }
-
-    problem_matrix_.push_back(problem_matrix_row);
-    upper_bounds_.push_back(kMaxInt);
-    lower_bounds_.push_back(constant_term);
-
-    problem_row.clear();
-    problem_matrix_row.clear();
-  }
-
-  //read in equality rows and add to problem matrix
-  std::getline(problems_filestream, num_equality_rows_string);
-  num_equalities_ = static_cast<int>(atoi(num_equality_rows_string.c_str()));
-
-  for(size_t i = 0; i < num_equalities_; ++i){
-    std::getline(problems_filestream, temp_string);
-    problem_row = getProblemRowAsIntVector(temp_string);
-
-    constant_term = problem_row.at(0)*(-1);
-    problem_matrix_row = spliceVector(problem_row, 1, num_variables);
-
-    //check vector size
-    if(problem_matrix_row.size() != num_variables){
-      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_variables << " was expected" << std::endl;
-    }
-
-    problem_matrix_.push_back(problem_matrix_row);
-    upper_bounds_.push_back(constant_term);
-    lower_bounds_.push_back(constant_term);
-
-    problem_row.clear();
-    problem_matrix_row.clear();
-  }
-
-  // Read the tilde line so that next problem starts
-  // at the number of variables line. If the last problem
-  // ends with a tilde line would work and we would not need the 
-  // tilde check at the start:
-  // std::getline(problems_filestream, temp_string);
-}
-
-void Reader::readProblem(const std::string problems_filepath, const int problem_number){
-  //clear anything still sored in class members from previous read
-  problem_matrix_.clear();
-  lower_bounds_.clear();
-  upper_bounds_.clear();
-
-  //initialise filestream and open file
-  std::fstream newfile;
-  newfile.open(problems_filepath, std::ios::in);
-  //check file is open
-  if(!newfile.is_open()){
-    std::cout << "ERROR: Unable to open file" << std::endl;
-  }
-  //find location in file we want to look at (nth problem)
-  int current_problem_location = 0;
-  std::string tempstring;
-  std::string tilde = "~";
-  while(current_problem_location != problem_number-1){
-    std::getline(newfile, tempstring);
-    if(tempstring.find(tilde) != std::string::npos){
-      current_problem_location += 1;
-    }
-  }
-  
-  //initialise strings for storing elements read from file
+  // initialise strings for storing elements read from file
   std::string temp_string;
   std::string num_variables_string;
   std::string num_inequality_rows_string;
 
   // get number of variables and number of inequalities we are reading in
-  std::getline(newfile, num_variables_string);
-  const int num_variables = static_cast<int>(atoi(num_variables_string.c_str()));
+  std::getline(filestream_, num_variables_string);
+  const int num_variables = atoi(num_variables_string.c_str()) + 1;
 
-  std::getline(newfile, num_inequality_rows_string);
-  const int num_inequality_rows = static_cast<int>(atoi(num_inequality_rows_string.c_str()));
+  std::getline(filestream_, num_inequality_rows_string);
+  const int num_inequality_rows = atoi(num_inequality_rows_string.c_str());
 
-  std::vector<int> problem_row;
-  int constant_term;
-  std::vector<int> problem_matrix_row;
+  // initialise vector for using as temporary holding and vector to hold
+  // inequality rows
+  std::vector<float> matrix_row;
+  std::vector<std::vector<float>> inequality_rows;
 
-  //read inequality in rows, add vectors to problem matrix
-  for(size_t i = 0; i < num_inequality_rows; ++i){
-    std::getline(newfile, temp_string);
-    problem_row = getProblemRowAsIntVector(temp_string);
-
-    constant_term = problem_row.at(0)*(-1);
-    problem_matrix_row = spliceVector(problem_row, 1, num_variables);
-
-    //check vector size
-    if(problem_matrix_row.size() != num_variables){
-      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_variables << " was expected" << std::endl;
-    }
-
-    problem_matrix_.push_back(problem_matrix_row);
-    upper_bounds_.push_back(kMaxInt);
-    lower_bounds_.push_back(constant_term);
-
-    problem_row.clear();
-    problem_matrix_row.clear();
+  // read inequality in rows, add vectors to problem matrix
+  for (size_t i = 0; i < num_inequality_rows; ++i) {
+    std::getline(filestream_, temp_string);
+    matrix_row = convertStringToVector(temp_string);
+    inequality_rows.push_back(matrix_row);
+    matrix_row.clear();
   }
 
-  //read in equality rows and add to problem matrix
+  // read in equality rows
   std::string num_equality_rows_string;
-  std::getline(newfile, num_equality_rows_string);
+  std::getline(filestream_, num_equality_rows_string);
 
-  int num_equality_rows = static_cast<int>(atoi(num_equality_rows_string.c_str()));
+  const int num_equality_rows = atoi(num_equality_rows_string.c_str());
+  std::vector<std::vector<float>> equality_rows;
 
-  for(size_t i = 0; i < num_equality_rows; ++i){
-    std::getline(newfile, temp_string);
-    problem_row = getProblemRowAsIntVector(temp_string);
-
-    constant_term = problem_row.at(0)*(-1);
-    problem_matrix_row = spliceVector(problem_row, 1, num_variables);
-
-    //check vector size
-    if(problem_matrix_row.size() != num_variables){
-      std::cout << "ERROR: length of matrix row is: " << problem_row.size() << " but length of " << num_variables << " was expected" << std::endl;
-    }
-
-    problem_matrix_.push_back(problem_matrix_row);
-    upper_bounds_.push_back(constant_term);
-    lower_bounds_.push_back(constant_term);
-
-    problem_row.clear();
-    problem_matrix_row.clear();
+  for (size_t i = 0; i < num_equality_rows; ++i) {
+    // get and typecast row vector
+    std::getline(filestream_, temp_string);
+    matrix_row = convertStringToVector(temp_string);
+    equality_rows.push_back(matrix_row);
+    matrix_row.clear();
   }
 
-  newfile.close();
+  // check we are where we think we are in problem
+  std::getline(filestream_, temp_string);
+  if (temp_string.find(tilde_) == std::string::npos) {
+    std::cout << "Error: Unable to deduce location in problem" << std::endl;
+    std::cout << "Last known problem location: " << current_probelm_number_
+              << std::endl;
+    return std::nullopt;
+  }
+
+  // increment filestream problem location
+  ++current_probelm_number_;
+
+  // format and return problem
+  core::InputRows next_problem;
+  next_problem.inequality_rows = inequality_rows;
+  next_problem.equality_rows = equality_rows;
+  next_problem.num_variables = num_variables;
+
+  return next_problem;
 }
 
-
-std::vector<int> Reader::convertStringToVector(const std::string vector_string){
+std::vector<float>
+ModifiedPrimalReader::convertStringToVector(const std::string vector_string) {
 
   std::string tempstring;
   std::vector<std::string> stringvec;
 
-  //convert single string to vector of strings with space character as delimiter
-  for(size_t i = 0; i < vector_string.length(); ++i){
+  // convert single string to vector of strings with space character as
+  // delimiter
+  for (size_t i = 0; i < vector_string.length(); ++i) {
     tempstring.push_back(vector_string.at(i));
-    if(vector_string.at(i) == ' '){
+    if (vector_string.at(i) == ' ') {
       stringvec.push_back(tempstring);
       tempstring.clear();
     }
-    if(i == vector_string.length()-1){
+    if (i == vector_string.length() - 1) {
       stringvec.push_back(tempstring);
     }
   }
 
-  //initialise variables
-  std::vector<int> rowvector;
-  int temp_int;
+  // initialise variables
+  std::vector<float> rowvector;
+  float temp_float;
   std::string space = " ";
 
-  //if string in vector is not empty or a space, convert to int and add to return vector
-  for(size_t i = 0; i < stringvec.size(); ++i){
+  // if string in vector is not empty or a space, convert to int and add to
+  // return vector
+  for (size_t i = 0; i < stringvec.size(); ++i) {
     tempstring = stringvec.at(i);
-    if(tempstring.compare(space) != 0 && !tempstring.empty()){
-      temp_int = static_cast<int>(atoi(tempstring.c_str()));
-      rowvector.push_back(temp_int);
+    if (tempstring.compare(space) != 0 && !tempstring.empty()) {
+      temp_float = static_cast<float>(atoi(tempstring.c_str()));
+      rowvector.push_back(temp_float);
     }
   }
   return rowvector;
 }
 
-std::vector<int> Reader::getProblemRowAsIntVector(const std::string problem_row_string){
-  std::string tempstring;
-  std::vector<int> row_vector;
-
-  //convert single string to vector of strings with space
-  //character as delimiter
-  for(size_t i = 0; i < problem_row_string.size(); ++i){
-    char position_char = problem_row_string.at(i);
-    
-    if(position_char != ' '){
-      tempstring.push_back(position_char);
-    } else {
-      row_vector.push_back(static_cast<int>(atoi(tempstring.c_str())));
-      tempstring.clear();
-    }
-
-    if(i == problem_row_string.length()-1){
-      row_vector.push_back(static_cast<int>(atoi(tempstring.c_str())));
-    }
-  }
-  
-  return row_vector;
-}
-
-std::vector<int> Reader::spliceVector(std::vector<int> to_splice, const int range_start, const int range_end) {
-  std::vector<int> spliced_vector;
-
-  for (int i = range_start; i < range_end+1; i++) {
-    spliced_vector.push_back(to_splice.at(i));
-  }
-
-  return spliced_vector;
-}
-
-}//namespace utils
-
+} // namespace utils

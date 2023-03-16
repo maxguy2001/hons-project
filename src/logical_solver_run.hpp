@@ -1,11 +1,10 @@
+#include "../lib/deprecated/presolve_reader.hpp"
 #include "../lib/solvers/logical_solver/presolve.hpp"
-#include "../lib/utils/reader.hpp"
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <string>
 #include <chrono>
-
+#include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
 
 class LogicalSolverRun {
 public:

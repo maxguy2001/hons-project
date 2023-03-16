@@ -3,7 +3,7 @@
 void LogicalSolverRun::testOnTestProblem() {
   std::string test_problem =
       "/Users/pepe/hons-project/problems/presolve_test_problem2.txt";
-  utils::Reader reader;
+  deprecated::Reader reader;
   // Start filestream to pass to reader.
   std::fstream problems_filestream;
   problems_filestream.open(test_problem, std::ios::in);
@@ -24,7 +24,7 @@ void LogicalSolverRun::testOnTestProblem() {
   if (!presolve.infeasible_) {
     presolve.printFeasibleSolution();
     if (presolve.isFeasibleSolutionInteger()) {
-      std::cout<<"Interger solution"<<std::endl;
+      std::cout << "Interger solution" << std::endl;
     }
   } else {
     std::cout << "Infeasible" << std::endl;
@@ -35,7 +35,7 @@ void LogicalSolverRun::testOnTestProblem() {
 void LogicalSolverRun::testOnSingleProblem(const int problem_number) {
   std::string all_test_problems =
       "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
-  utils::Reader reader;
+  deprecated::Reader reader;
   reader.readProblem(all_test_problems, problem_number);
 
   logical_solver::Presolve presolve(
@@ -56,10 +56,11 @@ void LogicalSolverRun::testOnSingleProblem(const int problem_number) {
 }
 
 void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
-  std::string all_test_problems = "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
+  std::string all_test_problems =
+      "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
   // std::string all_test_problems = "/home/maxguy/projects/hons/hons-project/"
   //                                 "problems/feasibility_testcases.txt";
-  utils::Reader reader;
+  deprecated::Reader reader;
 
   // Start filestream to pass to reader.
   std::fstream problems_filestream;
@@ -83,13 +84,13 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
           reader.num_inequalities_, reader.num_equalities_, true);
 
       // if (n == 34001) {
-        // presolve.printRow(6);
-        // presolve.printLP();
-        // presolve.setPrintUnsatisfiedConstraints();
+      // presolve.printRow(6);
+      // presolve.printLP();
+      // presolve.setPrintUnsatisfiedConstraints();
       presolve.applyPresolve();
       presolve.applyPostsolve();
-        // presolve.printLP();
-        // presolve.printFeasibleSolution();
+      // presolve.printLP();
+      // presolve.printFeasibleSolution();
       if (presolve.unsatisfied_constraints_) {
         unsatisfied_constraints += 1;
       } else if (presolve.infeasible_) {
@@ -106,15 +107,15 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
     }
   }
   printf(
-    "%d PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n",
-    reduced_to_empty_count);
-  printf("%d Problems had an integer feasible solution. \n", integer_feasible_count);
+      "%d PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n",
+      reduced_to_empty_count);
+  printf("%d Problems had an integer feasible solution. \n",
+         integer_feasible_count);
   printf("%d Problems were not feasible. \n", infeasible_count);
   printf("%d Problems were not feasible due to infeasible parallel rows. \n",
          infeasible_by_parallel_rows_count);
   printf("%d Problems led to unsatisfied constraints.\n",
          unsatisfied_constraints);
-
 }
 
 void LogicalSolverRun::testOnFullTestSet() {
