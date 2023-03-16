@@ -12,7 +12,6 @@ public:
   LogicalSolverRun() {}
 
   void testOnTestProblem();
-  void testOnSingleProblem(const int problem_number);
   void testOnMultipleProblems(const int problems_count);
   void testOnFullTestSet();
 };

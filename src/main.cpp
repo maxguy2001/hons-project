@@ -4,7 +4,7 @@
 
 int main() {
 
-  const std::string user = "max";
+  const std::string user = "josep";
 
   std::string problem_path;
   if (user == "josep") {
@@ -17,13 +17,11 @@ int main() {
     std::cout << "Error in main.cpp: no file path given" << std::endl;
   }
 
-  CombinedRun run_;
-  run_.runSolver(problem_path);
+  // CombinedRun run_;
+  // run_.runSolver(problem_path);
 
-  // LogicalSolverRun run_;
-  // run_.testOnFullTestSet();
-  // run_.testOnTestProblem();
-  // run_.testOnSingleProblem(755);
+  LogicalSolverRun run_;
+  run_.testOnFullTestSet();
 
   return 0;
 }

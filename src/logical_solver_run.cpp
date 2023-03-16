@@ -32,29 +32,6 @@ void LogicalSolverRun::testOnTestProblem() {
   // presolve.printImpliedBounds();
 }
 
-void LogicalSolverRun::testOnSingleProblem(const int problem_number) {
-  std::string all_test_problems =
-      "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
-  deprecated::Reader reader;
-  reader.readProblem(all_test_problems, problem_number);
-
-  logical_solver::Presolve presolve(
-      reader.problem_matrix_, reader.lower_bounds_, reader.upper_bounds_,
-      reader.num_inequalities_, reader.num_equalities_, true);
-
-  presolve.printLP();
-  presolve.applyPresolve();
-  presolve.applyPostsolve();
-  if (presolve.reduced_to_empty_) {
-    printf("Reduced to empty\n");
-  }
-  // presolve.applyPostsolve();
-  presolve.printFeasibleSolution();
-  if (presolve.infeasible_) {
-    std::cout << "INFEASIBLE" << std::endl;
-  }
-}
-
 void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
   std::string all_test_problems =
       "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
@@ -84,14 +61,9 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
           reader.problem_matrix_, reader.lower_bounds_, reader.upper_bounds_,
           reader.num_inequalities_, reader.num_equalities_, true);
 
-      // if (n == 34001) {
-      // presolve.printRow(6);
-      // presolve.printLP();
-      // presolve.setPrintUnsatisfiedConstraints();
       presolve.applyPresolve();
       presolve.applyPostsolve();
-      // presolve.printLP();
-      // presolve.printFeasibleSolution();
+
       if (presolve.unsatisfied_constraints_) {
         unsatisfied_constraints += 1;
       } else if (presolve.infeasible_) {
