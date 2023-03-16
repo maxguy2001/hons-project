@@ -1,0 +1,1 @@
+This section contains the solvers capable of solving the linear feasibility problems. They do so with varying degrees of speed and reliability however they are all ready for use.

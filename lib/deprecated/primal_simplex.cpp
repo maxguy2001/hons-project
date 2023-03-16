@@ -1,10 +1,10 @@
-#include "main.hpp"
+#include "primal_simplex.hpp"
 #include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <iterator>
 
-namespace primal_simplex {
+namespace deprecated {
 
 PrimalSimplex::PrimalSimplex() {}
 
@@ -233,4 +233,4 @@ void PrimalSimplex::solveProblem() {
   }
 }
 
-} // namespace primal_simplex
+} // namespace deprecated

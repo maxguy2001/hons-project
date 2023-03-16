@@ -1,8 +1,9 @@
-#include "../../../lib/core/consts.hpp"
+#include "../../lib/core/consts.hpp"
+#include "../core/types.hpp"
 #include <cstdint>
 #include <vector>
 
-namespace primal_simplex {
+namespace deprecated {
 
 class PrimalSimplex : public core::ISolver {
 public:
@@ -96,4 +97,4 @@ private:
   std::vector<int> basis_;
 };
 
-} // namespace primal_simplex
+} // namespace deprecated

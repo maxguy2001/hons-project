@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "../core/consts.hpp"
+#include "../core/types.hpp"
 
 namespace utils {
 
@@ -16,9 +17,9 @@ public:
 private:
   std::vector<std::vector<int>>
   getProblemMatrix(const core::InputRows input_rows);
-  std::vector<double> getLowerBounds(const core::InputRows input_rows);
-  std::vector<double> getUpperBounds(const core::InputRows input_rows,
-                                     const std::vector<double> lower_bounds);
+  std::vector<int> getLowerBounds(const core::InputRows input_rows);
+  std::vector<int> getUpperBounds(const core::InputRows input_rows,
+                                  const std::vector<int> lower_bounds);
 };
 
 } // namespace utils

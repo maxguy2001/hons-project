@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <cmath>
 #include <core/consts.hpp>
+#include <core/types.hpp>
 #include <iostream>
 #include <iterator>
 

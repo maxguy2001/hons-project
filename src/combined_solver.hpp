@@ -1,6 +1,8 @@
 #include "../lib/core/consts.hpp"
 #include "../lib/core/types.hpp"
+#include "../lib/solvers/logical_solver/presolve.hpp"
 #include "../lib/solvers/primal_bland/bland_simplex.hpp"
+#include "../lib/utils/logical_reformatter.hpp"
 #include "../lib/utils/primal_reformatter.hpp"
 #include "../lib/utils/reader.hpp"
 #include <chrono>
@@ -10,11 +12,10 @@
 #include <string>
 #include <vector>
 
-class PrimalRun {
+class CombinedRun {
 public:
   // empty constructor
-  PrimalRun() {}
+  CombinedRun() {}
 
-  void runPrimalSolver();
-  void printProblem(const core::InputRows input_rows);
+  void runSolver(const std::string problems_filepath);
 };
