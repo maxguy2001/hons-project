@@ -16,8 +16,11 @@ int main() {
     std::cout << "Error in main.cpp: no file path given" << std::endl;
   }
 
-  CombinedRun run_;
-  run_.runSolver(problem_path);
+  DualRun run_;
+  run_.runDualSolver();
+
+  // CombinedRun run_;
+  // run_.runSolver(problem_path);
 
   // LogicalSolverRun run_;
   // run_.testOnFullTestSet();

@@ -40,7 +40,7 @@ enum class SolveStatus { kInfeasible = 0, kFeasible, kError, kDidntConverge };
 
 class ISolver {
 public:
-  virtual void solveProblem() = 0;
+  virtual SolveStatus solveProblem() = 0;
 };
 
 } // namespace core

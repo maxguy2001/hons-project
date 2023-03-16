@@ -1,16 +1,14 @@
-#include "bland_simplex.hpp"
+#include "dual_blands.hpp"
 #include <algorithm>
 #include <cmath>
-#include <core/consts.hpp>
 #include <iostream>
 #include <iterator>
 
-namespace solvers::bland_simplex {
+namespace solvers::dual_simplex {
 
-BlandPrimalSimplex::BlandPrimalSimplex() {}
+DualSimplex::DualSimplex() {}
 
-void BlandPrimalSimplex::setProblem(
-    const std::vector<std::vector<float>> table) {
+void DualSimplex::setProblem(const std::vector<std::vector<float>> table) {
   // clear old data
   table_.clear();
 
@@ -20,7 +18,7 @@ void BlandPrimalSimplex::setProblem(
   }
 }
 
-void BlandPrimalSimplex::setBasis(const std::vector<int> basis) {
+void DualSimplex::setBasis(const std::vector<int> basis) {
   // clear old data
   basis_.clear();
 
@@ -30,8 +28,7 @@ void BlandPrimalSimplex::setBasis(const std::vector<int> basis) {
   }
 }
 
-std::vector<float>
-BlandPrimalSimplex::extractColumnFromTable(const int column_index) {
+std::vector<float> DualSimplex::extractColumnFromTable(const int column_index) {
   std::vector<float> column;
   float table_element;
   for (size_t i = 0; i < table_.size(); ++i) {
@@ -41,13 +38,13 @@ BlandPrimalSimplex::extractColumnFromTable(const int column_index) {
   return column;
 }
 
-int BlandPrimalSimplex::getPivotColumnIndex() {
+int DualSimplex::getPivotColumnIndex(const int pivot_row_index) {
 
   // get objective function
-  const std::vector<float> objective_function = table_.at(0);
+  const std::vector<float> pivot_row = table_.at(pivot_row_index);
 
-  for (std::size_t i = 1; i < objective_function.size(); ++i) {
-    if (objective_function.at(i) < 0 &&
+  for (std::size_t i = 1; i < pivot_row.size(); ++i) {
+    if (pivot_row.at(i) < 0 &&
         std::find(basis_.begin(), basis_.end(), i) == basis_.end()) {
       return i;
     }
@@ -56,22 +53,22 @@ int BlandPrimalSimplex::getPivotColumnIndex() {
   return -1;
 }
 
-int BlandPrimalSimplex::getPivotRowIndex(const int pivot_column_index) {
+int DualSimplex::getPivotRowIndex() {
 
-  // extract pivot column
-  const std::vector<float> pivot_column =
-      extractColumnFromTable(pivot_column_index);
+  // extract primal bounds vector
+  const std::vector<float> bounds =
+      extractColumnFromTable(table_.at(0).size() - 1);
 
-  for (std::size_t i = 1; i < pivot_column.size(); ++i) {
-    if (pivot_column.at(i) > 0) {
+  for (std::size_t i = 1; i < bounds.size(); ++i) {
+    if (bounds.at(i) < 0) {
       return i;
     }
   }
   return -1;
 }
 
-bool BlandPrimalSimplex::switchBasis(const int pivot_row_index,
-                                     const int pivot_column_index) {
+bool DualSimplex::switchBasis(const int pivot_row_index,
+                              const int pivot_column_index) {
 
   // check fail state for now
   if (basis_.size() < pivot_row_index) {
@@ -82,8 +79,8 @@ bool BlandPrimalSimplex::switchBasis(const int pivot_row_index,
   return true;
 }
 
-void BlandPrimalSimplex::constructNewTable(const int pivot_row_index,
-                                           const int pivot_column_index) {
+void DualSimplex::constructNewTable(const int pivot_row_index,
+                                    const int pivot_column_index) {
   // define new table
   std::vector<std::vector<float>> new_table;
 
@@ -151,83 +148,79 @@ void BlandPrimalSimplex::constructNewTable(const int pivot_row_index,
   }
 }
 
-bool BlandPrimalSimplex::checkOptimality() {
+bool DualSimplex::checkOptimality() {
 
-  const std::vector<float> objective_row = table_.at(0);
+  // extract primal bounds vector
+  const std::vector<float> bounds =
+      extractColumnFromTable(table_.at(0).size() - 1);
 
-  for (size_t i = 0; i < objective_row.size(); ++i) {
-    if (objective_row.at(i) < 0) {
+  for (size_t i = 0; i < bounds.size(); ++i) {
+    if (bounds.at(i) < 0) {
       return false;
     }
   }
   return true;
 }
 
-void BlandPrimalSimplex::printObjectiveRow() {
-  std::vector<float> obj_row = table_.at(0);
-  for (std::size_t i = 0; i < obj_row.size(); ++i) {
-    std::cout << obj_row.at(i) << " ";
-  }
-  std::cout << std::endl;
-}
-
-core::SolveStatus
-BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
-                                   std::vector<float> solution_row) {
-
-  // extract primal solution from solution row
-  const int num_primal_variables = original_problem.num_variables - 1;
-
-  std::vector<float> x_negative;
-  const int x_neg_upper_bound = solution_row.size() - 1;
-  const int x_neg_lower_bound = solution_row.size() - num_primal_variables - 1;
-  for (std::size_t i = x_neg_lower_bound; i < x_neg_upper_bound; ++i) {
-    x_negative.push_back(solution_row.at(i));
+std::vector<float>
+DualSimplex::extractSolution(const core::InputRows original_problem) {
+  int num_primal_variables;
+  if (original_problem.equality_rows.size() == 0) {
+    num_primal_variables = original_problem.inequality_rows.at(0).size();
+  } else {
+    num_primal_variables = original_problem.equality_rows.at(0).size();
   }
 
-  std::vector<float> x_positive;
-  const int x_pos_upper_bound = solution_row.size() - num_primal_variables - 1;
-  const int x_pos_lower_bound =
-      solution_row.size() - num_primal_variables - num_primal_variables - 1;
-  for (std::size_t i = x_pos_lower_bound; i < x_pos_upper_bound; ++i) {
-    x_positive.push_back(solution_row.at(i));
-  }
+  std::vector<float> bounds = extractColumnFromTable(table_.at(0).size() - 1);
 
-  std::vector<float> x;
-  x.push_back(1); // to multpiply scalar by 1
-  for (std::size_t i = 0; i < num_primal_variables; ++i) {
-    x.push_back(x_positive.at(i) - x_negative.at(i));
+  std::vector<float> extended_x_vals;
+  for (std::size_t i = 0; i < num_primal_variables * 2; ++i) {
+    extended_x_vals.push_back(0);
   }
-
-  if (solution_row.at(0) != 1) {
-    for (std::size_t i = 1; i < x.size(); ++i) {
-      x.at(i) /= solution_row.at(0);
+  for (std::size_t i = 0; i < basis_.size(); ++i) {
+    if (basis_.at(i) < 2 * num_primal_variables) {
+      extended_x_vals.at(basis_.at(i)) = bounds.at(i + 1);
     }
   }
 
+  std::vector<float> x_vals;
+  for (std::size_t i = 0; i < num_primal_variables; ++i) {
+    x_vals.push_back(extended_x_vals.at(i) -
+                     extended_x_vals.at(i + num_primal_variables));
+  }
+
+  return x_vals;
+}
+
+core::SolveStatus DualSimplex::verifySolution(core::InputRows original_problem,
+                                              std::vector<float> solution_row) {
+
+  std::vector<float> x = extractSolution(original_problem);
   solution_ = x;
+  const int num_primal_variables = original_problem.num_variables - 1;
 
   // check inequalities hold
   float total = 0;
   for (std::size_t i = 0; i < original_problem.inequality_rows.size(); ++i) {
-    // total += original_problem.inequality_rows.at(i).at(0);
+    total += original_problem.inequality_rows.at(i).at(0);
     for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
       total += original_problem.inequality_rows.at(i).at(j) * x.at(j);
     }
     if (total < -core::kEpsilon) {
-      return core::SolveStatus::kInfeasible;
+      return core::SolveStatus::kError;
     }
     total = 0;
   }
 
+  // check equalities hold
   total = 0;
   for (std::size_t i = 0; i < original_problem.equality_rows.size(); ++i) {
-    // total += original_problem.equality_rows.at(i).at(0);
+    total += original_problem.equality_rows.at(i).at(0);
     for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
       total += original_problem.equality_rows.at(i).at(j) * x.at(j);
     }
     if (std::fabs(total) > core::kEpsilon) {
-      return core::SolveStatus::kInfeasible;
+      return core::SolveStatus::kError;
     }
     total = 0;
   }
@@ -235,37 +228,27 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
   return core::SolveStatus::kFeasible;
 }
 
-void BlandPrimalSimplex::printSolution() {
-  std::cout << "Solution:" << std::endl;
-  for (std::size_t i = 0; i < solution_.size(); ++i) {
-    std::cout << solution_.at(i) << " ";
-  }
-  std::cout << std::endl;
-}
-
 core::SolveStatus
-BlandPrimalSimplex::solveProblem(const bool run_verbose,
-                                 const core::InputRows original_problem) {
+DualSimplex::solveProblem(const core::InputRows original_problem) {
 
-  // TODO: remove
   solution_.clear();
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
-    int pivot_column_index = getPivotColumnIndex();
+    // we now get pivot row index first!
+    int pivot_row_index = getPivotRowIndex();
+    if (pivot_row_index == -1) {
+      return core::SolveStatus::kInfeasible;
+    }
+
+    int pivot_column_index = getPivotColumnIndex(pivot_row_index);
     if (pivot_column_index == -1) {
-      //++num_already_optimal_;
       core::SolveStatus solution_status =
           verifySolution(original_problem, table_.at(0));
       return solution_status;
     }
-    int pivot_row_index = getPivotRowIndex(pivot_column_index);
-    if (pivot_row_index == -1) {
-      //++num_pivot_row_failures_;
-      return core::SolveStatus::kInfeasible;
-    }
+
     bool is_basis_switch_successful =
         switchBasis(pivot_row_index, pivot_column_index);
     if (!is_basis_switch_successful) {
-      //++num_basis_failures_;
       return core::SolveStatus::kError;
     }
     constructNewTable(pivot_row_index, pivot_column_index);
@@ -276,8 +259,7 @@ BlandPrimalSimplex::solveProblem(const bool run_verbose,
       return solution_status;
     }
   }
-  //++num_not_converging_;
   return core::SolveStatus::kDidntConverge;
 }
 
-} // namespace solvers::bland_simplex
+} // namespace solvers::dual_simplex
