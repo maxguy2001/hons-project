@@ -6,7 +6,7 @@ namespace core {
 
 enum class PresolveRulesIds {
   freeRowId = 0,
-  singletonVariableId,
+  rowAndColSingletonId,
   rowSingletonId,
   parallelRowId,
   emptyColId,

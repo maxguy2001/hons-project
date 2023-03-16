@@ -59,7 +59,7 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
     if (reader.problem_matrix_.size() > 0) {
       logical_solver::Presolve presolve(
           reader.problem_matrix_, reader.lower_bounds_, reader.upper_bounds_,
-          reader.num_inequalities_, reader.num_equalities_, true);
+          reader.num_inequalities_, reader.num_equalities_, false);
 
       presolve.applyPresolve();
       presolve.applyPostsolve();

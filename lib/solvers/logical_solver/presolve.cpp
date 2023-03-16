@@ -145,15 +145,18 @@ namespace logical_solver{
       // We now know we have an equality which is not satisfied.
       // We will check if there is only one other variable in the row,
       // and if so we will attempt to change the feasible value
-      // of the other variable to the variable coefficient of 
-      // the original variable in order to make the equality feasible.
+      // of the other variable to make the right hand side of the equality
+      // equal 1.
       int dependancy_index = getDependancyIndexRowDoubletonIP(
         row_index, col_index
       );
       if (dependancy_index != -1) {
-        if (checkDependancyIP(variable_coefficient, dependancy_index)) {
-          feasible_solution_.at(dependancy_index) = variable_coefficient;
-          return 1;
+        double dependancy_potential_value = (variable_coefficient - lower_bounds_.at(row_index))/problem_matrix_.at(row_index).at(dependancy_index);
+        if (dependancy_potential_value == floor(dependancy_potential_value)) {
+          if (checkDependancyIP(dependancy_potential_value, dependancy_index)) {
+            feasible_solution_.at(dependancy_index) = dependancy_potential_value;
+            return 1;
+          }
         }
       }
       return core::kIntInfinity;
@@ -202,12 +205,12 @@ namespace logical_solver{
   }
 
   void Presolve::applyFreeRowPostsolve(
-    const int row_index, const int col_index
+    const int row_index
   ) {
     postsolve_active_rows_.at(row_index) = true;
   }
 
-  void Presolve::updateStateSingletonVariable(
+  void Presolve::updateStateRowAndColSingleton(
     const int row_index, const int col_index
   ) {
     presolve_active_rows_.at(row_index) = false;
@@ -218,12 +221,12 @@ namespace logical_solver{
     // Update presolve stack.
     struct presolve_log log = {
       row_index, col_index, 
-      static_cast<int>(core::PresolveRulesIds::singletonVariableId)
+      static_cast<int>(core::PresolveRulesIds::rowAndColSingletonId)
     };
     presolve_stack_.push(log);
   }
 
-  void Presolve::applySingletonVariablePostsolve(
+  void Presolve::applyRowAndColSingletonPostsolve(
     const int row_index, const int col_index
   ) {
     int variable_coeff = problem_matrix_.at(row_index).at(col_index);
@@ -248,7 +251,7 @@ namespace logical_solver{
       // row. If so, check if the row (constraint) is satisfied, and if 
       // so turn on row in postsolve.
       if (isRowActivePostsolve(row_index)) {
-        if (checkConstraint(row_index, static_cast<int>(core::PresolveRulesIds::singletonVariableId))) {
+        if (checkConstraint(row_index, static_cast<int>(core::PresolveRulesIds::rowAndColSingletonId))) {
           postsolve_active_rows_.at(row_index) = true;
         }
       }
@@ -561,11 +564,6 @@ namespace logical_solver{
   void Presolve::updateStateFreeColSubstitution(
     int row_index, int col_index
   ) {
-    // Get dependancy variable and store in dependancies vector to be 
-    // stored in rule log struct.
-    // int dependancy = getFreeColSubstitutionDependancy(row_index, col_index);
-    // std::vector<int> dependancies_vector = {dependancy};
-
     // Turn off row and col
     presolve_active_rows_.at(row_index) = false;
     presolve_active_columns_.at(col_index) = false;
@@ -616,11 +614,6 @@ namespace logical_solver{
     double feasibleValueCalculationBound = getFeasibleValueCalculationBound(
       row_index
     );
-    // if (row_index == 2) {
-    //   printf("Col index: %d\n", col_index);
-    //   printf("Sum of dependancies: %0.1f\n", sum_of_dependancies);
-    //   printf("Calculation bound: %0.1f\n", feasibleValueCalculationBound);
-    // }
 
     if (sum_of_dependancies != core::kIntInfinity) {
       double RHS = feasibleValueCalculationBound - sum_of_dependancies;
@@ -710,7 +703,7 @@ namespace logical_solver{
 
           // If it is a singleton variable, update state accordingly.
           if (corresponding_col_non_zeros_count == 1) {
-            updateStateSingletonVariable(i, non_zero_variable);
+            updateStateRowAndColSingleton(i, non_zero_variable);
           }
           
           // If it is not a singleton variable, check if is an equality
@@ -849,17 +842,12 @@ namespace logical_solver{
         int rule_id = rule_log.rule_id;
         int row_index = rule_log.constraint_index;
         int col_index = rule_log.variable_index;
-
-        // if (col_index == 3) {
-        //   printf("Col 3 rule id: %d\n", rule_id);
-        //   printf("Corresponding row: %d\n", row_index);
-        // }
         
         if (rule_id == static_cast<int>(core::PresolveRulesIds::freeRowId)) {
-          applyFreeRowPostsolve(row_index, col_index);
+          applyFreeRowPostsolve(row_index);
         }
-        else if (rule_id == static_cast<int>(core::PresolveRulesIds::singletonVariableId)) {
-          applySingletonVariablePostsolve(row_index, col_index);
+        else if (rule_id == static_cast<int>(core::PresolveRulesIds::rowAndColSingletonId)) {
+          applyRowAndColSingletonPostsolve(row_index, col_index);
         }
         else if (rule_id == static_cast<int>(core::PresolveRulesIds::rowSingletonId)) {
           applyRowSingletonPostsolve(row_index);
@@ -878,9 +866,6 @@ namespace logical_solver{
         }
 
         if (infeasible_) {
-          // printf("Row %d\n", row_index);
-          // printf("Col %d\n", col_index);
-          // printf("Rule %d\n", rule_id);
           break;
         }
         // Remove rule from stack.
