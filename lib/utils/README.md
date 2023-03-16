@@ -1,0 +1,1 @@
+This section contains utilities required elsewhere in the codebase. This includes the reader and the problem formatters which adapts the read in problem for each of the final production formatters.

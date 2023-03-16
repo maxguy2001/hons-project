@@ -10,10 +10,10 @@ target_include_directories(${target}
 
 target_link_libraries(${target}
   dual_simplex
-  primal_simplex
   utils
   logical_solver
   revised_primal_solver
   primal_bland
   core
+  deprecated
 )
