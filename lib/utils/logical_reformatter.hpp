@@ -3,6 +3,7 @@
 #include <vector>
 
 #include "../core/consts.hpp"
+#include "../core/types.hpp"
 
 namespace utils {
 

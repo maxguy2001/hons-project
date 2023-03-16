@@ -1,4 +1,5 @@
 #include "../lib/core/consts.hpp"
+#include "../lib/core/types.hpp"
 #include "../lib/solvers/logical_solver/presolve.hpp"
 #include "../lib/solvers/primal_bland/bland_simplex.hpp"
 #include "../lib/utils/logical_reformatter.hpp"

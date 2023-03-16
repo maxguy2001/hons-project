@@ -1,4 +1,5 @@
 #include "../core/consts.hpp"
+#include "../core/types.hpp"
 #include <cstdint>
 #include <fstream>
 #include <optional>

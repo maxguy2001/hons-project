@@ -1,4 +1,5 @@
 #include "../../lib/core/consts.hpp"
+#include "../core/types.hpp"
 #include <cstdint>
 #include <vector>
 
