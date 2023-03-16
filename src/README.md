@@ -1,0 +1,1 @@
+This section hold all the files capable of running either individual solvers or the combined solver on a problem set. The actual solver is called in main.cpp but all the logic and setup will be in the individual solver running file.

@@ -1,0 +1,1 @@
+This section contains global constants (such as our limit value for inifinity) and global types such as structs and enum classes which we want to be avaiable everywhere in the codebase.

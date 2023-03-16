@@ -1,0 +1,5 @@
+This section contains old solvers, readers, etc. which are still useful and may still be used under ceratin conditions but which are no longer used in the main run.
+This includes:
+- primal_simplex: A regular primal simplex solver with no modifications to it. It is a useful halfway point for understanding how to solve linear feasibility problems in code but does not solve the testcases we have been given due to degeneracy and the lack of a definitely positive valued basis (and hence no guaranteed basic feasible solution with an all-slack basis).
+- primal_reader: An old reader for the primal simplex method. It is much slower than the final version
+- presolve_reader: An old reader for presolve problems. It is approximately the same speed as the final reader but does not deliver the problems in the desired format.
