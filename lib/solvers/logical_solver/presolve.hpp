@@ -27,7 +27,7 @@ namespace logical_solver{
     const std::vector<int> upper_bounds,
     const int inequalities_count,
     const int equalities_count,
-    const bool solve_MIP
+    const bool solve_ip
   );
 
   // PUBLIC METHODS
@@ -97,7 +97,7 @@ namespace logical_solver{
   const int equalities_count_;
   
   // Problem type
-  const bool solve_mip_;
+  const bool solve_ip_;
 
   // Vectors to keep track of implied lower and 
   // upper bounds during presolve.
@@ -159,22 +159,46 @@ namespace logical_solver{
    */
   void getRowsAndColsNonZeros();
 
+  /**
+   * @brief Returns the bound with which we will calculate
+   * the feasible value of a variable. In general we use the lower
+   * bound, but we make sure that if the lower bound is infinity
+   * and the upper bound isn't then we return the upper bound.
+   * 
+   * @param int row_index.
+   * @return double: calculation bound.
+   */
   double getFeasibleValueCalculationBound(const int row_index);
   
-  int getDependancyIndexRowDoubletonMIP(
+  /**
+   * @brief Used when we have an unsatisfied equality in IP
+   * postsolve, to check if the equality is a row doubleton.
+   * 
+   * @param int row_index: Index of corresponding row.
+   * @param int col_index: Index of correspinding variable.
+   * @return int Inf if not feasible, int feasible value if feasible.
+   */
+  int getDependancyIndexRowDoubletonIP(
     const int row_index, const int col_index
   );
 
-  bool checkConstraintByFasibleValue(
-    const int row_index, const int col_index, const double feasible_value
-  );
-
-  bool checkDependancyMIP(
-    const int feasible_value, const int dependancy_col_index
+  /**
+   * @brief Used to check changing the feasible value of the 
+   * dependancy variable in a an unsatisfied row doubleton in 
+   * IP postsolve leads to all the constraints that contain the 
+   * dependancy variable being satisfied.
+   * 
+   * @param int dependancy_new_feasible_value: New feasible value for the
+   * dependancy that we will use to check..
+   * @param int dependancy_col_index: Index of dependancy.
+   */
+  bool checkDependancyIP(
+    const int dependancy_new_feasible_value, 
+    const int dependancy_col_index
   );
 
   /**
-   * @brief Called in postsolve, when solving MIPs, 
+   * @brief Called in postsolve, when solving ips, 
    * to get the feasible value of a variable once a postsolve 
    * function has simplified the corresponding constraint to an 
    * integer coefficient times the variable in the LHS, 
@@ -188,7 +212,7 @@ namespace logical_solver{
    * @param int row_index.
    * @return int Inf if not feasible, int feasible value if feasible.
    */
-  int getVariableFeasibleValueMIP(
+  int getVariableFeasibleValueIP(
     const int row_index, 
     const int col_index, 
     const int variable_coefficient, 

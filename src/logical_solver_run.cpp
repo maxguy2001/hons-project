@@ -70,6 +70,7 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
   int integer_feasible_count = 0;
   int infeasible_by_parallel_rows_count = 0;
   int unsatisfied_constraints = 0;
+  int empty_problems = 0;
 
   for (int n = 0; n < problems_count; n++) {
     // printf("Solving problem %d\n", n);
@@ -103,12 +104,15 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
           integer_feasible_count += 1;
         }
       }
+    } else {
+      empty_problems += 1;
     }
   }
   printf(
-    "%d PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n",
+    "%d NON-EMPTY PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n",
     reduced_to_empty_count);
   printf("%d Problems had an integer feasible solution. \n", integer_feasible_count);
+  printf("%d Problems were empty\n", empty_problems);
   printf("%d Problems were not feasible. \n", infeasible_count);
   printf("%d Problems were not feasible due to infeasible parallel rows. \n",
          infeasible_by_parallel_rows_count);

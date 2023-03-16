@@ -9,10 +9,10 @@ namespace logical_solver{
     const std::vector<int> upper_bounds,
     const int inequalities_count,
     const int equalities_count,
-    const bool solve_MIP
+    const bool solve_ip
     ) 
     :problem_matrix_(problem_matrix),
-    solve_mip_(solve_MIP),
+    solve_ip_(solve_ip),
     variables_count_(problem_matrix[0].size()),
     constraints_count_(problem_matrix.size()),
     inequalities_count_(inequalities_count),
@@ -80,30 +80,7 @@ namespace logical_solver{
     return upper_bound;
   }
 
-  bool Presolve::checkConstraintByFasibleValue(
-    const int row_index, const int col_index, const double feasible_value
-  ) {
-    double constraint_value = 0;
-
-    // Loop through row active columns working out the 
-    // constraint value.
-    for (std::size_t j = 0; j < variables_count_; ++j) {
-      if (j == col_index) {
-        constraint_value += problem_matrix_.at(row_index).at(j)*feasible_value;
-      } else {
-        constraint_value += problem_matrix_.at(row_index).at(j)*feasible_solution_.at(j);
-      }
-    }
-
-    // Check if constraint is satisfied
-    if (constraint_value < lower_bounds_.at(row_index) || constraint_value > upper_bounds_.at(row_index)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  int Presolve::getDependancyIndexRowDoubletonMIP(
+  int Presolve::getDependancyIndexRowDoubletonIP(
     const int row_index, const int col_index
   ) {
     int nonzero_count = 0;
@@ -126,7 +103,7 @@ namespace logical_solver{
     return dependancy_index;
   }
 
-  bool Presolve::checkDependancyMIP(
+  bool Presolve::checkDependancyIP(
     const int dependancy_new_feasible_value, 
     const int dependancy_col_index
   ) {
@@ -145,7 +122,7 @@ namespace logical_solver{
     return true;
   }
 
-  int Presolve::getVariableFeasibleValueMIP(
+  int Presolve::getVariableFeasibleValueIP(
     const int row_index, const int col_index, 
     const int variable_coefficient, const double constraint_RHS
   ) {
@@ -170,11 +147,11 @@ namespace logical_solver{
       // and if so we will attempt to change the feasible value
       // of the other variable to the variable coefficient of 
       // the original variable in order to make the equality feasible.
-      int dependancy_index = getDependancyIndexRowDoubletonMIP(
+      int dependancy_index = getDependancyIndexRowDoubletonIP(
         row_index, col_index
       );
       if (dependancy_index != -1) {
-        if (checkDependancyMIP(variable_coefficient, dependancy_index)) {
+        if (checkDependancyIP(variable_coefficient, dependancy_index)) {
           feasible_solution_.at(dependancy_index) = variable_coefficient;
           return 1;
         }
@@ -201,7 +178,7 @@ namespace logical_solver{
   }
 
   bool Presolve::checkIsRowFree(const int row_index) {
-    if (solve_mip_) {
+    if (solve_ip_) {
       if (lower_bounds_.at(row_index) == -2147483646.000000) {
         lower_bounds_.at(row_index) = -core::kIntInfinity;
       }
@@ -255,8 +232,8 @@ namespace logical_solver{
     );
     double feasible_value;
 
-    if (solve_mip_) {
-      feasible_value = getVariableFeasibleValueMIP(
+    if (solve_ip_) {
+      feasible_value = getVariableFeasibleValueIP(
         row_index, col_index, problem_matrix_.at(row_index).at(col_index), 
         feasibleValueCalculationBound
       );
@@ -283,12 +260,12 @@ namespace logical_solver{
   ) {
     int variable_coefficient = problem_matrix_.at(row_index).at(col_index);
     int RHS = lower_bounds_.at(row_index);
-    // In row singleton equality, if we are solving the MIP,
+    // In row singleton equality, if we are solving the ip,
     // we check it is feasible in presolve already so that we 
     // do not continue the process of it is not feasible.
     double variable_value;
-    if (solve_mip_) {
-      variable_value = getVariableFeasibleValueMIP(
+    if (solve_ip_) {
+      variable_value = getVariableFeasibleValueIP(
         row_index, col_index, variable_coefficient, RHS
       );
     } else {
@@ -429,10 +406,10 @@ namespace logical_solver{
     // for inequalities.
     if (large_to_small_ratio < 0) {
       // large bound by ratio (rounded down to ensure feasibility for
-      // integers if solving MIP) now becomes an upper bound of the 
+      // integers if solving ip) now becomes an upper bound of the 
       // small inequality. Thus, if it is smaller than the small row's 
       // bound, the problem is infeasible.
-      if (solve_mip_) {
+      if (solve_ip_) {
         if (std::floor(large_lower_bound_by_ratio) < lower_bounds_.at(small_row_index)) {
           return false;
         }
@@ -464,12 +441,12 @@ namespace logical_solver{
     // if we have an inequality, update the bound on the small row 
     // to ensure that both are satisfied.
     if (small_row_index < inequalities_count_) {
-      // If we are solving the MIP then we have that we 
+      // If we are solving the ip then we have that we 
       // need to round up the large row's lower bound divided by 
       // the ratio to ensure that constraints are satisfied when 
       // restricted to integers.
       double potential_lower_bound;
-      if (solve_mip_) {potential_lower_bound = std::ceil(large_lower_bound_by_ratio);}
+      if (solve_ip_) {potential_lower_bound = std::ceil(large_lower_bound_by_ratio);}
       else {potential_lower_bound = large_lower_bound_by_ratio;}
 
       int small_row_lower_bound = lower_bounds_.at(small_row_index);
@@ -483,12 +460,12 @@ namespace logical_solver{
       } else {
         // If they do not have the same sign, then that means that the 
         // lower bound of the large one divided by the large 
-        // to small ratio (rounded down if we are solving the MIP), 
+        // to small ratio (rounded down if we are solving the ip), 
         // will have become an upper bound of the small one - if 
         // this upper bound is smaller than the small one's
         // lower bound, we will have already deemed the system unfeasible in 
         // checkAreParallelRowsFeasible.
-        if (solve_mip_) {
+        if (solve_ip_) {
           upper_bounds_.at(small_row_index) = std::floor(large_lower_bound_by_ratio);
         } else {
           upper_bounds_.at(small_row_index) = large_lower_bound_by_ratio;
@@ -650,8 +627,8 @@ namespace logical_solver{
       int variable_coefficient = problem_matrix_.at(row_index).at(col_index);
       double feasible_value;
 
-      if (solve_mip_) {
-        feasible_value = getVariableFeasibleValueMIP(
+      if (solve_ip_) {
+        feasible_value = getVariableFeasibleValueIP(
           row_index, col_index, variable_coefficient, RHS
         );
       } else {
