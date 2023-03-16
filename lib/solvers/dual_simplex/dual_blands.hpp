@@ -92,7 +92,7 @@ private:
    */
   bool checkOptimality();
 
-  std::vector<float> extractSolution(const core::InputRows original_problem);
+  core::DualSolution extractSolution(const core::InputRows original_problem);
 
   core::SolveStatus verifySolution(core::InputRows original_problem,
                                    std::vector<float> solution_row);

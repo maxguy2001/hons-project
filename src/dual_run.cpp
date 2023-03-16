@@ -72,7 +72,7 @@ void DualRun::runDualSolver() {
     auto problem = reader_.getNextProblem();
     if (problem->equality_rows.size() == 0 &&
         problem->inequality_rows.size() == 0) {
-      ++num_sucessfully_solved;
+      ++num_empty;
       // TODO: update conditions for number empty to include where row length is
       // 0
       // TODO: check if(!problem since auto)
@@ -81,7 +81,7 @@ void DualRun::runDualSolver() {
       ++num_sucessfully_solved;
     } else if (problem->equality_rows.size() == 1 &&
                problem->inequality_rows.size() == 0) {
-      ++num_empty;
+      ++num_sucessfully_solved;
     } else {
 
       core::FormattedDualProblem rf_prob = rf_.reformatProblem(problem.value());

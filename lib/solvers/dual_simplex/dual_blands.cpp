@@ -162,8 +162,9 @@ bool DualSimplex::checkOptimality() {
   return true;
 }
 
-std::vector<float>
+core::DualSolution
 DualSimplex::extractSolution(const core::InputRows original_problem) {
+
   int num_primal_variables;
   if (original_problem.equality_rows.size() == 0) {
     num_primal_variables = original_problem.inequality_rows.at(0).size();
@@ -174,38 +175,50 @@ DualSimplex::extractSolution(const core::InputRows original_problem) {
   std::vector<float> bounds = extractColumnFromTable(table_.at(0).size() - 1);
 
   std::vector<float> extended_x_vals;
+  std::vector<float> slack_vals;
   for (std::size_t i = 0; i < num_primal_variables * 2; ++i) {
     extended_x_vals.push_back(0);
   }
   for (std::size_t i = 0; i < basis_.size(); ++i) {
     if (basis_.at(i) < 2 * num_primal_variables) {
       extended_x_vals.at(basis_.at(i)) = bounds.at(i + 1);
+      slack_vals.push_back(0);
+    } else {
+      slack_vals.push_back(basis_.at(i));
     }
   }
 
   std::vector<float> x_vals;
+  // x_vals.push_back(1);
   for (std::size_t i = 0; i < num_primal_variables; ++i) {
     x_vals.push_back(extended_x_vals.at(i) -
                      extended_x_vals.at(i + num_primal_variables));
   }
 
-  return x_vals;
+  core::DualSolution dual_solution;
+  dual_solution.primal_variable_values = x_vals;
+  dual_solution.slack_variable_values = slack_vals;
+
+  return dual_solution;
 }
 
 core::SolveStatus DualSimplex::verifySolution(core::InputRows original_problem,
                                               std::vector<float> solution_row) {
 
-  std::vector<float> x = extractSolution(original_problem);
+  core::DualSolution extracted_solutions = extractSolution(original_problem);
+  std::vector<float> x = extracted_solutions.primal_variable_values;
   solution_ = x;
   const int num_primal_variables = original_problem.num_variables - 1;
 
   // check inequalities hold
   float total = 0;
   for (std::size_t i = 0; i < original_problem.inequality_rows.size(); ++i) {
-    total += original_problem.inequality_rows.at(i).at(0);
+    // total += original_problem.inequality_rows.at(i).at(0);
     for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
       total += original_problem.inequality_rows.at(i).at(j) * x.at(j);
     }
+    // add atrificial variable
+    total += extracted_solutions.slack_variable_values.at(i);
     if (total < -core::kEpsilon) {
       return core::SolveStatus::kError;
     }
@@ -236,14 +249,19 @@ DualSimplex::solveProblem(const core::InputRows original_problem) {
     // we now get pivot row index first!
     int pivot_row_index = getPivotRowIndex();
     if (pivot_row_index == -1) {
-      return core::SolveStatus::kInfeasible;
+      core::SolveStatus solution_status =
+          verifySolution(original_problem, table_.at(0));
+      return solution_status;
     }
 
     int pivot_column_index = getPivotColumnIndex(pivot_row_index);
     if (pivot_column_index == -1) {
       core::SolveStatus solution_status =
           verifySolution(original_problem, table_.at(0));
-      return solution_status;
+      if (solution_status == core::SolveStatus::kFeasible) {
+        return solution_status;
+      }
+      return core::SolveStatus::kInfeasible;
     }
 
     bool is_basis_switch_successful =

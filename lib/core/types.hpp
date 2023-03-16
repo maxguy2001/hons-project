@@ -36,6 +36,11 @@ struct FormattedLogicalProblem {
   std::vector<int> upper_bounds;
 };
 
+struct DualSolution {
+  std::vector<float> primal_variable_values;
+  std::vector<float> slack_variable_values;
+};
+
 enum class SolveStatus { kInfeasible = 0, kFeasible, kError, kDidntConverge };
 
 class ISolver {
