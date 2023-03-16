@@ -1,5 +1,3 @@
 #include "main.hpp"
 
-namespace dual_simplex{
-
-}
+namespace solvers::dual_simplex {}

@@ -25,6 +25,11 @@ struct FormattedPrimalProblem {
   std::vector<int> basic_variables;
 };
 
+struct FormattedDualProblem {
+  std::vector<std::vector<float>> problem_matrix;
+  std::vector<int> basic_variables;
+};
+
 struct FormattedLogicalProblem {
   std::vector<std::vector<int>> problem_matrix;
   std::vector<int> lower_bounds;
