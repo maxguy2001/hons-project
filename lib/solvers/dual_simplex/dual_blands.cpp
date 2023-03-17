@@ -203,8 +203,6 @@ core::SolveStatus DualSimplex::verifySolution(
       total +=
           original_formatted_problem.at(i).at(j) * extracted_solutions.at(j);
     }
-    // total += bounds.at(i);
-    // if (std::fabs(total) - bounds.at(i) > core::kEpsilon) {
     if (total - bounds.at(i) > core::kEpsilon) {
 
       return core::SolveStatus::kError;

@@ -15,6 +15,6 @@ public:
   // empty constructor
   PrimalRun() {}
 
-  void runPrimalSolver();
+  void runPrimalSolver(const std::string problems_filepath);
   void printProblem(const core::InputRows input_rows);
 };

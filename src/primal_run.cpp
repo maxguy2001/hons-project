@@ -21,12 +21,10 @@ void PrimalRun::printProblem(const core::InputRows input_rows) {
   std::cout << std::endl;
 }
 
-void PrimalRun::runPrimalSolver() {
+void PrimalRun::runPrimalSolver(const std::string problems_filepath) {
 
-  const std::string pp = "/home/maxguy/projects/hons/hons-project/problems/"
-                         "feasibility_testcases.txt";
   std::fstream filestream;
-  filestream.open(pp, std::ios::in);
+  filestream.open(problems_filepath, std::ios::in);
 
   // instantiate everything
   utils::ModifiedPrimalReader reader_(filestream);

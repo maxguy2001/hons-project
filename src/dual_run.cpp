@@ -67,12 +67,10 @@ copyMatrix(const std::vector<std::vector<float>> input) {
   return output;
 }
 
-void DualRun::runDualSolver() {
+void DualRun::runDualSolver(const std::string input_filepath) {
 
-  const std::string pp = "/home/maxguy/projects/hons/hons-project/problems/"
-                         "feasibility_testcases.txt";
   std::fstream filestream;
-  filestream.open(pp, std::ios::in);
+  filestream.open(input_filepath, std::ios::in);
 
   // instantiate everything
   utils::ModifiedPrimalReader reader_(filestream);

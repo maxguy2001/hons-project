@@ -1,12 +1,12 @@
-#include "simplex.hpp"
+#include "revised_simplex.hpp"
+#include "../core/consts.hpp"
+#include "../core/types.hpp"
 #include <algorithm>
 #include <cmath>
-#include <core/consts.hpp>
-#include <core/types.hpp>
 #include <iostream>
 #include <iterator>
 
-namespace solvers::revised_primal_simplex {
+namespace deprecated {
 
 RevisedPrimalSimplex::RevisedPrimalSimplex() {}
 
@@ -235,4 +235,4 @@ RevisedPrimalSimplex::solveProblem(const bool run_verbose) {
   return std::nullopt;
 } // namespace revised_primal_simplex
 
-} // namespace solvers::revised_primal_simplex
+} // namespace deprecated

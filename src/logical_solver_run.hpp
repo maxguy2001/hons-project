@@ -12,6 +12,7 @@ public:
   LogicalSolverRun() {}
 
   void testOnTestProblem();
-  void testOnMultipleProblems(const int problems_count);
-  void testOnFullTestSet();
+  void testOnMultipleProblems(const int problems_count,
+                              const std::string problems_filepath);
+  void testOnFullTestSet(const std::string problems_filepath);
 };

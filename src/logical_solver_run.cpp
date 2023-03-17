@@ -32,16 +32,13 @@ void LogicalSolverRun::testOnTestProblem() {
   // presolve.printImpliedBounds();
 }
 
-void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
-  std::string all_test_problems =
-      "/Users/pepe/hons-project/problems/feasibility_testcases.txt";
-  // std::string all_test_problems = "/home/maxguy/projects/hons/hons-project/"
-  //                                 "problems/feasibility_testcases.txt";
+void LogicalSolverRun::testOnMultipleProblems(
+    const int problems_count, const std::string problems_filepath) {
   deprecated::Reader reader;
 
   // Start filestream to pass to reader.
   std::fstream problems_filestream;
-  problems_filestream.open(all_test_problems, std::ios::in);
+  problems_filestream.open(problems_filepath, std::ios::in);
 
   int reduced_to_empty_count = 0;
   int infeasible_count = 0;
@@ -81,10 +78,11 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
       empty_problems += 1;
     }
   }
-  printf(
-    "%d NON-EMPTY PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION WAS FOUND.\n",
-    reduced_to_empty_count);
-  printf("%d Problems had an integer feasible solution. \n", integer_feasible_count);
+  printf("%d NON-EMPTY PROBLEMS WERE REDUCED TO EMPTY AND A FEASIBLE SOLUTION "
+         "WAS FOUND.\n",
+         reduced_to_empty_count);
+  printf("%d Problems had an integer feasible solution. \n",
+         integer_feasible_count);
   printf("%d Problems were empty\n", empty_problems);
   printf("%d Problems were not feasible. \n", infeasible_count);
   printf("%d Problems were not feasible due to infeasible parallel rows. \n",
@@ -93,10 +91,10 @@ void LogicalSolverRun::testOnMultipleProblems(const int problems_count) {
          unsatisfied_constraints);
 }
 
-void LogicalSolverRun::testOnFullTestSet() {
+void LogicalSolverRun::testOnFullTestSet(const std::string problems_filepath) {
   const int all_test_cases_count = 150218;
   auto start = std::chrono::high_resolution_clock::now();
-  testOnMultipleProblems(all_test_cases_count);
+  testOnMultipleProblems(all_test_cases_count, problems_filepath);
   auto elapsed = std::chrono::high_resolution_clock::now() - start;
   long long seconds =
       std::chrono::duration_cast<std::chrono::seconds>(elapsed).count();
