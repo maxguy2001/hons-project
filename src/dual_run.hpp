@@ -17,5 +17,5 @@ public:
 
   void runDualSolver();
   void printProblem(const core::InputRows input_rows);
-  void temp();
+  void debugSingleProblem();
 };

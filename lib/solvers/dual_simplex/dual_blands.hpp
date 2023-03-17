@@ -28,9 +28,10 @@ public:
    * @brief solve the given problem
    *
    */
-  core::SolveStatus solveProblem(const core::InputRows original_problem);
+  core::SolveStatus solveProblem(
+      const std::vector<std::vector<float>> original_formatted_problem);
 
-private:
+  // private:
   // simplex table
   std::vector<std::vector<float>> table_;
 
@@ -92,10 +93,10 @@ private:
    */
   bool checkOptimality();
 
-  core::DualSolution extractSolution(const core::InputRows original_problem);
+  std::vector<float> extractSolution();
 
-  core::SolveStatus verifySolution(core::InputRows original_problem,
-                                   std::vector<float> solution_row);
+  core::SolveStatus verifySolution(
+      const std::vector<std::vector<float>> original_formatted_problem);
 };
 
 } // namespace solvers::dual_simplex

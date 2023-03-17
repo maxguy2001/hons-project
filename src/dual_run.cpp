@@ -1,20 +1,35 @@
 #include "dual_run.hpp"
 
-void DualRun::temp() {
+void DualRun::debugSingleProblem() {
 
   core::InputRows input;
   input.equality_rows = {{0, -1, 0, 0, 1, 0, 0, 0, 0}};
   input.inequality_rows = {{0, 1, 0, 0, 0, 0, 0, 0, 0},
-                           {-1, -1, 0, 0, 0, 0, 0, 1, 0}};
+                           {0, 0, 1, 0, 0, 0, 0, 0, 0},
+                           {-1, 0, -1, 0, 0, 1, 0, 0, 0},
+                           {-1, -1, 0, 0, 0, 0, 0, 1, 0},
+                           {-1, 0, 0, 0, 0, -1, 0, 0, 1}};
   input.num_variables = 8;
 
   utils::DualReformatter rf_;
   core::FormattedDualProblem problem = rf_.reformatProblem(input);
 
-  solvers::dual_simplex::DualSimplex solver_;
-  solver_.setBasis(problem.basic_variables);
-  solver_.setProblem(problem.problem_matrix);
-  core::SolveStatus status = solver_.solveProblem(input);
+  for (std::size_t i = 0; i < problem.problem_matrix.size(); ++i) {
+    for (std::size_t j = 0; j < problem.problem_matrix.at(0).size(); ++j) {
+      if (problem.problem_matrix.at(i).at(j) == -0) {
+        std::cout << 0 << "  ";
+      } else {
+        std::cout << problem.problem_matrix.at(i).at(j) << "  ";
+      }
+    }
+    std::cout << std::endl;
+  }
+  std::cout << std::endl;
+
+  // solvers::dual_simplex::DualSimplex solver_;
+  // solver_.setBasis(problem.basic_variables);
+  // solver_.setProblem(problem.problem_matrix);
+  // core::SolveStatus status = solver_.solveProblem(problem.problem_matrix);
 }
 
 void DualRun::printProblem(const core::InputRows input_rows) {
@@ -38,6 +53,20 @@ void DualRun::printProblem(const core::InputRows input_rows) {
   std::cout << std::endl;
 }
 
+std::vector<std::vector<float>>
+copyMatrix(const std::vector<std::vector<float>> input) {
+  std::vector<std::vector<float>> output;
+  std::vector<float> temp;
+  for (std::size_t i = 0; i < input.size(); ++i) {
+    temp.clear();
+    for (std::size_t j = 0; j < input.at(0).size(); ++j) {
+      temp.push_back(input.at(i).at(j));
+    }
+    output.push_back(temp);
+  }
+  return output;
+}
+
 void DualRun::runDualSolver() {
 
   const std::string pp = "/home/maxguy/projects/hons/hons-project/problems/"
@@ -51,7 +80,7 @@ void DualRun::runDualSolver() {
   utils::DualReformatter rf_;
 
   // problem 2019 is first basis fault!
-  int num_to_solve = 150'000;
+  int num_to_solve = 150'218;
   int num_failed = 0;
   int num_empty = 0;
   int num_sucessfully_solved = 0;
@@ -73,9 +102,6 @@ void DualRun::runDualSolver() {
     if (problem->equality_rows.size() == 0 &&
         problem->inequality_rows.size() == 0) {
       ++num_empty;
-      // TODO: update conditions for number empty to include where row length is
-      // 0
-      // TODO: check if(!problem since auto)
     } else if (problem->equality_rows.size() == 0 &&
                problem->inequality_rows.size() == 1) {
       ++num_sucessfully_solved;
@@ -87,9 +113,9 @@ void DualRun::runDualSolver() {
       core::FormattedDualProblem rf_prob = rf_.reformatProblem(problem.value());
       solver_.setProblem(rf_prob.problem_matrix);
       solver_.setBasis(rf_prob.basic_variables);
-      // TODO: switch statement to find how many are sucessfully solved
-      // TODO: fix floating point errors?
-      auto solve_state = solver_.solveProblem(*problem);
+      std::vector<std::vector<float>> problem_matrix_copy =
+          copyMatrix(rf_prob.problem_matrix);
+      auto solve_state = solver_.solveProblem(problem_matrix_copy);
       if (solve_state == core::SolveStatus::kFeasible) {
         ++num_sucessfully_solved;
       } else if (solve_state == core::SolveStatus::kInfeasible) {
@@ -117,4 +143,5 @@ void DualRun::runDualSolver() {
   std::cout << "Number error " << num_error << std::endl;
   std::cout << "Number didn't converge " << num_didnt_converge << std::endl;
   std::cout << "Number empty " << num_empty << std::endl;
+  std::cout << "Time taken " << time_taken_secs << std::endl;
 }
