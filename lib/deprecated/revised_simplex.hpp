@@ -2,7 +2,7 @@
 #include <optional>
 #include <vector>
 
-namespace solvers::revised_primal_simplex {
+namespace deprecated {
 
 class RevisedPrimalSimplex {
 public:
@@ -100,4 +100,4 @@ private:
   void printObjectiveRow();
 };
 
-} // namespace solvers::revised_primal_simplex
+} // namespace deprecated
