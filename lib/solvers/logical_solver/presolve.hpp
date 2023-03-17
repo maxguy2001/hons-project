@@ -183,7 +183,7 @@ private:
   );
 
   /**
-   * @brief Used to check changing the feasible value of the 
+   * @brief Used to check if changing the feasible value of the 
    * dependancy variable in a an unsatisfied row doubleton in 
    * IP postsolve leads to all the constraints that contain the 
    * dependancy variable being satisfied.
@@ -203,10 +203,9 @@ private:
    * function has simplified the corresponding constraint to an 
    * integer coefficient times the variable in the LHS, 
    * and an integer in the RHS. It checks if the RHS divided by the coefficient is an integer that 
-   * satisfies the implied bounds. If not, if it is an inequality, 
-   * tries rounding up to nearest integer and checks if the upper 
-   * bound is satisfied.
-   *
+   * satisfies the implied bounds. If not, it applies the integrality
+   * check operarions.
+   * 
    * @param int variable_coefficient: integer coefficient of the variable.
    * @param int constraint_RHS: integer RHS of constraint.
    * @param int row_index.
@@ -219,15 +218,34 @@ private:
     const double constraint_RHS
   );
 
+  /**
+   * @brief Checks if a row is free, that is if it has lower
+   * bound of minus infinity and upper bound of infinity.
+   *
+   * @param int row_index: index of the row.
+   * @return Boolean of whether it is free.
+   */
   bool checkIsRowFree(const int row_index);
 
+  /**
+   * @brief Updates state when a free row is found in presolve.
+   *
+   * @param int row_index: index of the row.
+   * @return void.
+   */
   void updateStateFreeRow(const int row_index);
 
-  void applyFreeRowPostsolve(const int row_index, const int col_index);
+  /**
+   * @brief Applies free row postsolve.
+   *
+   * @param int row_index: index of the row.
+   * @return void.
+   */
+  void applyFreeRowPostsolve(const int row_index);
 
   /**
    * @brief Updates the state of the problem in presolve given that a
-   * singleton variable has been found. Turns off
+   * row and column singleton has been found. Turns off
    * the row and column and logs the rule into the presolve stack as a
    * row singleton.
    *
@@ -235,19 +253,18 @@ private:
    * @param column index.
    * @return void.
    */
-  void updateStateSingletonVariable(const int row_index, const int col_index);
+  void updateStateRowAndColSingleton(const int row_index, const int col_index);
 
   /**
-   * @brief Applies the postsolve steps for a singleton variable. It
-   * first finds the feasible value, which we take to be its lower
-   * bound, and checks it feasibility. Then, It logs the feasible value,
+   * @brief Applies postsolve for a row and column singleton. It
+   * first finds the feasible value and checks it feasibility. Then, It logs the feasible value,
    * sets the correponding postolve row and col to true,
    *
    * @param equality row index.
    * @param column index.
    * @return void.
    */
-  void applySingletonVariablePostsolve(const int row_index,
+  void applyRowAndColSingletonPostsolve(const int row_index,
                                        const int col_index);
 
   /**
@@ -311,18 +328,65 @@ private:
    */
   int getParallelRow(const int row_index, const int start);
 
+  /**
+   * @brief Given two parallel rows returns a vector with two
+   * elements with the index of the row with the larger 
+   * coefficients in the first entry and the one with the smaller
+   * coefficients in the smaller entry.
+   *
+   * @param int row: index of row we have rows iteration.
+   * @param int parallel_row: index of row parallel to row.
+   * @return rows indicies sorted by size.
+   */
   std::vector<int> sortParallelRowsBySize(const int row,
                                           const int parallel_row);
 
+
+  /**
+   * @brief Checks if two parallel rows are feasible. Check project
+   * report for on how the checks work.
+   *
+   * @param int small_row_index: index of row with smaller 
+   * coefficients.
+   * @param int large_to_small_ratio: ratio of large row (larger coefficients)
+   * to small row.
+   * @param double large_bound_by_ratio: ratio of upper bound of large row
+   * divided by large_to_small_ratio.
+   * 
+   * @return bool.
+   */
   bool checkAreParallelRowsFeasible(const int small_row_index,
                                     const int large_to_small_ratio,
                                     const double large_bound_by_ratio);
 
+  /**
+   * @brief Updates state of the problem when parallel rows are 
+   * found in presolve.
+   *
+   * @param int small_row_index: index of row with smaller 
+   * coefficients.
+   * @param int large_row_index: index of row with larger
+   * coefficients.
+   * @param int large_to_small_ratio: ratio of large row (larger coefficients)
+   * to small row.
+   * @param double large_bound_by_ratio: ratio of upper bound of large row
+   * divided by large_to_small_ratio.
+   * 
+   * @return void.
+   */
   void updateStateParallelRow(const int small_row_index,
                               const int large_row_index,
                               const double large_to_small_ratio,
                               const double large_bound_by_ratio);
 
+  /**
+   * @brief Applies postsolve for a row that had been removed
+   * from the problem by parallel rows. Removes rule from the 
+   * stack and upodates state of the problem accordingly.
+   *
+   * @param int row_index.
+   * @return void.
+   */
   void applyParallelRowPostsolve(const int row_index);
 
   /**
@@ -336,10 +400,9 @@ private:
   void updateStateEmptyCol(const int col_index);
 
   /**
-   * @brief Finds the feasible value of a variable in postsolve
-   * when the rule in presolve was empty column - as per the
-   * presolve stack. Feasible value is taken to be 0 arbitrarily. It then
-   * updates the feasible solution vector and the state of the problem
+   * @brief Applies postsolve for empty rows. Feasible value is taken 
+   * to be 0 arbitrarily. It then updates the feasible solution
+   *  vector and the state of the problem
    * accordingly.
    *
    * @param col_index: column index.
@@ -380,19 +443,6 @@ private:
                               const std::vector<int> col_non_zeros);
 
   /**
-   * @brief Function called in presolve when we know a column
-   * only has one non-zero cofficient, to check wherher it is
-   * a doubleton equation, so it is in a row where there is
-   * only one other varible.
-   *
-   * @param row_index: of the corresponding row to check.
-   * @param col_index: of the corresponding column.
-   * @return bool: indicating whether or not column is a free column
-   * substitution col.
-   */
-  bool isDoubletonEquation(const int row_index, const int col_index);
-
-  /**
    * @brief Checks if a column, which has already been found to be
    * a column singleton, is a free column, i.e if the implied bounds
    * on the variable are minus and plus infinity.
@@ -403,17 +453,6 @@ private:
    * substitution col.
    */
   bool isFreeColSubstitution(const int row_index, const int col_index);
-
-  /**
-   * @brief Finds the dependancy variable of a free column substitution column,
-   * that is the corresponding row that is non-zero when
-   *
-   * @param row index.
-   * @param column index.
-   * @return int - the index of the dependancy variable.
-   */
-  int getFreeColSubstitutionDependancy(const int row_index,
-                                       const int col_index);
 
   /**
    * @brief Updates state of the problem in presolve when a free column
@@ -428,23 +467,28 @@ private:
    */
   void updateStateFreeColSubstitution(const int row_index, const int col_index);
 
+  /**
+   * @brief Called in freeColSubstitution postsolve in order to
+   * get the sum of all the variables in the row, that are not
+   * col_index, times their corresponding coefficients. If the 
+   * feasible value for one of the variables has not been found
+   * returns infinity.
+   *
+   * @param row index.
+   * @param column index.
+   * @return void.
+   */
   double getFreeColSubstitutionSumOfDependancies(const int row_index,
                                                  const int col_index);
 
   /**
    * @brief Finds the feasible value of a variable in postsolve
-   * when the rule in presolve was free column substitution col - as per the
-   * presolve stack. Feasible value is given by the constant in the lower
-   * bounds vector minus the dependancy variable's feasible value
-   * times its coefficient (this will give a feasible value both in
-   * equalities and inequalities).It then updates the feasible solution
-   * vector and the state of the problem
+   * when the rule in presolve was free column substitution. It then
+   * updates the feasible solution vector and the state of the problem
    * accordingly.
    *
    * @param int row_index: row index.
    * @param int col_index: col index.
-   * @param int dependancy: dependancy variable to work out
-   * feasible solution.
    * @return void.
    */
   void applyFreeColSubstitutionPostsolve(const int row_index,
@@ -479,10 +523,29 @@ private:
   bool checkVariableImpliedBounds(const int col_index,
                                   const int feasible_value);
 
+  /**
+   * @brief Checks if a row is active in postsolve, that is,
+   * if we have found feasible values for all its nonzero
+   * variables.
+   *
+   * @param int row_index: index of the row.
+   * @return bool.
+   */
   bool isRowActivePostsolve(const int row_index);
 
+  /**
+   * @brief Checks if a constraint is satisfied in postsolve.
+   * Called ones the constraint has been determined as active.
+   *
+   * @param int row_index: index of the row.
+   * @return bool.
+   */
   bool checkConstraint(const int row_index, const int rule_id);
 
+  /**
+   * @brief Prints the rows and columns that are active in 
+   * presolve.
+   */
   void printPresolveCurrentState();
 };
 } // namespace logical_solver
