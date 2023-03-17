@@ -15,7 +15,7 @@ public:
   // empty constructor
   DualRun() {}
 
-  void runDualSolver();
+  void runDualSolver(const std::string input_filepath);
   void printProblem(const core::InputRows input_rows);
   void debugSingleProblem();
 };
