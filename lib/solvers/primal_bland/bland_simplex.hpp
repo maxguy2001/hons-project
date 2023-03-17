@@ -11,10 +11,10 @@ class BlandPrimalSimplex {
 public:
   BlandPrimalSimplex();
 
-  int num_already_optimal_ = 0;
-  int num_basis_failures_ = 0;
-  int num_pivot_row_failures_ = 0;
-  int num_not_converging_ = 0;
+  // int num_already_optimal_ = 0;
+  // int num_basis_failures_ = 0;
+  // int num_pivot_row_failures_ = 0;
+  // int num_not_converging_ = 0;
 
   /**
    * @brief Set the table class member

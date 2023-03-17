@@ -252,20 +252,20 @@ BlandPrimalSimplex::solveProblem(const bool run_verbose,
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
     int pivot_column_index = getPivotColumnIndex();
     if (pivot_column_index == -1) {
-      ++num_already_optimal_;
+      //++num_already_optimal_;
       core::SolveStatus solution_status =
           verifySolution(original_problem, table_.at(0));
       return solution_status;
     }
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
-      ++num_pivot_row_failures_;
+      //++num_pivot_row_failures_;
       return core::SolveStatus::kInfeasible;
     }
     bool is_basis_switch_successful =
         switchBasis(pivot_row_index, pivot_column_index);
     if (!is_basis_switch_successful) {
-      ++num_basis_failures_;
+      //++num_basis_failures_;
       return core::SolveStatus::kError;
     }
     constructNewTable(pivot_row_index, pivot_column_index);
@@ -276,7 +276,7 @@ BlandPrimalSimplex::solveProblem(const bool run_verbose,
       return solution_status;
     }
   }
-  ++num_not_converging_;
+  //++num_not_converging_;
   return core::SolveStatus::kDidntConverge;
 }
 
