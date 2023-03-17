@@ -210,7 +210,6 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
   // check inequalities hold
   float total = 0;
   for (std::size_t i = 0; i < original_problem.inequality_rows.size(); ++i) {
-    // total += original_problem.inequality_rows.at(i).at(0);
     for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
       total += original_problem.inequality_rows.at(i).at(j) * x.at(j);
     }
@@ -222,7 +221,6 @@ BlandPrimalSimplex::verifySolution(core::InputRows original_problem,
 
   total = 0;
   for (std::size_t i = 0; i < original_problem.equality_rows.size(); ++i) {
-    // total += original_problem.equality_rows.at(i).at(0);
     for (std::size_t j = 0; j < num_primal_variables + 1; ++j) {
       total += original_problem.equality_rows.at(i).at(j) * x.at(j);
     }
@@ -247,25 +245,21 @@ core::SolveStatus
 BlandPrimalSimplex::solveProblem(const bool run_verbose,
                                  const core::InputRows original_problem) {
 
-  // TODO: remove
   solution_.clear();
   for (size_t i = 0; i < core::kMaxIterations; ++i) {
     int pivot_column_index = getPivotColumnIndex();
     if (pivot_column_index == -1) {
-      //++num_already_optimal_;
       core::SolveStatus solution_status =
           verifySolution(original_problem, table_.at(0));
       return solution_status;
     }
     int pivot_row_index = getPivotRowIndex(pivot_column_index);
     if (pivot_row_index == -1) {
-      //++num_pivot_row_failures_;
       return core::SolveStatus::kInfeasible;
     }
     bool is_basis_switch_successful =
         switchBasis(pivot_row_index, pivot_column_index);
     if (!is_basis_switch_successful) {
-      //++num_basis_failures_;
       return core::SolveStatus::kError;
     }
     constructNewTable(pivot_row_index, pivot_column_index);
@@ -276,7 +270,6 @@ BlandPrimalSimplex::solveProblem(const bool run_verbose,
       return solution_status;
     }
   }
-  //++num_not_converging_;
   return core::SolveStatus::kDidntConverge;
 }
 

@@ -1,5 +1,3 @@
-//#include <core/consts.hpp>
-//#include <core/types.hpp>
 #include "../../core/consts.hpp"
 #include "../../core/types.hpp"
 
@@ -31,11 +29,10 @@ public:
   core::SolveStatus solveProblem(
       const std::vector<std::vector<float>> original_formatted_problem);
 
-  // private:
+private:
   // simplex table
   std::vector<std::vector<float>> table_;
 
-  // TODO:remove
   std::vector<float> solution_;
 
   // simplex basis. Order of basis must be preserved!
@@ -50,7 +47,7 @@ public:
   std::vector<float> extractColumnFromTable(const int column_index);
 
   /**
-   * @brief TODO
+   * @brief get column index
    *
    * @return int
    */
@@ -71,7 +68,6 @@ public:
    * @param pivot_column_index found in getPivotColumnIndex()
    */
   bool switchBasis(const int pivot_row_index, const int pivot_column_index);
-  // TODO: fix above later
 
   /**
    * @brief constructs new table_ object, completing row operations to reduce

@@ -3,7 +3,7 @@
 
 int main() {
 
-  const std::string user = "max";
+  const std::string user = "other";
 
   std::string problem_path;
   if (user == "josep") {
