@@ -31,7 +31,7 @@ int main() {
   // run_.runDualSolver(problem_path);
 
   // LogicalSolverRun run_;
-  // run_.testOnFullTestSet();
+  // run_.testOnFullTestSet(problem_path);
 
   return 0;
 }
