@@ -25,17 +25,27 @@ struct FormattedPrimalProblem {
   std::vector<int> basic_variables;
 };
 
+struct FormattedDualProblem {
+  std::vector<std::vector<float>> problem_matrix;
+  std::vector<int> basic_variables;
+};
+
 struct FormattedLogicalProblem {
   std::vector<std::vector<int>> problem_matrix;
   std::vector<int> lower_bounds;
   std::vector<int> upper_bounds;
 };
 
+struct DualSolution {
+  std::vector<float> primal_variable_values;
+  std::vector<float> slack_variable_values;
+};
+
 enum class SolveStatus { kInfeasible = 0, kFeasible, kError, kDidntConverge };
 
 class ISolver {
 public:
-  virtual void solveProblem() = 0;
+  virtual SolveStatus solveProblem() = 0;
 };
 
 } // namespace core

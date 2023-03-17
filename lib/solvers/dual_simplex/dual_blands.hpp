@@ -1,13 +1,14 @@
-#include "../../lib/core/consts.hpp"
-#include "../core/types.hpp"
-#include <cstdint>
-#include <vector>
+//#include <core/consts.hpp>
+//#include <core/types.hpp>
+#include "../../core/consts.hpp"
+#include "../../core/types.hpp"
 
-namespace deprecated {
+namespace solvers::dual_simplex {
 
-class PrimalSimplex {
+class DualSimplex {
+
 public:
-  PrimalSimplex();
+  DualSimplex();
 
   /**
    * @brief Set the table class member
@@ -27,14 +28,18 @@ public:
    * @brief solve the given problem
    *
    */
-  void solveProblem();
+  core::SolveStatus solveProblem(
+      const std::vector<std::vector<float>> original_formatted_problem);
 
-private:
-  /**
-   * @brief prints solution to simplex problem to terminal
-   *
-   */
-  void printSolution();
+  // private:
+  // simplex table
+  std::vector<std::vector<float>> table_;
+
+  // TODO:remove
+  std::vector<float> solution_;
+
+  // simplex basis. Order of basis must be preserved!
+  std::vector<int> basis_;
 
   /**
    * @brief returns a column of the table as a vector. Useful for iterating over
@@ -45,22 +50,19 @@ private:
   std::vector<float> extractColumnFromTable(const int column_index);
 
   /**
-   * @brief returns the index of the smallest nonbasic entry in the objective
-   * function (first row of table_)
+   * @brief TODO
    *
    * @return int
    */
-  int getPivotColumnIndex();
+  int getPivotColumnIndex(const int pivot_row_index);
 
   /**
-   * @brief returns index of pivot row in table_ based on the minimum value
-   * found during ratio testing
+   * @brief returns index of pivot row in table_ based on blands rule
    *
-   * @param pivot_column_index index found previously in getPivotColumnIndex()
-   * funtion
+
    * @return int
    */
-  int getPivotRowIndex(const int pivot_column_index);
+  int getPivotRowIndex();
 
   /**
    * @brief switch basis_ based on pivot row and column row
@@ -68,7 +70,8 @@ private:
    * @param pivot_row_index found in getPivotRowIndex()
    * @param pivot_column_index found in getPivotColumnIndex()
    */
-  void switchBasis(const int pivot_row_index, const int pivot_column_index);
+  bool switchBasis(const int pivot_row_index, const int pivot_column_index);
+  // TODO: fix above later
 
   /**
    * @brief constructs new table_ object, completing row operations to reduce
@@ -90,11 +93,10 @@ private:
    */
   bool checkOptimality();
 
-  // simplex table
-  std::vector<std::vector<float>> table_;
+  std::vector<float> extractSolution();
 
-  // simplex basis. Order of basis must be preserved!
-  std::vector<int> basis_;
+  core::SolveStatus verifySolution(
+      const std::vector<std::vector<float>> original_formatted_problem);
 };
 
-} // namespace deprecated
+} // namespace solvers::dual_simplex

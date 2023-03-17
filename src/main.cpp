@@ -1,5 +1,4 @@
 #include "main.hpp"
-#include <iostream>
 #include <string>
 
 int main() {
@@ -19,6 +18,9 @@ int main() {
 
   CombinedRun run_;
   run_.runSolver(problem_path);
+
+  // DualRun run_;
+  // run_.runDualSolver();
 
   // LogicalSolverRun run_;
   // run_.testOnFullTestSet();
